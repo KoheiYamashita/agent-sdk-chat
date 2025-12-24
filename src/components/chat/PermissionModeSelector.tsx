@@ -65,7 +65,6 @@ export function PermissionModeSelector({
   disabled = false,
 }: PermissionModeSelectorProps) {
   const currentMode = modes.find((m) => m.value === value) ?? modes[0];
-  const Icon = currentMode.icon;
   const isDestructive = currentMode.variant === 'destructive';
 
   return (
@@ -82,10 +81,7 @@ export function PermissionModeSelector({
             isDestructive && 'border-destructive/50 text-destructive'
           )}
         >
-          <div className="flex items-center gap-2">
-            <Icon className={cn('h-3.5 w-3.5', isDestructive && 'text-destructive')} />
-            <SelectValue placeholder="権限モードを選択" />
-          </div>
+          <SelectValue placeholder="権限モードを選択" />
         </SelectTrigger>
         <SelectContent>
           {modes.map((mode) => {
