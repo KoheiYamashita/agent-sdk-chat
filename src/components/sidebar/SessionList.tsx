@@ -8,9 +8,10 @@ interface SessionListProps {
   sessions: SessionSummary[];
   isLoading: boolean;
   onDelete: (id: string) => void;
+  onSessionClick?: () => void;
 }
 
-export function SessionList({ sessions, isLoading, onDelete }: SessionListProps) {
+export function SessionList({ sessions, isLoading, onDelete, onSessionClick }: SessionListProps) {
   if (isLoading) {
     return (
       <div className="space-y-2 p-2">
@@ -36,6 +37,7 @@ export function SessionList({ sessions, isLoading, onDelete }: SessionListProps)
           key={session.id}
           session={session}
           onDelete={onDelete}
+          onClick={onSessionClick}
         />
       ))}
     </div>

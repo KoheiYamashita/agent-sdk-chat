@@ -16,9 +16,10 @@ import type { SessionSummary } from '@/types';
 interface SessionItemProps {
   session: SessionSummary;
   onDelete: (id: string) => void;
+  onClick?: () => void;
 }
 
-export function SessionItem({ session, onDelete }: SessionItemProps) {
+export function SessionItem({ session, onDelete, onClick }: SessionItemProps) {
   const pathname = usePathname();
   const isActive = pathname === `/chat/${session.id}`;
 
@@ -31,6 +32,7 @@ export function SessionItem({ session, onDelete }: SessionItemProps) {
   return (
     <Link
       href={`/chat/${session.id}`}
+      onClick={onClick}
       className={cn(
         'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors group',
         isActive

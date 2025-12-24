@@ -2,6 +2,7 @@
 
 import { useChat } from '@/hooks/useChat';
 import { useSettings } from '@/hooks/useSettings';
+import { useSidebar } from '@/contexts/SidebarContext';
 import { ChatHeader } from './ChatHeader';
 import { MessageList } from './MessageList';
 import { InputArea } from './InputArea';
@@ -9,10 +10,10 @@ import type { PermissionMode } from '@/types';
 
 interface ChatContainerProps {
   sessionId?: string;
-  onMenuClick?: () => void;
 }
 
-export function ChatContainer({ sessionId, onMenuClick }: ChatContainerProps) {
+export function ChatContainer({ sessionId }: ChatContainerProps) {
+  const { open: openSidebar } = useSidebar();
   const {
     messages,
     isLoading,
@@ -30,7 +31,7 @@ export function ChatContainer({ sessionId, onMenuClick }: ChatContainerProps) {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <ChatHeader session={session} onMenuClick={onMenuClick} />
+      <ChatHeader session={session} onMenuClick={openSidebar} />
 
       {error && (
         <div className="bg-destructive/10 border-destructive/20 border-b px-4 py-2 text-sm text-destructive">

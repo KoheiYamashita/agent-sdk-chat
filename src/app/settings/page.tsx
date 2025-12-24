@@ -2,15 +2,26 @@
 
 import { useSettings } from '@/hooks/useSettings';
 import { PermissionModeRadioGroup } from '@/components/settings/PermissionModeRadioGroup';
+import { DefaultToolsCheckboxGroup } from '@/components/settings/DefaultToolsCheckboxGroup';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { PermissionMode } from '@/types';
 
 export default function SettingsPage() {
-  const { settings, isLoading, error, isSaving, updateGeneralSettings } = useSettings();
+  const { settings, isLoading, error, isSaving, updateGeneralSettings, saveSettings } = useSettings();
 
   const handlePermissionModeChange = async (mode: PermissionMode) => {
     await updateGeneralSettings({ defaultPermissionMode: mode });
+  };
+
+  const handleDefaultToolsChange = async (allowedTools: string[]) => {
+    if (!settings) return;
+    await saveSettings({
+      permissions: {
+        ...settings.permissions,
+        allowedTools,
+      },
+    });
   };
 
   if (error) {
@@ -68,15 +79,32 @@ export default function SettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>その他の設定</CardTitle>
+          <CardTitle>デフォルトで許可するツール</CardTitle>
           <CardDescription>
-            MCP、ツール、エージェントの設定は今後追加予定です。
+            チェックしたツールは新しいチャット開始時から自動的に許可されます。
+            チェックしていないツールは毎回確認を求めます。
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Coming soon...
-          </p>
+          {isLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="flex items-start space-x-3">
+                  <Skeleton className="h-4 w-4 mt-1" />
+                  <div className="flex-1">
+                    <Skeleton className="h-4 w-20 mb-2" />
+                    <Skeleton className="h-3 w-full" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <DefaultToolsCheckboxGroup
+              selectedTools={settings?.permissions.allowedTools ?? []}
+              onChange={handleDefaultToolsChange}
+              disabled={isSaving}
+            />
+          )}
         </CardContent>
       </Card>
     </div>

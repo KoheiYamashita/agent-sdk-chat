@@ -34,6 +34,18 @@ async function saveAllowedTools(sessionId: string, tools: Set<string>): Promise<
   });
 }
 
+// Helper to get globally allowed tools from settings
+async function getGlobalAllowedTools(): Promise<Set<string>> {
+  const settings = await prisma.settings.findUnique({ where: { key: 'permissions' } });
+  if (!settings) return new Set<string>();
+  try {
+    const permissions = JSON.parse(settings.value) as { allowedTools?: string[] };
+    return new Set(permissions.allowedTools ?? []);
+  } catch {
+    return new Set<string>();
+  }
+}
+
 export async function POST(request: Request) {
   const body = (await request.json()) as ChatRequest;
   const { message, sessionId, settings } = body;
@@ -75,6 +87,8 @@ export async function POST(request: Request) {
       try {
         // Get session-scoped always-allowed tools from DB
         const alwaysAllowedTools = parseAllowedTools(session.allowedTools);
+        // Get globally allowed tools from settings
+        const globalAllowedTools = await getGlobalAllowedTools();
 
         const queryOptions = {
           prompt: message,
@@ -90,6 +104,11 @@ export async function POST(request: Request) {
             canUseTool: async (toolName: string, input: Record<string, unknown>) => {
             // Check if tool is always allowed for this session
             if (alwaysAllowedTools.has(toolName)) {
+              return { behavior: 'allow' as const, updatedInput: input };
+            }
+
+            // Check if tool is allowed in global settings
+            if (globalAllowedTools.has(toolName)) {
               return { behavior: 'allow' as const, updatedInput: input };
             }
 

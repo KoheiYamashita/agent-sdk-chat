@@ -68,8 +68,8 @@ export function PermissionModeSelector({
   const isDestructive = currentMode.variant === 'destructive';
 
   return (
-    <div className="flex items-center gap-2 px-4 py-2 border-b bg-muted/30">
-      <span className="text-xs text-muted-foreground shrink-0">権限モード:</span>
+    <div className="flex items-center gap-2 px-2 sm:px-4 py-2 border-b bg-muted/30">
+      <span className="text-xs text-muted-foreground shrink-0 hidden sm:inline">権限モード:</span>
       <Select
         value={value}
         onValueChange={(v) => onChange(v as PermissionMode)}
@@ -77,7 +77,7 @@ export function PermissionModeSelector({
       >
         <SelectTrigger
           className={cn(
-            'w-[220px] h-8 text-xs',
+            'w-[140px] sm:w-[220px] h-8 text-xs',
             isDestructive && 'border-destructive/50 text-destructive'
           )}
         >

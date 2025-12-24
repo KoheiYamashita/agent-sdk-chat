@@ -46,51 +46,54 @@ export function ToolApprovalCard({ request, onRespond }: ToolApprovalCardProps) 
   }, [handleDecision]);
 
   return (
-    <Card className="mx-4 my-2 border-amber-500/50 bg-amber-500/5">
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-base">
+    <Card className="mx-2 sm:mx-4 my-2 border-amber-500/50 bg-amber-500/5">
+      <CardHeader className="pb-2 px-3 sm:px-6">
+        <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
           {request.isDangerous ? (
-            <AlertTriangle className="h-5 w-5 text-amber-500" />
+            <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-amber-500 shrink-0" />
           ) : (
-            <Terminal className="h-5 w-5 text-blue-500" />
+            <Terminal className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 shrink-0" />
           )}
           ツール実行の確認
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3 pb-3">
+      <CardContent className="space-y-3 pb-3 px-3 sm:px-6">
         <div>
-          <span className="text-sm font-medium text-muted-foreground">ツール名:</span>
-          <div className="mt-1 rounded-md bg-muted px-3 py-2 font-mono text-sm">
+          <span className="text-xs sm:text-sm font-medium text-muted-foreground">ツール名:</span>
+          <div className="mt-1 rounded-md bg-muted px-2 sm:px-3 py-1.5 sm:py-2 font-mono text-xs sm:text-sm break-all">
             {request.toolName}
           </div>
         </div>
 
         <div>
-          <span className="text-sm font-medium text-muted-foreground">入力:</span>
-          <div className="mt-1 max-h-32 overflow-auto rounded-md bg-muted px-3 py-2">
+          <span className="text-xs sm:text-sm font-medium text-muted-foreground">入力:</span>
+          <div className="mt-1 max-h-24 sm:max-h-32 overflow-auto rounded-md bg-muted px-2 sm:px-3 py-1.5 sm:py-2">
             <ToolInputDisplay input={request.toolInput} />
           </div>
         </div>
 
         {request.description && (
-          <p className="text-sm text-muted-foreground">{request.description}</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">{request.description}</p>
         )}
       </CardContent>
-      <CardFooter className="flex justify-between gap-2 pt-0">
+      <CardFooter className="flex flex-col sm:flex-row justify-between gap-2 pt-0 px-3 sm:px-6">
         <Button
           variant="outline"
           size="sm"
           onClick={() => handleDecision('deny')}
-          className="text-destructive hover:text-destructive"
+          className="text-destructive hover:text-destructive w-full sm:w-auto order-2 sm:order-1"
         >
-          拒否 [d]
+          <span className="sm:hidden">拒否</span>
+          <span className="hidden sm:inline">拒否 [d]</span>
         </Button>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => handleDecision('allow')}>
-            許可 [a]
+        <div className="flex gap-2 w-full sm:w-auto order-1 sm:order-2">
+          <Button variant="outline" size="sm" onClick={() => handleDecision('allow')} className="flex-1 sm:flex-none">
+            <span className="sm:hidden">許可</span>
+            <span className="hidden sm:inline">許可 [a]</span>
           </Button>
-          <Button size="sm" onClick={() => handleDecision('always')}>
-            常に許可 [y]
+          <Button size="sm" onClick={() => handleDecision('always')} className="flex-1 sm:flex-none">
+            <span className="sm:hidden">常に許可</span>
+            <span className="hidden sm:inline">常に許可 [y]</span>
           </Button>
         </div>
       </CardFooter>
@@ -100,20 +103,20 @@ export function ToolApprovalCard({ request, onRespond }: ToolApprovalCardProps) 
 
 function ToolInputDisplay({ input }: { input: unknown }) {
   if (input === null || input === undefined) {
-    return <span className="text-muted-foreground italic">なし</span>;
+    return <span className="text-muted-foreground italic text-xs sm:text-sm">なし</span>;
   }
 
   if (typeof input === 'string') {
-    return <pre className="whitespace-pre-wrap break-all font-mono text-sm">{input}</pre>;
+    return <pre className="whitespace-pre-wrap break-all font-mono text-xs sm:text-sm">{input}</pre>;
   }
 
   if (typeof input === 'object') {
     return (
-      <pre className="whitespace-pre-wrap break-all font-mono text-sm">
+      <pre className="whitespace-pre-wrap break-all font-mono text-xs sm:text-sm">
         {JSON.stringify(input, null, 2)}
       </pre>
     );
   }
 
-  return <span className="font-mono text-sm">{String(input)}</span>;
+  return <span className="font-mono text-xs sm:text-sm">{String(input)}</span>;
 }

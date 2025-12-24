@@ -44,7 +44,7 @@ export function InputArea({
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
+      if (e.key === 'Enter' && e.shiftKey) {
         e.preventDefault();
         handleSubmit();
       }
@@ -63,16 +63,15 @@ export function InputArea({
         onChange={setPermissionMode}
         disabled={disabled || isGenerating}
       />
-      <div className="p-4">
-        <div className="max-w-3xl mx-auto">
+      <div className="p-2 sm:p-4">
           <div className="relative">
             <Textarea
               ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="メッセージを入力... (Shift+Enterで改行)"
-              className="min-h-[60px] max-h-[200px] resize-none pr-14"
+              placeholder="メッセージを入力... (Shift+Enter送信)"
+              className="min-h-[60px] max-h-[200px] resize-none pr-12 sm:pr-14 text-sm sm:text-base"
               disabled={disabled || isGenerating}
               rows={1}
             />
@@ -98,10 +97,9 @@ export function InputArea({
               )}
             </div>
           </div>
-          <p className="text-xs text-muted-foreground mt-2 text-center">
+          <p className="text-xs text-muted-foreground mt-2 text-center hidden sm:block">
             Claude Code Web UI - Claude Agent SDK を使用
           </p>
-        </div>
       </div>
     </div>
   );
