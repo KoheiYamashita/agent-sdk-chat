@@ -31,7 +31,7 @@ export function Sidebar() {
 
       <Separator />
 
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 overflow-hidden">
         <SessionList
           sessions={sessions}
           isLoading={isLoading}
