@@ -1035,6 +1035,7 @@ __tests__/
 | `/api/sessions/[id]` | GET | ✅ 実装済 | `src/app/api/sessions/[id]/route.ts` |
 | `/api/sessions/[id]` | DELETE | ✅ 実装済 | `src/app/api/sessions/[id]/route.ts` |
 | `/api/sessions/[id]` | PATCH | ❌ 未実装 | - |
+| `/api/chat/approve` | POST | ✅ 実装済 | `src/app/api/chat/approve/route.ts` |
 | `/api/settings` | GET | ✅ 実装済 | `src/app/api/settings/route.ts` |
 | `/api/settings` | PUT | ✅ 実装済 | `src/app/api/settings/route.ts` |
 | `/api/mcp` | GET | ❌ 未実装 | - |
@@ -1059,7 +1060,8 @@ __tests__/
 | PermissionModeSelector | ✅ 実装済 | `src/components/chat/PermissionModeSelector.tsx` | チャット入力欄上部 |
 | ToolApprovalCard | ✅ 実装済 | `src/components/chat/ToolApprovalCard.tsx` | インライン表示、キーボードショートカット対応 |
 | ToolApprovalMessage | ✅ 実装済 | `src/components/chat/MessageItem.tsx` | 承認履歴表示（MessageItem内） |
-| ToolOutput | ❌ 未実装 | - | ツール実行結果表示 |
+| ToolCallList | ✅ 実装済 | `src/components/chat/ToolCallList.tsx` | ツール実行ステータス表示 |
+| ToolOutput | ❌ 未実装 | - | ツール実行結果表示（詳細表示） |
 | ThinkingIndicator | ❌ 未実装 | - | 思考過程表示 |
 | MarkdownRenderer | ❌ 未実装 | - | Markdownレンダリング |
 | CodeBlock | ❌ 未実装 | - | コードブロック表示 |
@@ -1138,20 +1140,26 @@ __tests__/
    - アシスタントのレスポンスがプレーンテキストで表示される
    - コードブロック、リンク、リスト等が正しく表示されない
 
-2. **ツール実行結果非表示**
-   - Claude Code CLIのツール呼び出し（ファイル読み書き等）が表示されない
-   - 実行状況がユーザーに見えない
+2. **ツール実行結果表示** → **実装済み** [13章参照](#13-ツール実行ステータス表示設計)
+   - ✅ ツール実行中/完了/失敗のステータス表示
+   - ✅ tool_use/tool_resultイベントによるリアルタイム更新
+   - ✅ ツール入力/出力の表示
 
 3. **権限制御** → **実装済み** [11章参照](#11-権限モード切替ui設計)
    - ✅ チャット入力欄上部で権限モード即時切替可能
    - ✅ 設定画面でデフォルト権限モードを設定可能
    - ✅ 設定はDBに永続化される
 
-4. **設定永続化未対応**
+4. **ツール実行確認** → **実装済み** [12章参照](#12-ツール実行確認ui設計)
+   - ✅ インライン確認UIによる許可/拒否/常に許可
+   - ✅ キーボードショートカット対応 (a/d/y)
+   - ✅ 「常に許可」はセッション単位でDBに永続化
+
+5. **設定永続化未対応**
    - MCP、ツール、エージェントの設定がUIから行えない
    - DBテーブルは存在するが未使用
 
-5. **エラーハンドリング不十分**
+6. **エラーハンドリング不十分**
    - エラー時のユーザーフィードバックが限定的
    - グローバルエラーバウンダリ未実装
 
@@ -1572,9 +1580,10 @@ interface UpdateSettingsRequest {
    - 許可/拒否/常に許可の3択を提示
    - 確認待ち中は他の操作をブロック
 
-2. **「常に許可」のスコープ**
-   - **セッション内限定**: ブラウザリロードやセッション切替でリセット
-   - メモリ上で管理（DBには保存しない）
+2. **「常に許可」のスコープ** ✅ 実装済み（DB永続化）
+   - **セッション単位でDBに保存**: Session.allowedTools フィールドに保存
+   - ブラウザリロードしても維持される
+   - セッション切替時は別のallowedToolsを使用
    - ツール名単位で記憶
 
 3. **視覚的フィードバック**
@@ -2038,3 +2047,298 @@ const queryOptions = {
    - permissionMode: 'default' での動作確認
    - 「常に許可」のセッション内限定確認
    - 承認履歴のチャット表示確認
+
+---
+
+## 13. ツール実行ステータス表示設計
+
+### 13.1 概要
+
+Claude Code CLIと同様に、ツール実行時のステータス（「検索中」「編集中」など）をリアルタイムで表示する機能。
+
+### 13.2 機能要件
+
+1. **ステータス表示**
+   - `running`: ツール実行中（スピナーアイコン）
+   - `completed`: 実行完了（チェックアイコン、緑色）
+   - `failed`: 実行失敗（エラーアイコン、赤色）
+
+2. **イベントフロー**
+   ```
+   SDK assistant message → tool_use event (status: running)
+                        ↓
+   SDK user message (tool_result) → tool_result event (status: completed)
+   ```
+
+3. **メッセージ管理**
+   - ツール実行後は新しいメッセージを作成（既存メッセージに追加しない）
+   - `assistantMessageId` をリセットして正しい順序を維持
+
+### 13.3 実装アーキテクチャ
+
+#### 13.3.1 サーバー側（route.ts）
+
+```typescript
+// processSDKMessage を配列を返すように変更
+function processSDKMessage(msg: SDKMessage): ChatEvent[] {
+  const events: ChatEvent[] = [];
+
+  switch (msg.type) {
+    case 'assistant': {
+      // テキストコンテンツ処理
+      const textContent = content
+        .filter((c) => c.type === 'text' && c.text)
+        .map((c) => c.text!)
+        .join('');
+
+      if (textContent) {
+        events.push({ type: 'message', content: textContent, role: 'assistant' });
+      }
+
+      // ツール使用イベント
+      const toolUses = content.filter((c) => c.type === 'tool_use');
+      for (const toolUse of toolUses) {
+        events.push({
+          type: 'tool_use',
+          toolName: toolUse.name!,
+          toolInput: toolUse.input,
+          toolUseId: toolUse.id!,
+        });
+      }
+      break;
+    }
+
+    case 'user': {
+      // ツール結果イベント
+      const toolResults = content.filter((c) => c.type === 'tool_result');
+      for (const toolResult of toolResults) {
+        events.push({
+          type: 'tool_result',
+          toolName: '',
+          result: toolResult.content,
+          toolUseId: toolResult.tool_use_id!,
+        });
+      }
+      break;
+    }
+  }
+
+  return events;
+}
+```
+
+#### 13.3.2 クライアント側（useChat.ts）
+
+```typescript
+// tool_use イベント処理
+case 'tool_use': {
+  if (!assistantMessageId) {
+    assistantMessageId = generateUUID();
+  }
+  const newToolCall: ToolCall = {
+    id: event.toolUseId,
+    name: event.toolName,
+    input: event.toolInput,
+    status: 'running',  // 実行中ステータス
+  };
+  setMessages((prev) => {
+    const existingIndex = prev.findIndex((m) => m.id === assistantMessageId);
+    if (existingIndex !== -1) {
+      const existingToolCalls = prev[existingIndex].toolCalls || [];
+      const updated = [...prev];
+      updated[existingIndex] = {
+        ...updated[existingIndex],
+        toolCalls: [...existingToolCalls, newToolCall],
+      };
+      return updated;
+    }
+    return [
+      ...prev,
+      {
+        id: assistantMessageId!,
+        role: 'assistant',
+        content: assistantContent,
+        toolCalls: [newToolCall],
+        createdAt: new Date().toISOString(),
+      },
+    ];
+  });
+  break;
+}
+
+// tool_result イベント処理
+case 'tool_result': {
+  setMessages((prev) => {
+    return prev.map((msg) => {
+      if (msg.toolCalls) {
+        const updatedToolCalls = msg.toolCalls.map((tc) =>
+          tc.id === event.toolUseId
+            ? { ...tc, status: 'completed' as const, output: event.result }
+            : tc
+        );
+        return { ...msg, toolCalls: updatedToolCalls };
+      }
+      return msg;
+    });
+  });
+  // 次のメッセージは新しいIDで作成
+  assistantMessageId = null;
+  assistantContent = '';
+  break;
+}
+```
+
+### 13.4 UI表示（ToolCallList.tsx）
+
+```typescript
+// ステータスに応じたアイコンと色
+const getStatusIcon = (status: ToolCall['status']) => {
+  switch (status) {
+    case 'running':
+      return <Loader2 className="h-4 w-4 animate-spin text-blue-500" />;
+    case 'completed':
+      return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+    case 'failed':
+      return <XCircle className="h-4 w-4 text-red-500" />;
+    default:
+      return <Clock className="h-4 w-4 text-muted-foreground" />;
+  }
+};
+
+// ステータスに応じた背景色
+const getStatusBg = (status: ToolCall['status']) => {
+  switch (status) {
+    case 'running':
+      return 'bg-blue-500/10 border-blue-500/30';
+    case 'completed':
+      return 'bg-green-500/10 border-green-500/30';
+    case 'failed':
+      return 'bg-red-500/10 border-red-500/30';
+    default:
+      return 'bg-muted/50 border-muted';
+  }
+};
+```
+
+### 13.5 「常に許可」のDB永続化
+
+#### 13.5.1 データベーススキーマ
+
+```prisma
+model Session {
+  id              String    @id @default(cuid())
+  title           String
+  claudeSessionId String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  settings        String?   // JSON stored as string for SQLite
+  allowedTools    String?   // JSON array of always-allowed tool names
+  isArchived      Boolean   @default(false)
+  messages        Message[]
+}
+```
+
+#### 13.5.2 サーバー側実装
+
+```typescript
+// Helper to get allowed tools from session
+function parseAllowedTools(allowedToolsJson: string | null): Set<string> {
+  if (!allowedToolsJson) return new Set<string>();
+  try {
+    const tools = JSON.parse(allowedToolsJson) as string[];
+    return new Set(tools);
+  } catch {
+    return new Set<string>();
+  }
+}
+
+// Helper to save allowed tools to session
+async function saveAllowedTools(sessionId: string, tools: Set<string>): Promise<void> {
+  await prisma.session.update({
+    where: { id: sessionId },
+    data: { allowedTools: JSON.stringify([...tools]) },
+  });
+}
+
+// canUseTool コールバック内
+const alwaysAllowedTools = parseAllowedTools(session.allowedTools);
+
+canUseTool: async (toolName: string, input: Record<string, unknown>) => {
+  // Check if tool is always allowed for this session
+  if (alwaysAllowedTools.has(toolName)) {
+    return { behavior: 'allow' as const, updatedInput: input };
+  }
+
+  // ... 承認リクエスト処理 ...
+
+  if (response.decision === 'always') {
+    alwaysAllowedTools.add(toolName);
+    await saveAllowedTools(session.id, alwaysAllowedTools);
+    return { behavior: 'allow' as const, updatedInput: input };
+  }
+  // ...
+}
+```
+
+### 13.6 スクロール修正
+
+ツール実行時にチャットUIがスクロールできなくなる問題の修正：
+
+```typescript
+// ChatContainer.tsx
+<div className="flex flex-col h-full overflow-hidden">
+  {/* ... */}
+</div>
+
+// MessageList.tsx
+<ScrollArea className="flex-1 min-h-0">
+  {/* ... */}
+</ScrollArea>
+```
+
+- `overflow-hidden`: 親コンテナのオーバーフローを制御
+- `min-h-0`: Flexbox子要素の最小高さをリセットしてスクロール可能に
+
+### 13.7 実装ファイル一覧
+
+| ファイル | 種別 | 状況 | 説明 |
+|---------|------|------|------|
+| `src/app/api/chat/route.ts` | 更新 | ✅ 実装済 | processSDKMessageを配列返却に変更、tool_resultイベント追加 |
+| `src/hooks/useChat.ts` | 更新 | ✅ 実装済 | tool_use/tool_resultイベント処理、メッセージID管理 |
+| `src/components/chat/ToolCallList.tsx` | 既存 | ✅ 実装済 | ステータス表示UI（running/completed/failed） |
+| `src/components/chat/ChatContainer.tsx` | 更新 | ✅ 実装済 | overflow-hidden追加 |
+| `src/components/chat/MessageList.tsx` | 更新 | ✅ 実装済 | min-h-0追加 |
+| `prisma/schema.prisma` | 更新 | ✅ 実装済 | Session.allowedTools追加 |
+
+### 13.8 イベントシーケンス
+
+```
+┌─────────┐     ┌─────────┐     ┌─────────┐     ┌─────────┐
+│ Client  │     │ Server  │     │   SDK   │     │  Claude │
+└────┬────┘     └────┬────┘     └────┬────┘     └────┬────┘
+     │               │               │               │
+     │  POST /api/chat              │               │
+     │──────────────►│               │               │
+     │               │  query()      │               │
+     │               │──────────────►│               │
+     │               │               │  API call     │
+     │               │               │──────────────►│
+     │               │               │               │
+     │               │               │◄──────────────│
+     │               │               │  assistant    │
+     │               │◄──────────────│  (tool_use)   │
+     │               │               │               │
+     │  SSE: tool_use (running)     │               │
+     │◄──────────────│               │               │
+     │               │               │               │
+     │               │               │  tool exec    │
+     │               │               │──────────────►│
+     │               │               │               │
+     │               │               │◄──────────────│
+     │               │◄──────────────│  user         │
+     │               │               │  (tool_result)│
+     │               │               │               │
+     │  SSE: tool_result (completed)│               │
+     │◄──────────────│               │               │
+     │               │               │               │
+```

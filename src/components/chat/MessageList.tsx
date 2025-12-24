@@ -38,7 +38,7 @@ export function MessageList({
   }
 
   return (
-    <ScrollArea className="flex-1">
+    <ScrollArea className="flex-1 min-h-0">
       <div className="divide-y">
         {messages.map((message) => (
           <MessageItem key={message.id} message={message} />

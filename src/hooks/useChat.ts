@@ -10,6 +10,7 @@ import type {
   PermissionMode,
   ToolApprovalRequest,
   ToolApprovalResponse,
+  ToolCall,
 } from '@/types';
 import { generateUUID } from '@/lib/utils/uuid';
 
@@ -132,18 +133,44 @@ export function useChat({ sessionId }: UseChatOptions = {}): UseChatReturn {
                   break;
 
                 case 'message':
-                  assistantContent += event.content;
-                  if (!assistantMessageId) {
-                    assistantMessageId = generateUUID();
-                  }
                   setMessages((prev) => {
-                    const lastMessage = prev[prev.length - 1];
-                    if (lastMessage?.id === assistantMessageId) {
+                    // Find existing assistant message by ID
+                    const existingIndex = assistantMessageId
+                      ? prev.findIndex((m) => m.id === assistantMessageId)
+                      : -1;
+
+                    // If existing message has toolCalls, create a new message instead
+                    // (this means tool execution happened and we should start fresh)
+                    if (existingIndex !== -1 && prev[existingIndex].toolCalls?.length) {
+                      // Start a new message after tool execution
+                      assistantMessageId = generateUUID();
+                      assistantContent = event.content;
                       return [
-                        ...prev.slice(0, -1),
-                        { ...lastMessage, content: assistantContent },
+                        ...prev,
+                        {
+                          id: assistantMessageId,
+                          role: 'assistant',
+                          content: assistantContent,
+                          createdAt: new Date().toISOString(),
+                        },
                       ];
                     }
+
+                    assistantContent += event.content;
+                    if (!assistantMessageId) {
+                      assistantMessageId = generateUUID();
+                    }
+
+                    if (existingIndex !== -1) {
+                      // Update existing message
+                      const updated = [...prev];
+                      updated[existingIndex] = {
+                        ...updated[existingIndex],
+                        content: assistantContent,
+                      };
+                      return updated;
+                    }
+                    // Add new message
                     return [
                       ...prev,
                       {
@@ -155,6 +182,64 @@ export function useChat({ sessionId }: UseChatOptions = {}): UseChatReturn {
                     ];
                   });
                   break;
+
+                case 'tool_use': {
+                  // Ensure we have an assistant message to attach tool calls to
+                  if (!assistantMessageId) {
+                    assistantMessageId = generateUUID();
+                  }
+                  const newToolCall: ToolCall = {
+                    id: event.toolUseId,
+                    name: event.toolName,
+                    input: event.toolInput,
+                    status: 'running',
+                  };
+                  setMessages((prev) => {
+                    // Find existing assistant message by ID
+                    const existingIndex = prev.findIndex((m) => m.id === assistantMessageId);
+                    if (existingIndex !== -1) {
+                      const existingToolCalls = prev[existingIndex].toolCalls || [];
+                      const updated = [...prev];
+                      updated[existingIndex] = {
+                        ...updated[existingIndex],
+                        toolCalls: [...existingToolCalls, newToolCall],
+                      };
+                      return updated;
+                    }
+                    // Add new message with tool call
+                    return [
+                      ...prev,
+                      {
+                        id: assistantMessageId!,
+                        role: 'assistant',
+                        content: assistantContent,
+                        toolCalls: [newToolCall],
+                        createdAt: new Date().toISOString(),
+                      },
+                    ];
+                  });
+                  break;
+                }
+
+                case 'tool_result': {
+                  setMessages((prev) => {
+                    return prev.map((msg) => {
+                      if (msg.toolCalls) {
+                        const updatedToolCalls = msg.toolCalls.map((tc) =>
+                          tc.id === event.toolUseId
+                            ? { ...tc, status: 'completed' as const, output: event.result }
+                            : tc
+                        );
+                        return { ...msg, toolCalls: updatedToolCalls };
+                      }
+                      return msg;
+                    });
+                  });
+                  // Reset for next message - new text after tool result should be a new message
+                  assistantMessageId = null;
+                  assistantContent = '';
+                  break;
+                }
 
                 case 'tool_approval_request':
                   setPendingToolApproval(event.request);
@@ -183,6 +268,54 @@ export function useChat({ sessionId }: UseChatOptions = {}): UseChatReturn {
                 case 'error':
                   setError(event.message);
                   break;
+
+                case 'done': {
+                  // Final result - add or update assistant message with the result
+                  if (event.result) {
+                    setMessages((prev) => {
+                      // Check if we have an existing assistant message to update
+                      const existingIndex = assistantMessageId
+                        ? prev.findIndex((m) => m.id === assistantMessageId)
+                        : -1;
+
+                      // If existing message has toolCalls, create a new message
+                      if (existingIndex !== -1 && prev[existingIndex].toolCalls?.length) {
+                        const newId = generateUUID();
+                        return [
+                          ...prev,
+                          {
+                            id: newId,
+                            role: 'assistant',
+                            content: event.result,
+                            createdAt: new Date().toISOString(),
+                          },
+                        ];
+                      }
+
+                      // If no existing message or no toolCalls, update or create
+                      if (existingIndex !== -1) {
+                        const updated = [...prev];
+                        updated[existingIndex] = {
+                          ...updated[existingIndex],
+                          content: event.result,
+                        };
+                        return updated;
+                      }
+
+                      // No existing message, create new one
+                      return [
+                        ...prev,
+                        {
+                          id: generateUUID(),
+                          role: 'assistant',
+                          content: event.result,
+                          createdAt: new Date().toISOString(),
+                        },
+                      ];
+                    });
+                  }
+                  break;
+                }
               }
             } catch {
               // Skip invalid JSON

@@ -11,6 +11,27 @@ interface ContentBlock {
   id?: string;
   name?: string;
   input?: unknown;
+  tool_use_id?: string;
+  content?: string | ContentBlock[];
+}
+
+// Helper to get allowed tools from session
+function parseAllowedTools(allowedToolsJson: string | null): Set<string> {
+  if (!allowedToolsJson) return new Set<string>();
+  try {
+    const tools = JSON.parse(allowedToolsJson) as string[];
+    return new Set(tools);
+  } catch {
+    return new Set<string>();
+  }
+}
+
+// Helper to save allowed tools to session
+async function saveAllowedTools(sessionId: string, tools: Set<string>): Promise<void> {
+  await prisma.session.update({
+    where: { id: sessionId },
+    data: { allowedTools: JSON.stringify([...tools]) },
+  });
 }
 
 export async function POST(request: Request) {
@@ -18,7 +39,7 @@ export async function POST(request: Request) {
   const { message, sessionId, settings } = body;
 
   // Get or create session
-  let session = sessionId
+  const session = sessionId
     ? await prisma.session.findUnique({ where: { id: sessionId } })
     : await prisma.session.create({
         data: { title: message.slice(0, 50) },
@@ -41,14 +62,19 @@ export async function POST(request: Request) {
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
+      let isControllerClosed = false;
       const sendEvent = (event: ChatEvent) => {
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+        if (isControllerClosed) return;
+        try {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+        } catch {
+          isControllerClosed = true;
+        }
       };
 
       try {
-        // Session-scoped always-allowed tools (reset on each request for simplicity)
-        // In production, you might want to track this per Claude session
-        const alwaysAllowedTools = new Set<string>();
+        // Get session-scoped always-allowed tools from DB
+        const alwaysAllowedTools = parseAllowedTools(session.allowedTools);
 
         const queryOptions = {
           prompt: message,
@@ -98,6 +124,8 @@ export async function POST(request: Request) {
 
             if (response.decision === 'always') {
               alwaysAllowedTools.add(toolName);
+              // Save to DB
+              await saveAllowedTools(session.id, alwaysAllowedTools);
               return { behavior: 'allow' as const, updatedInput: input };
             } else if (response.decision === 'allow') {
               return { behavior: 'allow' as const, updatedInput: input };
@@ -112,8 +140,8 @@ export async function POST(request: Request) {
         let claudeSessionId = session.claudeSessionId;
 
         for await (const msg of query(queryOptions)) {
-          const event = processSDKMessage(msg);
-          if (event) {
+          const events = processSDKMessage(msg);
+          for (const event of events) {
             sendEvent(event);
           }
 
@@ -209,7 +237,9 @@ export async function POST(request: Request) {
   });
 }
 
-function processSDKMessage(msg: SDKMessage): ChatEvent | null {
+function processSDKMessage(msg: SDKMessage): ChatEvent[] {
+  const events: ChatEvent[] = [];
+
   switch (msg.type) {
     case 'assistant': {
       const content = msg.message.content as ContentBlock[];
@@ -219,31 +249,61 @@ function processSDKMessage(msg: SDKMessage): ChatEvent | null {
         .join('');
 
       if (textContent) {
-        return { type: 'message', content: textContent, role: 'assistant' };
+        events.push({ type: 'message', content: textContent, role: 'assistant' });
       }
 
       // Check for tool use
-      const toolUse = content.find(
+      const toolUses = content.filter(
         (c: ContentBlock) => c.type === 'tool_use' && c.id && c.name
       );
 
-      if (toolUse) {
-        return {
+      for (const toolUse of toolUses) {
+        events.push({
           type: 'tool_use',
           toolName: toolUse.name!,
           toolInput: toolUse.input,
           toolUseId: toolUse.id!,
-        };
+        });
       }
+      break;
+    }
 
-      return null;
+    case 'user': {
+      // Check for tool results
+      const content = msg.message.content as ContentBlock[];
+      const toolResults = content.filter(
+        (c: ContentBlock) => c.type === 'tool_result' && c.tool_use_id
+      );
+
+      for (const toolResult of toolResults) {
+        // Extract result content
+        let resultContent: unknown;
+        if (typeof toolResult.content === 'string') {
+          resultContent = toolResult.content;
+        } else if (Array.isArray(toolResult.content)) {
+          // Handle array of content blocks
+          resultContent = toolResult.content
+            .filter((c: ContentBlock) => c.type === 'text' && c.text)
+            .map((c: ContentBlock) => c.text)
+            .join('');
+        } else {
+          resultContent = toolResult.content;
+        }
+
+        events.push({
+          type: 'tool_result',
+          toolName: '', // Tool name not available in result
+          result: resultContent,
+          toolUseId: toolResult.tool_use_id!,
+        });
+      }
+      break;
     }
 
     case 'result':
       // Handled separately
-      return null;
-
-    default:
-      return null;
+      break;
   }
+
+  return events;
 }

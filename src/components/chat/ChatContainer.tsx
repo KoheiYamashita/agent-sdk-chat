@@ -29,7 +29,7 @@ export function ChatContainer({ sessionId, onMenuClick }: ChatContainerProps) {
   const defaultPermissionMode: PermissionMode = settings?.general.defaultPermissionMode ?? 'default';
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full overflow-hidden">
       <ChatHeader session={session} onMenuClick={onMenuClick} />
 
       {error && (
