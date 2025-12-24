@@ -63,6 +63,9 @@ next-env.d.ts
 logs/
 *.log
 
+# server pid
+server.pid
+
 # OS
 .DS_Store
 .Spotlight-V100
