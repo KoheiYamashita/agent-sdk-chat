@@ -1,0 +1,66 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Session {
+  id              String    @id @default(cuid())
+  title           String
+  claudeSessionId String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  settings        String?   // JSON stored as string for SQLite
+  isArchived      Boolean   @default(false)
+  messages        Message[]
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  sessionId String
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role      String   // 'user' | 'assistant' | 'system'
+  content   String
+  toolCalls String?  // JSON stored as string for SQLite
+  metadata  String?  // JSON stored as string for SQLite
+  createdAt DateTime @default(now())
+
+  @@index([sessionId])
+}
+
+model MCPServer {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  type      String   // 'stdio' | 'sse' | 'http'
+  command   String?
+  args      String?  // JSON stored as string for SQLite
+  env       String?  // JSON stored as string for SQLite
+  url       String?
+  headers   String?  // JSON stored as string for SQLite
+  isEnabled Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model Agent {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String
+  prompt      String
+  tools       String?  // JSON stored as string for SQLite
+  model       String?
+  isEnabled   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+model Settings {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String   // JSON stored as string for SQLite
+  updatedAt DateTime @updatedAt
+}

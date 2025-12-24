@@ -1,0 +1,30 @@
+services:
+  claude-code-webui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: claude-code-webui
+    ports:
+      - "3000:3000"
+    volumes:
+      # Claude CLI authentication - mount from host
+      - ~/.claude:/root/.claude:rw
+      # SQLite database persistence
+      - ./data:/app/data:rw
+      # Workspace directory for file operations
+      - ./workspace:/app/workspace:rw
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=file:/app/data/claude-code-webui.db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  claude-data:
+  app-data:
+  workspace:
