@@ -27,6 +27,99 @@ export async function GET(_request: Request, { params }: RouteParams) {
       );
     }
 
+    // Expand assistant messages with toolCalls into multiple messages to match real-time display:
+    // 1. tool_approval messages for each tool (showing approval status)
+    // 2. Message with toolCalls (showing execution results)
+    // 3. Message with content only (the text response)
+    const dangerousTools = ['Bash', 'Write', 'Edit', 'KillShell'];
+
+    interface ToolCall {
+      id: string;
+      name: string;
+      input: unknown;
+      status: string;
+      output?: unknown;
+    }
+
+    interface ExpandedMessage {
+      id: string;
+      role: string;
+      content: string;
+      toolCalls?: ToolCall[];
+      toolApproval?: {
+        requestId: string;
+        toolName: string;
+        toolInput: unknown;
+        isDangerous: boolean;
+        decision: 'allow' | 'always';
+        decidedAt: string;
+      };
+      metadata?: unknown;
+      createdAt: string;
+    }
+
+    const expandedMessages: ExpandedMessage[] = [];
+
+    for (const message of session.messages) {
+      const toolCalls: ToolCall[] | null = message.toolCalls ? JSON.parse(message.toolCalls) : null;
+      const metadata = message.metadata ? JSON.parse(message.metadata) : null;
+
+      if (message.role === 'assistant' && toolCalls && toolCalls.length > 0) {
+        // Match real-time display order:
+        // 1. toolCalls message (tool_use event creates this first)
+        // 2. tool_approval messages (tool_approval_request comes after tool_use)
+        // 3. content message (text response comes last)
+
+        // First: toolCalls message (showing execution results)
+        expandedMessages.push({
+          id: `${message.id}-tools`,
+          role: message.role,
+          content: '',
+          toolCalls,
+          createdAt: message.createdAt.toISOString(),
+        });
+
+        // Second: tool_approval messages for each tool
+        for (const toolCall of toolCalls) {
+          expandedMessages.push({
+            id: `${message.id}-approval-${toolCall.id}`,
+            role: 'tool_approval',
+            content: '',
+            toolApproval: {
+              requestId: toolCall.id,
+              toolName: toolCall.name,
+              toolInput: toolCall.input,
+              isDangerous: dangerousTools.includes(toolCall.name),
+              decision: 'allow', // Already executed, so it was allowed
+              decidedAt: message.createdAt.toISOString(),
+            },
+            createdAt: message.createdAt.toISOString(),
+          });
+        }
+
+        // Finally: content only (if there is content)
+        if (message.content) {
+          expandedMessages.push({
+            id: message.id,
+            role: message.role,
+            content: message.content,
+            metadata,
+            createdAt: message.createdAt.toISOString(),
+          });
+        }
+      } else {
+        // Regular message, no splitting needed
+        expandedMessages.push({
+          id: message.id,
+          role: message.role,
+          content: message.content,
+          toolCalls: toolCalls ?? undefined,
+          metadata,
+          createdAt: message.createdAt.toISOString(),
+        });
+      }
+    }
+
     return NextResponse.json({
       session: {
         id: session.id,
@@ -37,14 +130,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
         settings: session.settings ? JSON.parse(session.settings) : null,
         isArchived: session.isArchived,
       },
-      messages: session.messages.map((message) => ({
-        id: message.id,
-        role: message.role,
-        content: message.content,
-        toolCalls: message.toolCalls ? JSON.parse(message.toolCalls) : null,
-        metadata: message.metadata ? JSON.parse(message.metadata) : null,
-        createdAt: message.createdAt.toISOString(),
-      })),
+      messages: expandedMessages,
     });
   } catch (error) {
     console.error('Failed to fetch session:', error);

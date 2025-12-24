@@ -138,11 +138,34 @@ export async function POST(request: Request) {
 
         let assistantContent = '';
         let claudeSessionId = session.claudeSessionId;
+        const toolCalls: Array<{
+          id: string;
+          name: string;
+          input: unknown;
+          status: 'running' | 'completed';
+          output?: unknown;
+        }> = [];
 
         for await (const msg of query(queryOptions)) {
           const events = processSDKMessage(msg);
           for (const event of events) {
             sendEvent(event);
+
+            // Accumulate tool calls for persistence
+            if (event.type === 'tool_use') {
+              toolCalls.push({
+                id: event.toolUseId,
+                name: event.toolName,
+                input: event.toolInput,
+                status: 'running',
+              });
+            } else if (event.type === 'tool_result') {
+              const existingTool = toolCalls.find(tc => tc.id === event.toolUseId);
+              if (existingTool) {
+                existingTool.status = 'completed';
+                existingTool.output = event.result;
+              }
+            }
           }
 
           // Capture session ID from init message
@@ -164,19 +187,29 @@ export async function POST(request: Request) {
             });
           }
 
-          // Accumulate assistant content
+          // Accumulate assistant content (append, don't overwrite)
           if (msg.type === 'assistant') {
             const content = msg.message.content as ContentBlock[];
             const textContent = content
               .filter((c: ContentBlock) => c.type === 'text' && c.text)
               .map((c: ContentBlock) => c.text!)
               .join('');
-            assistantContent = textContent;
+            if (textContent) {
+              // Append with separator if there's existing content
+              assistantContent = assistantContent
+                ? assistantContent + '\n\n' + textContent
+                : textContent;
+            }
           }
 
           // Save final result
           if (msg.type === 'result' && 'result' in msg) {
-            const resultContent = msg.result || assistantContent;
+            // Use assistantContent for DB (text only, no tool results)
+            // msg.result contains tool results mixed in, which we store separately in toolCalls
+            // Only use msg.result as fallback if no tools were used (pure text response)
+            const resultContent = toolCalls.length > 0
+              ? assistantContent  // Tool execution: use accumulated text only
+              : (assistantContent || msg.result);  // No tools: allow msg.result fallback
 
             const usage: MessageMetadata['usage'] = {
               input_tokens: msg.usage.input_tokens,
@@ -190,6 +223,7 @@ export async function POST(request: Request) {
                 sessionId: session.id,
                 role: 'assistant',
                 content: resultContent,
+                toolCalls: toolCalls.length > 0 ? JSON.stringify(toolCalls) : null,
                 metadata: JSON.stringify({
                   usage,
                   cost: msg.total_cost_usd,
