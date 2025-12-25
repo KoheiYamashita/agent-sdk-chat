@@ -1,12 +1,15 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { SessionSummary, SessionListResponse, Session } from '@/types';
 
 const SESSIONS_QUERY_KEY = ['sessions'];
 
-async function fetchSessions(): Promise<SessionListResponse> {
-  const response = await fetch('/api/sessions');
+async function fetchSessions(cursor?: string): Promise<SessionListResponse> {
+  const params = new URLSearchParams();
+  if (cursor) params.set('cursor', cursor);
+
+  const response = await fetch(`/api/sessions?${params.toString()}`);
   if (!response.ok) {
     throw new Error('Failed to fetch sessions');
   }
@@ -48,34 +51,62 @@ async function toggleArchiveApi(id: string, isArchived: boolean): Promise<{ sess
 export function useSessions() {
   const queryClient = useQueryClient();
 
-  const { data, isLoading, error } = useQuery({
+  const {
+    data,
+    isLoading,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey: SESSIONS_QUERY_KEY,
-    queryFn: fetchSessions,
+    queryFn: ({ pageParam }) => fetchSessions(pageParam),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
   });
+
+  // Flatten all pages into a single sessions array
+  const sessions = data?.pages.flatMap((page) => page.sessions) ?? [];
+  const total = data?.pages[0]?.total ?? 0;
 
   const createMutation = useMutation({
     mutationFn: createSessionApi,
-    onSuccess: (data) => {
-      queryClient.setQueryData<SessionListResponse>(SESSIONS_QUERY_KEY, (old) => {
-        if (!old) return { sessions: [toSummary(data.session)], total: 1 };
-        return {
-          sessions: [toSummary(data.session), ...old.sessions],
-          total: old.total + 1,
-        };
-      });
+    onSuccess: (result) => {
+      queryClient.setQueryData<{ pages: SessionListResponse[]; pageParams: (string | undefined)[] }>(
+        SESSIONS_QUERY_KEY,
+        (old) => {
+          if (!old) return old;
+          const newSummary = toSummary(result.session);
+          return {
+            ...old,
+            pages: old.pages.map((page, index) =>
+              index === 0
+                ? { ...page, sessions: [newSummary, ...page.sessions], total: page.total + 1 }
+                : page
+            ),
+          };
+        }
+      );
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: deleteSessionApi,
     onSuccess: (_, deletedId) => {
-      queryClient.setQueryData<SessionListResponse>(SESSIONS_QUERY_KEY, (old) => {
-        if (!old) return { sessions: [], total: 0 };
-        return {
-          sessions: old.sessions.filter((s) => s.id !== deletedId),
-          total: old.total - 1,
-        };
-      });
+      queryClient.setQueryData<{ pages: SessionListResponse[]; pageParams: (string | undefined)[] }>(
+        SESSIONS_QUERY_KEY,
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              sessions: page.sessions.filter((s) => s.id !== deletedId),
+              total: page.total - 1,
+            })),
+          };
+        }
+      );
     },
   });
 
@@ -83,15 +114,21 @@ export function useSessions() {
     mutationFn: ({ id, isArchived }: { id: string; isArchived: boolean }) =>
       toggleArchiveApi(id, isArchived),
     onSuccess: (data, { id }) => {
-      queryClient.setQueryData<SessionListResponse>(SESSIONS_QUERY_KEY, (old) => {
-        if (!old) return old;
-        return {
-          ...old,
-          sessions: old.sessions.map((s) =>
-            s.id === id ? { ...s, isArchived: data.session.isArchived } : s
-          ),
-        };
-      });
+      queryClient.setQueryData<{ pages: SessionListResponse[]; pageParams: (string | undefined)[] }>(
+        SESSIONS_QUERY_KEY,
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              sessions: page.sessions.map((s) =>
+                s.id === id ? { ...s, isArchived: data.session.isArchived } : s
+              ),
+            })),
+          };
+        }
+      );
       // Also invalidate the session detail query
       queryClient.invalidateQueries({ queryKey: ['session', id] });
     },
@@ -114,11 +151,20 @@ export function useSessions() {
     await toggleArchiveMutation.mutateAsync({ id, isArchived: !currentIsArchived });
   };
 
+  const loadMore = () => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  };
+
   return {
-    sessions: data?.sessions ?? [],
-    total: data?.total ?? 0,
+    sessions,
+    total,
     isLoading,
     error,
+    hasMore: hasNextPage ?? false,
+    isLoadingMore: isFetchingNextPage,
+    loadMore,
     createSession,
     deleteSession,
     toggleArchive,

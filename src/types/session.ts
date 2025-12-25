@@ -22,6 +22,8 @@ export interface SessionSummary {
 export interface SessionListResponse {
   sessions: SessionSummary[];
   total: number;
+  nextCursor: string | null;
+  hasMore: boolean;
 }
 
 export interface SessionDetailResponse {

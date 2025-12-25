@@ -7,6 +7,7 @@ import type {
   ChatEvent,
   Session,
   SessionDetailResponse,
+  MessageListResponse,
   PermissionMode,
   ToolApprovalRequest,
   ToolApprovalResponse,
@@ -29,9 +30,28 @@ interface UseChatReturn {
   error: string | null;
   session: Session | null;
   pendingToolApproval: ToolApprovalRequest | null;
+  hasMoreMessages: boolean;
+  isLoadingMoreMessages: boolean;
+  loadMoreMessages: () => Promise<void>;
   sendMessage: (content: string, options?: SendMessageOptions) => Promise<void>;
   stopGeneration: () => void;
   respondToToolApproval: (response: ToolApprovalResponse) => Promise<void>;
+}
+
+async function fetchMessages(
+  sessionId: string,
+  cursor?: string
+): Promise<MessageListResponse> {
+  const params = new URLSearchParams();
+  if (cursor) params.set('cursor', cursor);
+
+  const response = await fetch(
+    `/api/sessions/${sessionId}/messages?${params.toString()}`
+  );
+  if (!response.ok) {
+    throw new Error('Failed to fetch messages');
+  }
+  return response.json();
 }
 
 export function useChat({ sessionId }: UseChatOptions = {}): UseChatReturn {
@@ -40,10 +60,15 @@ export function useChat({ sessionId }: UseChatOptions = {}): UseChatReturn {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [pendingToolApproval, setPendingToolApproval] = useState<ToolApprovalRequest | null>(null);
+  const [pendingToolApproval, setPendingToolApproval] =
+    useState<ToolApprovalRequest | null>(null);
+  const [hasMoreMessages, setHasMoreMessages] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [isLoadingMoreMessages, setIsLoadingMoreMessages] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const { data: sessionData, isLoading } = useQuery({
+  // Fetch session info only
+  const { data: sessionData, isLoading: isLoadingSession } = useQuery({
     queryKey: ['session', sessionId],
     queryFn: async (): Promise<SessionDetailResponse> => {
       const response = await fetch(`/api/sessions/${sessionId}`);
@@ -51,19 +76,61 @@ export function useChat({ sessionId }: UseChatOptions = {}): UseChatReturn {
       return response.json();
     },
     enabled: !!sessionId,
-    staleTime: 0, // Always refetch when session changes
+    staleTime: 0,
+  });
+
+  // Fetch initial messages (last N messages)
+  const { isLoading: isLoadingMessages } = useQuery({
+    queryKey: ['messages', sessionId],
+    queryFn: async (): Promise<MessageListResponse> => {
+      const response = await fetchMessages(sessionId!);
+      return response;
+    },
+    enabled: !!sessionId,
+    staleTime: 0,
   });
 
   // Load session data when query completes or sessionId changes
   useEffect(() => {
     if (sessionData) {
       setSession(sessionData.session);
-      setMessages(sessionData.messages);
     } else if (!sessionId) {
       setSession(null);
       setMessages([]);
+      setHasMoreMessages(false);
+      setNextCursor(null);
     }
   }, [sessionId, sessionData]);
+
+  // Load initial messages when the query completes
+  useEffect(() => {
+    const queryData = queryClient.getQueryData<MessageListResponse>([
+      'messages',
+      sessionId,
+    ]);
+    if (queryData) {
+      setMessages(queryData.messages);
+      setHasMoreMessages(queryData.hasMore);
+      setNextCursor(queryData.nextCursor);
+    }
+  }, [sessionId, queryClient, isLoadingMessages]);
+
+  // Load more (older) messages
+  const loadMoreMessages = useCallback(async () => {
+    if (!sessionId || !nextCursor || isLoadingMoreMessages) return;
+
+    setIsLoadingMoreMessages(true);
+    try {
+      const response = await fetchMessages(sessionId, nextCursor);
+      setMessages((prev) => [...response.messages, ...prev]);
+      setHasMoreMessages(response.hasMore);
+      setNextCursor(response.nextCursor);
+    } catch (err) {
+      console.error('Failed to load more messages:', err);
+    } finally {
+      setIsLoadingMoreMessages(false);
+    }
+  }, [sessionId, nextCursor, isLoadingMoreMessages]);
 
   const sendMessage = useCallback(
     async (content: string, options?: SendMessageOptions) => {
@@ -87,7 +154,9 @@ export function useChat({ sessionId }: UseChatOptions = {}): UseChatReturn {
           body: JSON.stringify({
             message: content,
             sessionId: session?.id,
-            settings: options?.permissionMode ? { permissionMode: options.permissionMode } : undefined,
+            settings: options?.permissionMode
+              ? { permissionMode: options.permissionMode }
+              : undefined,
           }),
           signal: abortControllerRef.current.signal,
         });
@@ -141,7 +210,10 @@ export function useChat({ sessionId }: UseChatOptions = {}): UseChatReturn {
 
                     // If existing message has toolCalls, create a new message instead
                     // (this means tool execution happened and we should start fresh)
-                    if (existingIndex !== -1 && prev[existingIndex].toolCalls?.length) {
+                    if (
+                      existingIndex !== -1 &&
+                      prev[existingIndex].toolCalls?.length
+                    ) {
                       // Start a new message after tool execution
                       assistantMessageId = generateUUID();
                       assistantContent = event.content;
@@ -196,9 +268,12 @@ export function useChat({ sessionId }: UseChatOptions = {}): UseChatReturn {
                   };
                   setMessages((prev) => {
                     // Find existing assistant message by ID
-                    const existingIndex = prev.findIndex((m) => m.id === assistantMessageId);
+                    const existingIndex = prev.findIndex(
+                      (m) => m.id === assistantMessageId
+                    );
                     if (existingIndex !== -1) {
-                      const existingToolCalls = prev[existingIndex].toolCalls || [];
+                      const existingToolCalls =
+                        prev[existingIndex].toolCalls || [];
                       const updated = [...prev];
                       updated[existingIndex] = {
                         ...updated[existingIndex],
@@ -227,7 +302,11 @@ export function useChat({ sessionId }: UseChatOptions = {}): UseChatReturn {
                       if (msg.toolCalls) {
                         const updatedToolCalls = msg.toolCalls.map((tc) =>
                           tc.id === event.toolUseId
-                            ? { ...tc, status: 'completed' as const, output: event.result }
+                            ? {
+                                ...tc,
+                                status: 'completed' as const,
+                                output: event.result,
+                              }
                             : tc
                         );
                         return { ...msg, toolCalls: updatedToolCalls };
@@ -279,7 +358,10 @@ export function useChat({ sessionId }: UseChatOptions = {}): UseChatReturn {
                         : -1;
 
                       // If existing message has toolCalls, create a new message
-                      if (existingIndex !== -1 && prev[existingIndex].toolCalls?.length) {
+                      if (
+                        existingIndex !== -1 &&
+                        prev[existingIndex].toolCalls?.length
+                      ) {
                         const newId = generateUUID();
                         return [
                           ...prev,
@@ -339,47 +421,59 @@ export function useChat({ sessionId }: UseChatOptions = {}): UseChatReturn {
     setIsGenerating(false);
   }, []);
 
-  const respondToToolApproval = useCallback(async (response: ToolApprovalResponse) => {
-    try {
-      // Update the message with the decision
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === response.requestId && msg.toolApproval
-            ? {
-                ...msg,
-                toolApproval: {
-                  ...msg.toolApproval,
-                  decision: response.decision,
-                  decidedAt: new Date().toISOString(),
-                },
-              }
-            : msg
-        )
-      );
+  const respondToToolApproval = useCallback(
+    async (response: ToolApprovalResponse) => {
+      try {
+        // Update the message with the decision
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === response.requestId && msg.toolApproval
+              ? {
+                  ...msg,
+                  toolApproval: {
+                    ...msg.toolApproval,
+                    decision: response.decision,
+                    decidedAt: new Date().toISOString(),
+                  },
+                }
+              : msg
+          )
+        );
 
-      const res = await fetch('/api/chat/approve', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(response),
-      });
+        const res = await fetch('/api/chat/approve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(response),
+        });
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to respond to tool approval');
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(
+            errorData.error || 'Failed to respond to tool approval'
+          );
+        }
+      } catch (err) {
+        console.error('Failed to respond to tool approval:', err);
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Failed to respond to tool approval'
+        );
       }
-    } catch (err) {
-      console.error('Failed to respond to tool approval:', err);
-      setError(err instanceof Error ? err.message : 'Failed to respond to tool approval');
-    }
-  }, []);
+    },
+    []
+  );
 
   return {
     messages,
-    isLoading,
+    isLoading: isLoadingSession || isLoadingMessages,
     isGenerating,
     error,
     session,
     pendingToolApproval,
+    hasMoreMessages,
+    isLoadingMoreMessages,
+    loadMoreMessages,
     sendMessage,
     stopGeneration,
     respondToToolApproval,

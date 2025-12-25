@@ -21,6 +21,9 @@ export function ChatContainer({ sessionId }: ChatContainerProps) {
     error,
     session,
     pendingToolApproval,
+    hasMoreMessages,
+    isLoadingMoreMessages,
+    loadMoreMessages,
     sendMessage,
     stopGeneration,
     respondToToolApproval,
@@ -42,6 +45,9 @@ export function ChatContainer({ sessionId }: ChatContainerProps) {
       <MessageList
         messages={messages}
         isLoading={isLoading}
+        hasMore={hasMoreMessages}
+        isLoadingMore={isLoadingMoreMessages}
+        onLoadMore={loadMoreMessages}
         pendingToolApproval={pendingToolApproval}
         onToolApprovalRespond={respondToToolApproval}
       />

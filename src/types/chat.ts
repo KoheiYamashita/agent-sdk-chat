@@ -80,3 +80,10 @@ export interface ChatSettings {
 }
 
 export type PermissionMode = 'default' | 'acceptEdits' | 'bypassPermissions' | 'plan';
+
+export interface MessageListResponse {
+  messages: Message[];
+  total: number;
+  nextCursor: string | null;
+  hasMore: boolean;
+}

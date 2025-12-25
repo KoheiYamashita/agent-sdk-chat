@@ -1,9 +1,27 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 
-export async function GET() {
+const DEFAULT_PAGE_SIZE = 20;
+
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const cursor = searchParams.get('cursor');
+    const limit = Math.min(
+      parseInt(searchParams.get('limit') || String(DEFAULT_PAGE_SIZE), 10),
+      50
+    );
+
+    // Get total count
+    const total = await prisma.session.count();
+
+    // Fetch sessions with cursor-based pagination
     const sessions = await prisma.session.findMany({
+      take: limit + 1, // Fetch one extra to check if there are more
+      ...(cursor && {
+        cursor: { id: cursor },
+        skip: 1, // Skip the cursor itself
+      }),
       orderBy: { updatedAt: 'desc' },
       include: {
         _count: {
@@ -12,7 +30,12 @@ export async function GET() {
       },
     });
 
-    const sessionSummaries = sessions.map((session) => ({
+    // Check if there are more results
+    const hasMore = sessions.length > limit;
+    const sessionsToReturn = hasMore ? sessions.slice(0, -1) : sessions;
+    const nextCursor = hasMore ? sessionsToReturn[sessionsToReturn.length - 1]?.id : null;
+
+    const sessionSummaries = sessionsToReturn.map((session) => ({
       id: session.id,
       title: session.title,
       createdAt: session.createdAt.toISOString(),
@@ -23,7 +46,9 @@ export async function GET() {
 
     return NextResponse.json({
       sessions: sessionSummaries,
-      total: sessionSummaries.length,
+      total,
+      nextCursor,
+      hasMore,
     });
   } catch (error) {
     console.error('Failed to fetch sessions:', error);
