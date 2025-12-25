@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { MessageSquare, Trash2, MoreHorizontal, Archive, ArchiveRestore } from 'lucide-react';
+import { Trash2, MoreHorizontal, Archive, ArchiveRestore } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -47,7 +47,6 @@ export function SessionItem({ session, onDelete, onToggleArchive, onClick }: Ses
           : 'hover:bg-muted text-muted-foreground hover:text-foreground'
       )}
     >
-      <MessageSquare className="h-4 w-4 shrink-0" />
       <span className="flex-1 truncate">{session.title}</span>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

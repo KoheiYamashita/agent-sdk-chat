@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useCallback, useRef, useState } from 'react';
 import { Plus, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -14,6 +15,8 @@ import {
 } from '@/components/ui/sheet';
 import { SessionList } from './SessionList';
 import { useSessions } from '@/hooks/useSessions';
+import { useSidebar } from '@/contexts/SidebarContext';
+import { cn } from '@/lib/utils';
 
 interface SidebarContentProps {
   onNavigate?: () => void;
@@ -71,9 +74,49 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
 }
 
 export function Sidebar() {
+  const { width, setWidth, minWidth, maxWidth } = useSidebar();
+  const [isResizing, setIsResizing] = useState(false);
+  const sidebarRef = useRef<HTMLElement>(null);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+
+    const startX = e.clientX;
+    const startWidth = width;
+    let currentWidth = startWidth;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const delta = e.clientX - startX;
+      currentWidth = Math.min(Math.max(startWidth + delta, minWidth), maxWidth);
+      setWidth(currentWidth, false);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      setWidth(currentWidth, true);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }, [width, setWidth, minWidth, maxWidth]);
+
   return (
-    <aside className="w-64 border-r flex flex-col h-full bg-muted/30">
+    <aside
+      ref={sidebarRef}
+      className="border-r flex flex-col h-full bg-muted/30 relative"
+      style={{ width: `${width}px` }}
+    >
       <SidebarContent />
+      <div
+        className={cn(
+          'absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-primary/20 transition-colors',
+          isResizing && 'bg-primary/30'
+        )}
+        onMouseDown={handleMouseDown}
+      />
     </aside>
   );
 }
