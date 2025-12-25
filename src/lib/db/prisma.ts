@@ -3,11 +3,6 @@ import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 import path from 'path';
 
 const getDatabaseUrl = () => {
-  // In production (Docker), use /app/data directory
-  if (process.env.NODE_ENV === 'production') {
-    return process.env.DATABASE_URL || 'file:/app/data/claude-code-webui.db';
-  }
-  // In development, use prisma directory
   return process.env.DATABASE_URL || `file:${path.join(process.cwd(), 'prisma', 'dev.db')}`;
 };
 

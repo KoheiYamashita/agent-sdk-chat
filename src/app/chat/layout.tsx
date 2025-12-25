@@ -7,7 +7,7 @@ function ChatLayoutContent({ children }: { children: React.ReactNode }) {
   const { isOpen, setOpen } = useSidebar();
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-dvh">
       {/* Desktop sidebar */}
       <div className="hidden md:block">
         <Sidebar />
