@@ -171,3 +171,17 @@ export function getToolsByCategory(): Array<{
 export function getToolByName(name: string): ToolDefinition | undefined {
   return BUILTIN_TOOLS.find((t) => t.name === name);
 }
+
+/**
+ * 全ツール名のリストを取得
+ */
+export function getAllToolNames(): string[] {
+  return BUILTIN_TOOLS.map((t) => t.name);
+}
+
+/**
+ * 危険なツール名のリストを取得
+ */
+export function getDangerousToolNames(): string[] {
+  return BUILTIN_TOOLS.filter((t) => t.isDangerous).map((t) => t.name);
+}

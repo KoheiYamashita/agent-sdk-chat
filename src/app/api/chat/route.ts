@@ -5,6 +5,7 @@ import { query, type SDKMessage } from '@anthropic-ai/claude-agent-sdk';
 import { prisma } from '@/lib/db/prisma';
 import { approvalManager } from '@/lib/approval-manager';
 import { generateUUID } from '@/lib/utils/uuid';
+import { getAllToolNames, getDangerousToolNames } from '@/lib/constants/tools';
 import type { ChatRequest, ChatEvent, MessageMetadata, ToolApprovalRequest, SandboxSettings } from '@/types';
 
 interface ContentBlock {
@@ -121,73 +122,88 @@ export async function POST(request: Request) {
           await fs.mkdir(workspacePath, { recursive: true });
         }
 
+        // Build the list of auto-allowed tools (global + session)
+        const autoAllowedTools = [
+          ...Array.from(globalAllowedTools),
+          ...Array.from(alwaysAllowedTools),
+        ];
+
+        // Get dangerous tool names for UI display
+        const dangerousToolNames = getDangerousToolNames();
+
         const queryOptions = {
           prompt: message,
           options: {
             resume: session.claudeSessionId ?? undefined,
             model: settings?.model,
-            allowedTools: settings?.allowedTools,
-            disallowedTools: settings?.disallowedTools,
-            permissionMode: settings?.permissionMode ?? 'default',
             systemPrompt: settings?.systemPrompt,
             maxTurns: settings?.maxTurns,
             includePartialMessages: true,
+
+            // Explicitly ignore CLI settings files (SDK isolation mode)
+            settingSources: [] as ('user' | 'project' | 'local')[],
+
+            // Explicitly specify available tools (overrides SDK defaults)
+            tools: getAllToolNames(),
+
+            // Auto-allow tools from global settings + session settings
+            // SDK will skip canUseTool for these tools
+            allowedTools: autoAllowedTools,
+
             // Sandbox and workspace settings
             cwd: sandboxSettings.enabled ? workspacePath : undefined,
-            sandbox: sandboxSettings.enabled ? { enabled: true } : undefined,
+            sandbox: sandboxSettings.enabled
+              ? {
+                  enabled: true,
+                  network: {
+                    allowedDomains: [], // Empty array = no network restrictions (WebFetch/WebSearch can access any domain)
+                  },
+                }
+              : undefined,
+
+            // Permission handler for tools not in allowedTools
             canUseTool: async (toolName: string, input: Record<string, unknown>) => {
-            // Check if tool is always allowed for this session
-            if (alwaysAllowedTools.has(toolName)) {
-              return { behavior: 'allow' as const, updatedInput: input };
-            }
+              // Generate unique request ID
+              const requestId = generateUUID();
 
-            // Check if tool is allowed in global settings
-            if (globalAllowedTools.has(toolName)) {
-              return { behavior: 'allow' as const, updatedInput: input };
-            }
+              // Determine if tool is dangerous
+              const isDangerous = dangerousToolNames.includes(toolName);
 
-            // Generate unique request ID
-            const requestId = generateUUID();
+              // Send approval request to client
+              const approvalRequest: ToolApprovalRequest = {
+                requestId,
+                toolName,
+                toolInput: input,
+                isDangerous,
+              };
 
-            // Determine if tool is dangerous
-            const dangerousTools = ['Bash', 'Write', 'Edit', 'KillShell'];
-            const isDangerous = dangerousTools.includes(toolName);
+              sendEvent({
+                type: 'tool_approval_request',
+                request: approvalRequest,
+              });
 
-            // Send approval request to client
-            const approvalRequest: ToolApprovalRequest = {
-              requestId,
-              toolName,
-              toolInput: input,
-              isDangerous,
-            };
+              // Wait for client response
+              const response = await approvalManager.waitForApproval(requestId);
 
-            sendEvent({
-              type: 'tool_approval_request',
-              request: approvalRequest,
-            });
+              // Notify client that approval was resolved
+              sendEvent({
+                type: 'tool_approval_resolved',
+                requestId,
+              });
 
-            // Wait for client response
-            const response = await approvalManager.waitForApproval(requestId);
-
-            // Notify client that approval was resolved
-            sendEvent({
-              type: 'tool_approval_resolved',
-              requestId,
-            });
-
-            if (response.decision === 'always') {
-              alwaysAllowedTools.add(toolName);
-              // Save to DB
-              await saveAllowedTools(session.id, alwaysAllowedTools);
-              return { behavior: 'allow' as const, updatedInput: input };
-            } else if (response.decision === 'allow') {
-              return { behavior: 'allow' as const, updatedInput: input };
-            } else {
-              return { behavior: 'deny' as const, message: 'User denied tool execution' };
-            }
+              if (response.decision === 'always') {
+                alwaysAllowedTools.add(toolName);
+                // Save to DB for future requests in this session
+                await saveAllowedTools(session.id, alwaysAllowedTools);
+                return { behavior: 'allow' as const, updatedInput: input };
+              } else if (response.decision === 'allow') {
+                return { behavior: 'allow' as const, updatedInput: input };
+              } else {
+                return { behavior: 'deny' as const, message: 'User denied tool execution' };
+              }
+            },
           },
-          },  // close options
-        };  // close queryOptions
+        };
 
         let assistantContent = '';
         let claudeSessionId = session.claudeSessionId;
