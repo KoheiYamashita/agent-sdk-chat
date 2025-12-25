@@ -290,20 +290,31 @@ export async function POST(request: Request) {
   });
 }
 
+interface StreamEvent {
+  type: string;
+  delta?: {
+    type: string;
+    text?: string;
+  };
+}
+
 function processSDKMessage(msg: SDKMessage): ChatEvent[] {
   const events: ChatEvent[] = [];
 
   switch (msg.type) {
-    case 'assistant': {
-      const content = msg.message.content as ContentBlock[];
-      const textContent = content
-        .filter((c: ContentBlock) => c.type === 'text' && c.text)
-        .map((c: ContentBlock) => c.text!)
-        .join('');
-
-      if (textContent) {
-        events.push({ type: 'message', content: textContent, role: 'assistant' });
+    case 'stream_event': {
+      // Handle streaming events for real-time text display
+      const event = msg.event as StreamEvent;
+      if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta' && event.delta.text) {
+        events.push({ type: 'text_delta', delta: event.delta.text });
       }
+      break;
+    }
+
+    case 'assistant': {
+      // Text content is already sent via text_delta events from stream_event
+      // Here we only handle tool_use events
+      const content = msg.message.content as ContentBlock[];
 
       // Check for tool use
       const toolUses = content.filter(

@@ -41,6 +41,7 @@ export interface MessageMetadata {
 export type ChatEvent =
   | { type: 'init'; sessionId: string; claudeSessionId: string }
   | { type: 'message'; content: string; role: 'assistant' }
+  | { type: 'text_delta'; delta: string }
   | { type: 'tool_use'; toolName: string; toolInput: unknown; toolUseId: string }
   | { type: 'tool_result'; toolName: string; result: unknown; toolUseId: string }
   | { type: 'tool_approval_request'; request: ToolApprovalRequest }

@@ -201,6 +201,54 @@ export function useChat({ sessionId }: UseChatOptions = {}): UseChatReturn {
                   }
                   break;
 
+                case 'text_delta': {
+                  // Streaming text delta - update message in real-time
+                  // Update content OUTSIDE setMessages to avoid React strict mode double-execution
+                  const needsNewMessage =
+                    assistantMessageId &&
+                    messages.find(
+                      (m) => m.id === assistantMessageId && m.toolCalls?.length
+                    );
+
+                  if (needsNewMessage) {
+                    assistantMessageId = generateUUID();
+                    assistantContent = event.delta;
+                  } else {
+                    assistantContent += event.delta;
+                    if (!assistantMessageId) {
+                      assistantMessageId = generateUUID();
+                    }
+                  }
+
+                  const currentContent = assistantContent;
+                  const currentId = assistantMessageId;
+
+                  setMessages((prev) => {
+                    const existingIndex = prev.findIndex(
+                      (m) => m.id === currentId
+                    );
+
+                    if (existingIndex !== -1) {
+                      const updated = [...prev];
+                      updated[existingIndex] = {
+                        ...updated[existingIndex],
+                        content: currentContent,
+                      };
+                      return updated;
+                    }
+                    return [
+                      ...prev,
+                      {
+                        id: currentId!,
+                        role: 'assistant',
+                        content: currentContent,
+                        createdAt: new Date().toISOString(),
+                      },
+                    ];
+                  });
+                  break;
+                }
+
                 case 'message':
                   setMessages((prev) => {
                     // Find existing assistant message by ID
