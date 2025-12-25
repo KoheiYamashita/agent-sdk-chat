@@ -333,23 +333,37 @@ Subagentを削除。
 ```
 app/
 ├── page.tsx                 # リダイレクト → /chat
-├── (chat)/
+├── chat/                    # チャット関連ページ
 │   ├── layout.tsx           # サイドバー付きレイアウト
 │   ├── page.tsx             # 新規チャット
 │   └── [sessionId]/
 │       └── page.tsx         # 既存セッション
 ├── settings/
 │   ├── layout.tsx           # 設定ページレイアウト
-│   ├── page.tsx             # 一般設定
-│   ├── mcp/
-│   │   └── page.tsx         # MCP設定
-│   ├── tools/
-│   │   └── page.tsx         # ツール設定
-│   ├── agents/
-│   │   └── page.tsx         # Subagent設定
-│   └── skills/
-│       └── page.tsx         # Skills設定
+│   └── page.tsx             # 一般設定（権限モード、デフォルトツール）
 └── api/                     # APIルート
+    ├── chat/
+    │   ├── route.ts         # POST チャット送信
+    │   └── approve/
+    │       └── route.ts     # POST ツール承認
+    ├── sessions/
+    │   ├── route.ts         # GET/POST セッション
+    │   └── [id]/
+    │       ├── route.ts     # GET/PATCH/DELETE セッション詳細
+    │       └── messages/
+    │           └── route.ts # GET メッセージ差分ロード
+    ├── settings/
+    │   └── route.ts         # GET/PUT 設定
+    ├── mcp/
+    │   ├── route.ts         # GET/POST MCPサーバー
+    │   └── [id]/
+    │       └── route.ts     # GET/PATCH/DELETE MCPサーバー詳細
+    ├── agents/
+    │   ├── route.ts         # GET/POST エージェント
+    │   └── [id]/
+    │       └── route.ts     # GET/PATCH/DELETE エージェント詳細
+    └── health/
+        └── route.ts         # GET ヘルスチェック
 ```
 
 ### 2.2 主要コンポーネント
@@ -1033,20 +1047,22 @@ __tests__/
 | `/api/sessions` | GET | ✅ 実装済 | `src/app/api/sessions/route.ts` |
 | `/api/sessions` | POST | ✅ 実装済 | `src/app/api/sessions/route.ts` |
 | `/api/sessions/[id]` | GET | ✅ 実装済 | `src/app/api/sessions/[id]/route.ts` |
+| `/api/sessions/[id]` | PATCH | ✅ 実装済 | `src/app/api/sessions/[id]/route.ts` |
 | `/api/sessions/[id]` | DELETE | ✅ 実装済 | `src/app/api/sessions/[id]/route.ts` |
-| `/api/sessions/[id]` | PATCH | ❌ 未実装 | - |
-| `/api/chat/approve` | POST | ✅ 実装済 | `src/app/api/chat/approve/route.ts` |
+| `/api/sessions/[id]/messages` | GET | ✅ 実装済 | `src/app/api/sessions/[id]/messages/route.ts` |
 | `/api/settings` | GET | ✅ 実装済 | `src/app/api/settings/route.ts` |
 | `/api/settings` | PUT | ✅ 実装済 | `src/app/api/settings/route.ts` |
-| `/api/mcp` | GET | ❌ 未実装 | - |
-| `/api/mcp` | POST | ❌ 未実装 | - |
-| `/api/mcp/[id]` | PATCH | ❌ 未実装 | - |
-| `/api/mcp/[id]` | DELETE | ❌ 未実装 | - |
-| `/api/tools` | GET | ❌ 未実装 | - |
-| `/api/agents` | GET | ❌ 未実装 | - |
-| `/api/agents` | POST | ❌ 未実装 | - |
-| `/api/agents/[id]` | PATCH | ❌ 未実装 | - |
-| `/api/agents/[id]` | DELETE | ❌ 未実装 | - |
+| `/api/mcp` | GET | ✅ 実装済 | `src/app/api/mcp/route.ts` |
+| `/api/mcp` | POST | ✅ 実装済 | `src/app/api/mcp/route.ts` |
+| `/api/mcp/[id]` | GET | ✅ 実装済 | `src/app/api/mcp/[id]/route.ts` |
+| `/api/mcp/[id]` | PATCH | ✅ 実装済 | `src/app/api/mcp/[id]/route.ts` |
+| `/api/mcp/[id]` | DELETE | ✅ 実装済 | `src/app/api/mcp/[id]/route.ts` |
+| `/api/agents` | GET | ✅ 実装済 | `src/app/api/agents/route.ts` |
+| `/api/agents` | POST | ✅ 実装済 | `src/app/api/agents/route.ts` |
+| `/api/agents/[id]` | GET | ✅ 実装済 | `src/app/api/agents/[id]/route.ts` |
+| `/api/agents/[id]` | PATCH | ✅ 実装済 | `src/app/api/agents/[id]/route.ts` |
+| `/api/agents/[id]` | DELETE | ✅ 実装済 | `src/app/api/agents/[id]/route.ts` |
+| `/api/health` | GET | ✅ 実装済 | `src/app/api/health/route.ts` |
 
 ### 10.2 コンポーネント実装状況
 
@@ -1054,35 +1070,34 @@ __tests__/
 | コンポーネント | 状況 | ファイル | 備考 |
 |---------------|------|----------|------|
 | ChatContainer | ✅ 実装済 | `src/components/chat/ChatContainer.tsx` | - |
+| ChatHeader | ✅ 実装済 | `src/components/chat/ChatHeader.tsx` | セッションタイトル表示 |
 | MessageList | ✅ 実装済 | `src/components/chat/MessageList.tsx` | - |
-| MessageItem | ✅ 実装済 | `src/components/chat/MessageItem.tsx` | Markdown未対応 |
+| MessageItem | ✅ 実装済 | `src/components/chat/MessageItem.tsx` | Markdown対応済み |
 | InputArea | ✅ 実装済 | `src/components/chat/InputArea.tsx` | 権限モード選択統合済み |
 | PermissionModeSelector | ✅ 実装済 | `src/components/chat/PermissionModeSelector.tsx` | チャット入力欄上部 |
 | ToolApprovalCard | ✅ 実装済 | `src/components/chat/ToolApprovalCard.tsx` | インライン表示、キーボードショートカット対応 |
 | ToolApprovalMessage | ✅ 実装済 | `src/components/chat/MessageItem.tsx` | 承認履歴表示（MessageItem内） |
 | ToolCallList | ✅ 実装済 | `src/components/chat/ToolCallList.tsx` | ツール実行ステータス表示 |
-| ToolOutput | ❌ 未実装 | - | ツール実行結果表示（詳細表示） |
+| MarkdownRenderer | ✅ 実装済 | `src/components/chat/MarkdownRenderer.tsx` | react-markdown, rehype-highlight使用 |
 | ThinkingIndicator | ❌ 未実装 | - | 思考過程表示 |
-| MarkdownRenderer | ❌ 未実装 | - | Markdownレンダリング |
-| CodeBlock | ❌ 未実装 | - | コードブロック表示 |
 
 #### サイドバー関連
 | コンポーネント | 状況 | ファイル | 備考 |
 |---------------|------|----------|------|
-| Sidebar | ✅ 実装済 | `src/components/sidebar/Sidebar.tsx` | - |
-| SessionList | ✅ 実装済 | `src/components/sidebar/SessionList.tsx` | - |
-| SessionItem | ✅ 実装済 | `src/components/sidebar/SessionItem.tsx` | - |
+| Sidebar | ✅ 実装済 | `src/components/sidebar/Sidebar.tsx` | 横幅調整対応 |
+| SessionList | ✅ 実装済 | `src/components/sidebar/SessionList.tsx` | 差分ロード対応 |
+| SessionItem | ✅ 実装済 | `src/components/sidebar/SessionItem.tsx` | メニュー付き |
 | SearchBar | ❌ 未実装 | - | セッション検索 |
 
 #### 設定関連
 | コンポーネント | 状況 | ファイル | 備考 |
 |---------------|------|----------|------|
 | SettingsLayout | ✅ 実装済 | `src/app/settings/layout.tsx` | 設定ページレイアウト |
-| SettingsPage | ✅ 実装済 | `src/app/settings/page.tsx` | 一般設定（権限モード含む） |
+| SettingsPage | ✅ 実装済 | `src/app/settings/page.tsx` | 権限モード、デフォルトツール設定 |
 | PermissionModeRadioGroup | ✅ 実装済 | `src/components/settings/PermissionModeRadioGroup.tsx` | 設定画面用 |
-| MCPConfig | ❌ 未実装 | - | MCP設定 |
-| ToolsConfig | ❌ 未実装 | - | ツール設定 |
-| AgentsConfig | ❌ 未実装 | - | Subagent設定 |
+| DefaultToolsCheckboxGroup | ✅ 実装済 | `src/components/settings/DefaultToolsCheckboxGroup.tsx` | カテゴリ別ツール選択 |
+| MCPConfig | ❌ 未実装 | - | MCP設定UI（APIは実装済み） |
+| AgentsConfig | ❌ 未実装 | - | Subagent設定UI（APIは実装済み） |
 | SkillsConfig | ❌ 未実装 | - | Skills設定 |
 
 #### 共通UI
@@ -1090,78 +1105,87 @@ __tests__/
 |---------------|------|----------|------|
 | Button | ✅ 実装済 | `src/components/ui/button.tsx` | shadcn/ui |
 | Input | ✅ 実装済 | `src/components/ui/input.tsx` | shadcn/ui |
+| Textarea | ✅ 実装済 | `src/components/ui/textarea.tsx` | shadcn/ui |
 | ScrollArea | ✅ 実装済 | `src/components/ui/scroll-area.tsx` | shadcn/ui |
 | Avatar | ✅ 実装済 | `src/components/ui/avatar.tsx` | shadcn/ui |
 | Card | ✅ 実装済 | `src/components/ui/card.tsx` | shadcn/ui |
 | Dialog | ✅ 実装済 | `src/components/ui/dialog.tsx` | shadcn/ui |
-| Toast | ❌ 未実装 | - | 通知 |
 | Select | ✅ 実装済 | `src/components/ui/select.tsx` | shadcn/ui |
-| DropdownMenu | ❌ 未実装 | - | ドロップダウン |
-| Tabs | ❌ 未実装 | - | タブ |
-| Switch | ❌ 未実装 | - | トグル |
+| DropdownMenu | ✅ 実装済 | `src/components/ui/dropdown-menu.tsx` | shadcn/ui |
+| Tabs | ✅ 実装済 | `src/components/ui/tabs.tsx` | shadcn/ui |
+| Badge | ✅ 実装済 | `src/components/ui/badge.tsx` | shadcn/ui |
+| Tooltip | ✅ 実装済 | `src/components/ui/tooltip.tsx` | shadcn/ui |
+| Sheet | ✅ 実装済 | `src/components/ui/sheet.tsx` | shadcn/ui |
+| Skeleton | ✅ 実装済 | `src/components/ui/skeleton.tsx` | shadcn/ui |
+| ToggleGroup | ✅ 実装済 | `src/components/ui/toggle-group.tsx` | shadcn/ui |
+| RadioGroup | ✅ 実装済 | `src/components/ui/radio-group.tsx` | shadcn/ui |
+| Label | ✅ 実装済 | `src/components/ui/label.tsx` | shadcn/ui |
+| Checkbox | ✅ 実装済 | `src/components/ui/checkbox.tsx` | shadcn/ui |
+| Separator | ✅ 実装済 | `src/components/ui/separator.tsx` | shadcn/ui |
+| Toast | ❌ 未実装 | - | 通知 |
 
 ### 10.3 カスタムフック実装状況
 
 | フック | 状況 | ファイル | 備考 |
 |-------|------|----------|------|
 | useChat | ✅ 実装済 | `src/hooks/useChat.ts` | React Query使用、permissionMode対応、ツール承認対応 |
-| useSessions | ✅ 実装済 | `src/hooks/useSessions.ts` | セッション一覧取得 |
-| useSettings | ✅ 実装済 | `src/hooks/useSettings.ts` | 設定管理 |
-| useMCP | ❌ 未実装 | - | MCP管理 |
-| useAgents | ❌ 未実装 | - | エージェント管理 |
-| useTools | ❌ 未実装 | - | ツール管理 |
+| useSessions | ✅ 実装済 | `src/hooks/useSessions.ts` | セッション一覧取得、差分ロード対応 |
+| useSettings | ✅ 実装済 | `src/hooks/useSettings.ts` | 設定管理、デフォルトツール対応 |
+| useMCP | ❌ 未実装 | - | MCP管理（APIは実装済み） |
+| useAgents | ❌ 未実装 | - | エージェント管理（APIは実装済み） |
 
 ### 10.4 ページ実装状況
 
 | ページ | 状況 | ファイル | 備考 |
 |-------|------|----------|------|
-| ホーム (新規チャット) | ✅ 実装済 | `src/app/(chat)/page.tsx` | - |
-| チャット (セッション) | ✅ 実装済 | `src/app/(chat)/[sessionId]/page.tsx` | - |
-| チャットレイアウト | ✅ 実装済 | `src/app/(chat)/layout.tsx` | サイドバー付き |
-| 設定メイン | ✅ 実装済 | `src/app/settings/page.tsx` | 権限モード設定 |
-| MCP設定 | ❌ 未実装 | - | - |
-| ツール設定 | ❌ 未実装 | - | - |
-| Subagent設定 | ❌ 未実装 | - | - |
+| ルート | ✅ 実装済 | `src/app/page.tsx` | /chatへリダイレクト |
+| 新規チャット | ✅ 実装済 | `src/app/chat/page.tsx` | - |
+| セッションチャット | ✅ 実装済 | `src/app/chat/[sessionId]/page.tsx` | - |
+| チャットレイアウト | ✅ 実装済 | `src/app/chat/layout.tsx` | サイドバー付き |
+| 設定メイン | ✅ 実装済 | `src/app/settings/page.tsx` | 権限モード、デフォルトツール設定 |
+| 設定レイアウト | ✅ 実装済 | `src/app/settings/layout.tsx` | - |
+| MCP設定 | ❌ 未実装 | - | APIは実装済み |
+| Subagent設定 | ❌ 未実装 | - | APIは実装済み |
 | Skills設定 | ❌ 未実装 | - | - |
 
 ### 10.5 データベーステーブル状況
 
 | テーブル | 状況 | 使用状況 |
 |---------|------|----------|
-| Session | ✅ 作成済 | ✅ 使用中 |
-| Message | ✅ 作成済 | ✅ 使用中 |
-| MCPServer | ✅ 作成済 | ❌ 未使用 |
-| Agent | ✅ 作成済 | ❌ 未使用 |
-| Settings | ✅ 作成済 | ❌ 未使用 |
+| Session | ✅ 作成済 | ✅ 使用中（チャットセッション、allowedTools） |
+| Message | ✅ 作成済 | ✅ 使用中（チャットメッセージ） |
+| MCPServer | ✅ 作成済 | ✅ 使用中（API経由でCRUD可能） |
+| Agent | ✅ 作成済 | ✅ 使用中（API経由でCRUD可能） |
+| Settings | ✅ 作成済 | ✅ 使用中（権限モード、デフォルトツール） |
 
 ### 10.6 既知の課題・制限事項
 
-1. **Markdownレンダリング未対応**
-   - アシスタントのレスポンスがプレーンテキストで表示される
-   - コードブロック、リンク、リスト等が正しく表示されない
+1. **設定UI未実装**
+   - MCP、エージェントの設定がUIから行えない（APIは実装済み）
+   - Skills設定UIが未実装
 
-2. **ツール実行結果表示** → **実装済み** [13章参照](#13-ツール実行ステータス表示設計)
-   - ✅ ツール実行中/完了/失敗のステータス表示
-   - ✅ tool_use/tool_resultイベントによるリアルタイム更新
-   - ✅ ツール入力/出力の表示
+2. **思考過程（Thinking）表示未対応**
+   - Claudeの思考過程を表示する機能が未実装
+   - thinkingイベントのUI処理が必要
 
-3. **権限制御** → **実装済み** [11章参照](#11-権限モード切替ui設計)
-   - ✅ チャット入力欄上部で権限モード即時切替可能
-   - ✅ 設定画面でデフォルト権限モードを設定可能
-   - ✅ 設定はDBに永続化される
-
-4. **ツール実行確認** → **実装済み** [12章参照](#12-ツール実行確認ui設計)
-   - ✅ インライン確認UIによる許可/拒否/常に許可
-   - ✅ キーボードショートカット対応 (a/d/y)
-   - ✅ 「常に許可」はセッション単位でDBに永続化
-
-5. **設定永続化未対応**
-   - MCP、ツール、エージェントの設定がUIから行えない
-   - DBテーブルは存在するが未使用
-
-6. **エラーハンドリング不十分**
+3. **エラーハンドリング不十分**
    - エラー時のユーザーフィードバックが限定的
    - グローバルエラーバウンダリ未実装
+   - Toast通知コンポーネントが未実装
+
+4. **入力バリデーション未対応**
+   - API入力のZodスキーマによるバリデーションが未実装
+
+5. **セッション検索未対応**
+   - タイトル・内容によるセッション検索機能が未実装
+
+#### 実装済み機能（参考）
+
+- ✅ **Markdownレンダリング**: react-markdown, rehype-highlight使用（`MarkdownRenderer.tsx`）
+- ✅ **ツール実行結果表示**: [13章参照](#13-ツール実行ステータス表示設計)
+- ✅ **権限制御**: [11章参照](#11-権限モード切替ui設計)
+- ✅ **ツール実行確認**: [12章参照](#12-ツール実行確認ui設計)
+- ✅ **MCP/エージェントAPI**: GET/POST/PATCH/DELETE完全実装
 
 ---
 

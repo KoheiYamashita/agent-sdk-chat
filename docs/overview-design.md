@@ -68,65 +68,104 @@ Claude Code CLIの機能をWeb UIとして提供し、ブラウザから簡単�
 ```
 src/
 ├── app/                          # Next.js App Router
-│   ├── (chat)/                   # チャット関連ページ
-│   │   ├── page.tsx              # メインチャットページ
+│   ├── chat/                     # チャット関連ページ
+│   │   ├── layout.tsx            # チャットレイアウト（サイドバー付き）
+│   │   ├── page.tsx              # 新規チャットページ
 │   │   └── [sessionId]/          # セッション別ページ
 │   │       └── page.tsx
 │   ├── settings/                 # 設定ページ
-│   │   ├── page.tsx              # 設定メイン
-│   │   ├── mcp/                  # MCP設定
-│   │   ├── tools/                # ツール設定
-│   │   ├── agents/               # Subagent設定
-│   │   └── skills/               # Skills設定
+│   │   ├── layout.tsx            # 設定レイアウト
+│   │   └── page.tsx              # 設定メイン（権限モード、デフォルトツール等）
 │   ├── api/                      # API Routes
 │   │   ├── chat/                 # チャットAPI
-│   │   │   └── route.ts
+│   │   │   ├── route.ts          # POST /api/chat
+│   │   │   └── approve/
+│   │   │       └── route.ts      # POST /api/chat/approve
 │   │   ├── sessions/             # セッション管理API
-│   │   │   ├── route.ts
+│   │   │   ├── route.ts          # GET/POST /api/sessions
 │   │   │   └── [id]/
-│   │   │       └── route.ts
+│   │   │       ├── route.ts      # GET/PATCH/DELETE /api/sessions/[id]
+│   │   │       └── messages/
+│   │   │           └── route.ts  # GET /api/sessions/[id]/messages (差分ロード)
 │   │   ├── settings/             # 設定API
-│   │   │   └── route.ts
+│   │   │   └── route.ts          # GET/PUT /api/settings
 │   │   ├── mcp/                  # MCP管理API
-│   │   │   └── route.ts
-│   │   └── tools/                # ツール管理API
-│   │       └── route.ts
+│   │   │   ├── route.ts          # GET/POST /api/mcp
+│   │   │   └── [id]/
+│   │   │       └── route.ts      # GET/PATCH/DELETE /api/mcp/[id]
+│   │   ├── agents/               # エージェント管理API
+│   │   │   ├── route.ts          # GET/POST /api/agents
+│   │   │   └── [id]/
+│   │   │       └── route.ts      # GET/PATCH/DELETE /api/agents/[id]
+│   │   └── health/               # ヘルスチェックAPI
+│   │       └── route.ts          # GET /api/health
+│   ├── page.tsx                  # ルートページ（/chatへリダイレクト）
 │   ├── layout.tsx                # ルートレイアウト
 │   └── globals.css               # グローバルスタイル
 ├── components/                   # UIコンポーネント
 │   ├── ui/                       # shadcn/uiコンポーネント
+│   │   ├── button.tsx
+│   │   ├── input.tsx
+│   │   ├── textarea.tsx
+│   │   ├── card.tsx
+│   │   ├── dialog.tsx
+│   │   ├── dropdown-menu.tsx
+│   │   ├── scroll-area.tsx
+│   │   ├── avatar.tsx
+│   │   ├── badge.tsx
+│   │   ├── tabs.tsx
+│   │   ├── tooltip.tsx
+│   │   ├── sheet.tsx
+│   │   ├── skeleton.tsx
+│   │   ├── toggle-group.tsx
+│   │   ├── radio-group.tsx
+│   │   ├── label.tsx
+│   │   ├── select.tsx
+│   │   ├── checkbox.tsx
+│   │   └── separator.tsx
 │   ├── chat/                     # チャット関連コンポーネント
-│   │   ├── ChatContainer.tsx
-│   │   ├── MessageList.tsx
-│   │   ├── MessageItem.tsx
-│   │   ├── InputArea.tsx
-│   │   └── ToolOutput.tsx
+│   │   ├── ChatContainer.tsx     # チャットメインコンテナ
+│   │   ├── ChatHeader.tsx        # チャットヘッダー
+│   │   ├── MessageList.tsx       # メッセージリスト
+│   │   ├── MessageItem.tsx       # 個別メッセージ表示
+│   │   ├── InputArea.tsx         # 入力エリア
+│   │   ├── PermissionModeSelector.tsx  # 権限モード選択UI
+│   │   ├── ToolApprovalCard.tsx  # ツール実行確認カード
+│   │   ├── ToolCallList.tsx      # ツール実行ステータス表示
+│   │   └── MarkdownRenderer.tsx  # Markdownレンダリング
 │   ├── sidebar/                  # サイドバー関連
-│   │   ├── Sidebar.tsx
-│   │   ├── SessionList.tsx
-│   │   └── SessionItem.tsx
+│   │   ├── Sidebar.tsx           # サイドバーメイン
+│   │   ├── SessionList.tsx       # セッション一覧
+│   │   └── SessionItem.tsx       # セッションアイテム
 │   └── settings/                 # 設定関連
-│       ├── MCPConfig.tsx
-│       ├── ToolsConfig.tsx
-│       ├── AgentsConfig.tsx
-│       └── SkillsConfig.tsx
+│       ├── PermissionModeRadioGroup.tsx  # 権限モード設定
+│       └── DefaultToolsCheckboxGroup.tsx # デフォルトツール選択
+├── contexts/                     # React Context
+│   └── SidebarContext.tsx        # サイドバー状態管理
 ├── lib/                          # ユーティリティ
 │   ├── claude/                   # Claude SDK関連
 │   │   ├── client.ts             # SDKクライアント
-│   │   ├── session.ts            # セッション管理
 │   │   └── types.ts              # 型定義
+│   ├── constants/                # 定数
+│   │   └── tools.ts              # ビルトインツール定義
 │   ├── db/                       # データベース
-│   │   ├── prisma.ts             # Prismaクライアント
-│   │   └── queries.ts            # クエリ関数
-│   └── utils/                    # ユーティリティ関数
+│   │   └── prisma.ts             # Prismaクライアント
+│   ├── utils/                    # ユーティリティ関数
+│   │   └── uuid.ts               # UUID生成
+│   ├── utils.ts                  # 共通ユーティリティ（cn等）
+│   ├── providers.tsx             # React Query Provider
+│   └── approval-manager.ts       # ツール承認マネージャー
 ├── hooks/                        # カスタムフック
-│   ├── useChat.ts
-│   ├── useSession.ts
-│   └── useSettings.ts
-└── types/                        # 型定義
-    ├── chat.ts
-    ├── session.ts
-    └── settings.ts
+│   ├── useChat.ts                # チャット管理
+│   ├── useSessions.ts            # セッション管理
+│   └── useSettings.ts            # 設定管理
+├── types/                        # 型定義
+│   ├── index.ts                  # 共通型定義
+│   ├── chat.ts                   # チャット関連型
+│   ├── session.ts                # セッション関連型
+│   └── settings.ts               # 設定関連型
+└── generated/                    # 自動生成ファイル
+    └── prisma/                   # Prisma生成コード
 ```
 
 ---
@@ -175,6 +214,8 @@ src/
 ### 3.2 Prismaスキーマ
 
 ```prisma
+// SQLiteを使用するため、JSON型はString型で格納し、アプリケーション側でパース
+
 model Session {
   id              String    @id @default(cuid())
   title           String
@@ -193,9 +234,11 @@ model Message {
   session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   role      String   // 'user' | 'assistant' | 'system'
   content   String
-  toolCalls Json?
-  metadata  Json?
+  toolCalls String?  // JSON stored as string for SQLite
+  metadata  String?  // JSON stored as string for SQLite
   createdAt DateTime @default(now())
+
+  @@index([sessionId])
 }
 
 model MCPServer {
@@ -203,10 +246,10 @@ model MCPServer {
   name      String   @unique
   type      String   // 'stdio' | 'sse' | 'http'
   command   String?
-  args      Json?
-  env       Json?
+  args      String?  // JSON stored as string for SQLite
+  env       String?  // JSON stored as string for SQLite
   url       String?
-  headers   Json?
+  headers   String?  // JSON stored as string for SQLite
   isEnabled Boolean  @default(true)
   createdAt DateTime @default(now())
 }
@@ -216,7 +259,7 @@ model Agent {
   name        String   @unique
   description String
   prompt      String
-  tools       Json?
+  tools       String?  // JSON stored as string for SQLite
   model       String?
   isEnabled   Boolean  @default(true)
   createdAt   DateTime @default(now())
@@ -225,7 +268,7 @@ model Agent {
 model Settings {
   id        String   @id @default(cuid())
   key       String   @unique
-  value     Json
+  value     String   // JSON stored as string for SQLite
   updatedAt DateTime @updatedAt
 }
 ```
@@ -337,11 +380,12 @@ CMD ["node", "server.js"]
 #### インフラ・基盤
 | 機能 | ファイル | 備考 |
 |------|---------|------|
-| Next.js 16 プロジェクト構成 | `package.json`, `next.config.ts` | App Router, Turbopack対応 |
-| Prisma 7 + SQLite | `prisma/schema.prisma`, `src/lib/db/prisma.ts` | better-sqlite3アダプタ使用 |
-| 型定義 | `src/types/index.ts` | Session, Message, ChatEvent等 |
-| shadcn/ui コンポーネント | `src/components/ui/*` | Button, Input, ScrollArea等 |
+| Next.js 15 プロジェクト構成 | `package.json`, `next.config.ts` | App Router, Turbopack対応 |
+| Prisma + SQLite | `prisma/schema.prisma`, `src/lib/db/prisma.ts` | prisma-client生成 |
+| 型定義 | `src/types/*.ts` | Session, Message, ChatEvent, Settings等 |
+| shadcn/ui コンポーネント | `src/components/ui/*` | Button, Input, Card, Tabs, DropdownMenu等 |
 | Docker対応 | `Dockerfile`, `docker-compose.yml` | ~/.claude マウント対応 |
+| ヘルスチェック | `src/app/api/health/route.ts` | GET /api/health |
 
 #### チャット機能
 | 機能 | ファイル | 備考 |
@@ -351,6 +395,8 @@ CMD ["node", "server.js"]
 | チャット履歴表示 | `src/hooks/useChat.ts` | React Query使用 |
 | ストリーミングレスポンス | `src/app/api/chat/route.ts` | Server-Sent Events |
 | 生成中止機能 | `src/hooks/useChat.ts` | AbortController使用 |
+| Markdownレンダリング | `src/components/chat/MarkdownRenderer.tsx` | react-markdown, rehype-highlight使用 |
+| ストリーミングテキスト表示 | `src/components/chat/MessageItem.tsx` | リアルタイム文字表示 |
 
 #### セッション管理
 | 機能 | ファイル | 備考 |
@@ -358,13 +404,16 @@ CMD ["node", "server.js"]
 | セッション一覧表示 | `src/components/sidebar/Sidebar.tsx` | サイドバーに表示 |
 | セッション作成 | `src/app/api/sessions/route.ts` | 新規チャット開始時に自動作成 |
 | セッション詳細取得 | `src/app/api/sessions/[id]/route.ts` | メッセージ含む |
+| セッション更新 | `src/app/api/sessions/[id]/route.ts` | PATCH対応（タイトル、設定、アーカイブ） |
 | セッション削除 | `src/app/api/sessions/[id]/route.ts` | CASCADE削除 |
-| セッション切替 | `src/hooks/useChat.ts` | staleTime:0で常に最新取得 |
+| セッション切替 | `src/hooks/useSessions.ts` | staleTime:0で常に最新取得 |
+| メッセージ差分ロード | `src/app/api/sessions/[id]/messages/route.ts` | カーソルベースページネーション |
+| サイドバー横幅調整 | `src/contexts/SidebarContext.tsx` | ドラッグ可能 |
 
 #### Claude Agent SDK統合
 | 機能 | ファイル | 備考 |
 |------|---------|------|
-| SDK接続 | `src/app/api/chat/route.ts` | @anthropic-ai/claude-agent-sdk v0.1.76 |
+| SDK接続 | `src/app/api/chat/route.ts` | @anthropic-ai/claude-agent-sdk |
 | セッション再開 | `src/app/api/chat/route.ts` | claudeSessionId使用 |
 | メッセージ処理 | `src/app/api/chat/route.ts` | テキストコンテンツ抽出 |
 | ツール実行確認 | `src/app/api/chat/route.ts` | canUseToolコールバック |
@@ -379,20 +428,40 @@ CMD ["node", "server.js"]
 | 承認マネージャー | `src/lib/approval-manager.ts` | Promise待機管理 |
 | 承認API | `src/app/api/chat/approve/route.ts` | POST /api/chat/approve |
 
-#### その他
-| 機能 | ファイル | 備考 |
-|------|---------|------|
-| UUID生成 | `src/lib/utils/uuid.ts` | ブラウザ互換フォールバック付き |
-| React Query設定 | `src/components/providers/QueryProvider.tsx` | キャッシュ管理 |
-| ルーティング | `src/app/(chat)/page.tsx`, `src/app/(chat)/[sessionId]/page.tsx` | App Router |
-
 #### 設定機能
 | 機能 | ファイル | 備考 |
 |------|---------|------|
 | 権限モード切替UI | `src/components/chat/PermissionModeSelector.tsx` | チャット入力欄上部で即時切替 |
-| 設定画面 | `src/app/settings/page.tsx` | デフォルト権限モード設定 |
+| 設定画面 | `src/app/settings/page.tsx` | デフォルト権限モード、デフォルトツール設定 |
 | 設定API | `src/app/api/settings/route.ts` | GET/PUT対応 |
 | 設定フック | `src/hooks/useSettings.ts` | React Query使用 |
+| デフォルトツール選択UI | `src/components/settings/DefaultToolsCheckboxGroup.tsx` | カテゴリ別チェックボックス |
+| ビルトインツール定義 | `src/lib/constants/tools.ts` | ツール名、説明、危険度 |
+
+#### MCP管理API
+| 機能 | ファイル | 備考 |
+|------|---------|------|
+| MCPサーバー一覧取得 | `src/app/api/mcp/route.ts` | GET /api/mcp |
+| MCPサーバー追加 | `src/app/api/mcp/route.ts` | POST /api/mcp |
+| MCPサーバー詳細取得 | `src/app/api/mcp/[id]/route.ts` | GET /api/mcp/[id] |
+| MCPサーバー更新 | `src/app/api/mcp/[id]/route.ts` | PATCH /api/mcp/[id] |
+| MCPサーバー削除 | `src/app/api/mcp/[id]/route.ts` | DELETE /api/mcp/[id] |
+
+#### エージェント管理API
+| 機能 | ファイル | 備考 |
+|------|---------|------|
+| エージェント一覧取得 | `src/app/api/agents/route.ts` | GET /api/agents |
+| エージェント追加 | `src/app/api/agents/route.ts` | POST /api/agents |
+| エージェント詳細取得 | `src/app/api/agents/[id]/route.ts` | GET /api/agents/[id] |
+| エージェント更新 | `src/app/api/agents/[id]/route.ts` | PATCH /api/agents/[id] |
+| エージェント削除 | `src/app/api/agents/[id]/route.ts` | DELETE /api/agents/[id] |
+
+#### その他
+| 機能 | ファイル | 備考 |
+|------|---------|------|
+| UUID生成 | `src/lib/utils/uuid.ts` | ブラウザ互換フォールバック付き |
+| React Query Provider | `src/lib/providers.tsx` | キャッシュ管理 |
+| ルーティング | `src/app/chat/page.tsx`, `src/app/chat/[sessionId]/page.tsx` | App Router |
 
 ---
 
@@ -401,20 +470,14 @@ CMD ["node", "server.js"]
 #### 設定UI
 | 機能 | 優先度 | 備考 |
 |------|--------|------|
-| MCP設定UI | 高 | サーバー追加・編集・削除 |
-| ツール設定UI | 高 | 許可/禁止ツールの設定 |
-| Subagent設定UI | 中 | カスタムエージェント定義 |
+| MCP設定UI | 高 | サーバー追加・編集・削除（APIは実装済み） |
+| Subagent設定UI | 中 | カスタムエージェント定義（APIは実装済み） |
 | Skills設定UI | 中 | スラッシュコマンド設定 |
-| 権限モード切替UI | 高 | **実装済み** → [詳細設計書 11章](./detailed-design.md#11-権限モード切替ui設計) |
 | 一般設定UI | 中 | テーマ、言語、デフォルトモデル |
 
 #### チャット拡張
 | 機能 | 優先度 | 備考 |
 |------|--------|------|
-| ツール実行確認UI | 高 | **実装済み** → [詳細設計書 12章](./detailed-design.md#12-ツール実行確認ui設計) |
-| ツール実行ステータス表示 | 高 | **実装済み** → [詳細設計書 13章](./detailed-design.md#13-ツール実行ステータス表示設計) |
-| 「常に許可」のDB永続化 | 高 | **実装済み** → セッション単位でDBに保存 |
-| Markdownレンダリング | 高 | コードブロック、リスト等 |
 | シンキング表示 | 中 | Claude思考過程の表示 |
 | ファイルアップロード | 中 | 画像・ファイル添付 |
 | 生成中止のClaude側反映 | 中 | SDK abort機能 |
@@ -423,8 +486,6 @@ CMD ["node", "server.js"]
 | 機能 | 優先度 | 備考 |
 |------|--------|------|
 | セッション検索 | 中 | タイトル・内容検索 |
-| セッションアーカイブ | 低 | 非表示化 |
-| セッションタイトル編集 | 中 | 手動タイトル変更 |
 | セッションエクスポート | 低 | JSON/Markdown出力 |
 | セッションインポート | 低 | 履歴復元 |
 
@@ -432,23 +493,13 @@ CMD ["node", "server.js"]
 | 機能 | 優先度 | 備考 |
 |------|--------|------|
 | ダークモード | 中 | テーマ切替 |
-| レスポンシブデザイン | 中 | モバイル対応 |
-| キーボードショートカット | 低 | Ctrl+Enter等 |
+| レスポンシブデザイン | 中 | モバイル対応（一部実装済み） |
 | エラートースト通知 | 中 | 操作フィードバック |
-| ローディングスケルトン | 低 | 読込中表示 |
-
-#### API拡張
-| 機能 | 優先度 | 備考 |
-|------|--------|------|
-| MCP管理API | 高 | GET/POST/PATCH/DELETE /api/mcp |
-| ツール管理API | 高 | GET/PUT /api/tools |
-| エージェント管理API | 中 | GET/POST/PATCH/DELETE /api/agents |
-| 設定API | 中 | GET/PUT /api/settings |
-| 入力バリデーション | 中 | Zodスキーマ |
 
 #### セキュリティ・品質
 | 機能 | 優先度 | 備考 |
 |------|--------|------|
+| 入力バリデーション | 中 | Zodスキーマ |
 | 入力サニタイズ | 高 | XSS対策 |
 | レート制限 | 中 | API保護 |
 | エラーバウンダリ | 中 | グローバルエラー処理 |
@@ -466,33 +517,41 @@ CMD ["node", "server.js"]
 - [x] セッション管理
 - [x] Docker対応
 
-#### Phase 2: 設定機能 🚧 進行中
-- [x] 権限モード切替UI ✅
-- [x] ツール実行確認UI ✅
-- [x] ツール実行ステータス表示 ✅
-- [x] 「常に許可」のDB永続化 ✅
-- [ ] MCP設定UI
-- [ ] ツール設定UI
-- [ ] Subagent設定UI
+#### Phase 2: 設定機能 ✅ 完了
+- [x] 権限モード切替UI
+- [x] ツール実行確認UI
+- [x] ツール実行ステータス表示
+- [x] 「常に許可」のDB永続化
+- [x] デフォルトツール設定UI
+- [x] 設定API（GET/PUT）
+
+#### Phase 3: API拡張 ✅ 完了
+- [x] MCP管理API（GET/POST/PATCH/DELETE）
+- [x] エージェント管理API（GET/POST/PATCH/DELETE）
+- [x] セッションPATCH API
+- [x] メッセージ差分ロードAPI
+
+#### Phase 4: チャット拡張 ✅ 完了
+- [x] Markdownレンダリング（react-markdown使用）
+- [x] ツール実行結果表示
+- [x] ストリーミングテキスト表示
+
+#### Phase 5: 設定UI 🚧 進行中
+- [ ] MCP設定UI（APIは実装済み）
+- [ ] Subagent設定UI（APIは実装済み）
 - [ ] Skills設定UI
 
-#### Phase 3: チャット拡張
-- [ ] Markdownレンダリング
-- [x] ツール実行結果表示 ✅
-- [ ] ファイルアップロード
-- [ ] シンキング表示
-
-#### Phase 4: UI/UX改善
+#### Phase 6: UI/UX改善
 - [ ] ダークモード
-- [ ] レスポンシブデザイン
-- [ ] チャット履歴検索
+- [ ] レスポンシブデザイン強化
+- [ ] セッション検索
 - [ ] エラー通知改善
 
-#### Phase 5: 品質・最適化
+#### Phase 7: 品質・最適化
 - [ ] テスト追加
-- [ ] パフォーマンス最適化
+- [ ] 入力バリデーション（Zod）
 - [ ] セキュリティ強化
-- [ ] ドキュメント整備
+- [ ] パフォーマンス最適化
 
 ---
 
