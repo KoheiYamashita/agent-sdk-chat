@@ -74,3 +74,6 @@ ehthumbs.db
 
 # Claude Code
 .claude/
+
+# Workspace (sandbox directory for Claude Code)
+/workspace/

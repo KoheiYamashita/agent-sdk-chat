@@ -234,8 +234,7 @@ interface SettingsData {
   };
   sandbox: {
     enabled: boolean;
-    autoAllowBash: boolean;
-    networkRestrictions: boolean;
+    workspacePath: string;
   };
 }
 ```
@@ -817,8 +816,7 @@ export interface PermissionSettings {
 
 export interface SandboxSettings {
   enabled: boolean;
-  autoAllowBash: boolean;
-  networkRestrictions: boolean;
+  workspacePath: string;
 }
 
 export type PermissionMode = 'default' | 'acceptEdits' | 'bypassPermissions' | 'plan';
@@ -1093,9 +1091,10 @@ __tests__/
 | コンポーネント | 状況 | ファイル | 備考 |
 |---------------|------|----------|------|
 | SettingsLayout | ✅ 実装済 | `src/app/settings/layout.tsx` | 設定ページレイアウト |
-| SettingsPage | ✅ 実装済 | `src/app/settings/page.tsx` | 権限モード、デフォルトツール設定 |
+| SettingsPage | ✅ 実装済 | `src/app/settings/page.tsx` | 権限モード、デフォルトツール、サンドボックス設定 |
 | PermissionModeRadioGroup | ✅ 実装済 | `src/components/settings/PermissionModeRadioGroup.tsx` | 設定画面用 |
 | DefaultToolsCheckboxGroup | ✅ 実装済 | `src/components/settings/DefaultToolsCheckboxGroup.tsx` | カテゴリ別ツール選択 |
+| SandboxSettingsForm | ✅ 実装済 | `src/components/settings/SandboxSettingsForm.tsx` | サンドボックス設定（有効/無効、ワークスペースパス） |
 | MCPConfig | ❌ 未実装 | - | MCP設定UI（APIは実装済み） |
 | AgentsConfig | ❌ 未実装 | - | Subagent設定UI（APIは実装済み） |
 | SkillsConfig | ❌ 未実装 | - | Skills設定 |

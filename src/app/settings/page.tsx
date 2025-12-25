@@ -3,9 +3,10 @@
 import { useSettings } from '@/hooks/useSettings';
 import { PermissionModeRadioGroup } from '@/components/settings/PermissionModeRadioGroup';
 import { DefaultToolsCheckboxGroup } from '@/components/settings/DefaultToolsCheckboxGroup';
+import { SandboxSettingsForm } from '@/components/settings/SandboxSettingsForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { PermissionMode } from '@/types';
+import type { PermissionMode, SandboxSettings } from '@/types';
 
 export default function SettingsPage() {
   const { settings, isLoading, error, isSaving, updateGeneralSettings, saveSettings } = useSettings();
@@ -22,6 +23,10 @@ export default function SettingsPage() {
         allowedTools,
       },
     });
+  };
+
+  const handleSandboxSettingsChange = async (sandbox: SandboxSettings) => {
+    await saveSettings({ sandbox });
   };
 
   if (error) {
@@ -102,6 +107,37 @@ export default function SettingsPage() {
             <DefaultToolsCheckboxGroup
               selectedTools={settings?.permissions.allowedTools ?? []}
               onChange={handleDefaultToolsChange}
+              disabled={isSaving}
+            />
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>サンドボックス設定</CardTitle>
+          <CardDescription>
+            Claude Codeの実行環境を制限し、安全性を高めます。
+            サンドボックスモードでは、指定したワークスペース内でのみ動作します。
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-start space-x-3">
+                  <Skeleton className="h-4 w-4 mt-1" />
+                  <div className="flex-1">
+                    <Skeleton className="h-4 w-32 mb-2" />
+                    <Skeleton className="h-3 w-full" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <SandboxSettingsForm
+              settings={settings?.sandbox ?? { enabled: true, workspacePath: './workspace' }}
+              onChange={handleSandboxSettingsChange}
               disabled={isSaving}
             />
           )}

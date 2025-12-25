@@ -34,7 +34,4 @@ export interface AgentDefinition {
 
 export interface SandboxConfig {
   enabled?: boolean;
-  autoAllowBashIfSandboxed?: boolean;
-  excludedCommands?: string[];
-  allowUnsandboxedCommands?: boolean;
 }

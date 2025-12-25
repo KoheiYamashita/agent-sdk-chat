@@ -15,9 +15,8 @@ const DEFAULT_SETTINGS: SettingsData = {
     disallowedTools: [],
   },
   sandbox: {
-    enabled: false,
-    autoAllowBash: false,
-    networkRestrictions: false,
+    enabled: true,
+    workspacePath: './workspace',
   },
 };
 

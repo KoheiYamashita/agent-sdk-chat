@@ -21,8 +21,7 @@ export interface PermissionSettings {
 
 export interface SandboxSettings {
   enabled: boolean;
-  autoAllowBash: boolean;
-  networkRestrictions: boolean;
+  workspacePath: string;
 }
 
 export interface MCPServerConfig {

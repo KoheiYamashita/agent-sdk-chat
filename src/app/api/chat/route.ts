@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
+import path from 'path';
+import fs from 'fs/promises';
 import { query, type SDKMessage } from '@anthropic-ai/claude-agent-sdk';
 import { prisma } from '@/lib/db/prisma';
 import { approvalManager } from '@/lib/approval-manager';
 import { generateUUID } from '@/lib/utils/uuid';
-import type { ChatRequest, ChatEvent, MessageMetadata, ToolApprovalRequest } from '@/types';
+import type { ChatRequest, ChatEvent, MessageMetadata, ToolApprovalRequest, SandboxSettings } from '@/types';
 
 interface ContentBlock {
   type: string;
@@ -43,6 +45,23 @@ async function getGlobalAllowedTools(): Promise<Set<string>> {
     return new Set(permissions.allowedTools ?? []);
   } catch {
     return new Set<string>();
+  }
+}
+
+// Default sandbox settings
+const DEFAULT_SANDBOX_SETTINGS: SandboxSettings = {
+  enabled: true,
+  workspacePath: './workspace',
+};
+
+// Helper to get sandbox settings
+async function getSandboxSettings(): Promise<SandboxSettings> {
+  const settings = await prisma.settings.findUnique({ where: { key: 'sandbox' } });
+  if (!settings) return DEFAULT_SANDBOX_SETTINGS;
+  try {
+    return JSON.parse(settings.value) as SandboxSettings;
+  } catch {
+    return DEFAULT_SANDBOX_SETTINGS;
   }
 }
 
@@ -89,6 +108,18 @@ export async function POST(request: Request) {
         const alwaysAllowedTools = parseAllowedTools(session.allowedTools);
         // Get globally allowed tools from settings
         const globalAllowedTools = await getGlobalAllowedTools();
+        // Get sandbox settings
+        const sandboxSettings = await getSandboxSettings();
+
+        // Resolve workspace path (relative to cwd or absolute)
+        const workspacePath = sandboxSettings.workspacePath.startsWith('/')
+          ? sandboxSettings.workspacePath
+          : path.resolve(process.cwd(), sandboxSettings.workspacePath);
+
+        // Create workspace directory if it doesn't exist (when sandbox is enabled)
+        if (sandboxSettings.enabled) {
+          await fs.mkdir(workspacePath, { recursive: true });
+        }
 
         const queryOptions = {
           prompt: message,
@@ -101,6 +132,9 @@ export async function POST(request: Request) {
             systemPrompt: settings?.systemPrompt,
             maxTurns: settings?.maxTurns,
             includePartialMessages: true,
+            // Sandbox and workspace settings
+            cwd: sandboxSettings.enabled ? workspacePath : undefined,
+            sandbox: sandboxSettings.enabled ? { enabled: true } : undefined,
             canUseTool: async (toolName: string, input: Record<string, unknown>) => {
             // Check if tool is always allowed for this session
             if (alwaysAllowedTools.has(toolName)) {
