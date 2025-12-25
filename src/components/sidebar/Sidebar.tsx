@@ -21,7 +21,7 @@ interface SidebarContentProps {
 
 function SidebarContent({ onNavigate }: SidebarContentProps) {
   const router = useRouter();
-  const { sessions, isLoading, createSession, deleteSession } = useSessions();
+  const { sessions, isLoading, createSession, deleteSession, toggleArchive } = useSessions();
 
   const handleNewChat = async () => {
     const newSession = await createSession();
@@ -46,11 +46,12 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
 
       <Separator />
 
-      <ScrollArea className="flex-1 overflow-hidden">
+      <ScrollArea className="flex-1 overflow-hidden w-full">
         <SessionList
           sessions={sessions}
           isLoading={isLoading}
           onDelete={deleteSession}
+          onToggleArchive={toggleArchive}
           onSessionClick={handleSessionClick}
         />
       </ScrollArea>

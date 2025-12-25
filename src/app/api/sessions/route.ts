@@ -4,7 +4,6 @@ import { prisma } from '@/lib/db/prisma';
 export async function GET() {
   try {
     const sessions = await prisma.session.findMany({
-      where: { isArchived: false },
       orderBy: { updatedAt: 'desc' },
       include: {
         _count: {

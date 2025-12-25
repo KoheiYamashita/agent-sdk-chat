@@ -33,6 +33,18 @@ async function deleteSessionApi(id: string): Promise<void> {
   }
 }
 
+async function toggleArchiveApi(id: string, isArchived: boolean): Promise<{ session: Session }> {
+  const response = await fetch(`/api/sessions/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ isArchived }),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to toggle archive');
+  }
+  return response.json();
+}
+
 export function useSessions() {
   const queryClient = useQueryClient();
 
@@ -67,6 +79,24 @@ export function useSessions() {
     },
   });
 
+  const toggleArchiveMutation = useMutation({
+    mutationFn: ({ id, isArchived }: { id: string; isArchived: boolean }) =>
+      toggleArchiveApi(id, isArchived),
+    onSuccess: (data, { id }) => {
+      queryClient.setQueryData<SessionListResponse>(SESSIONS_QUERY_KEY, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          sessions: old.sessions.map((s) =>
+            s.id === id ? { ...s, isArchived: data.session.isArchived } : s
+          ),
+        };
+      });
+      // Also invalidate the session detail query
+      queryClient.invalidateQueries({ queryKey: ['session', id] });
+    },
+  });
+
   const createSession = async (): Promise<Session | null> => {
     try {
       const result = await createMutation.mutateAsync();
@@ -80,6 +110,10 @@ export function useSessions() {
     await deleteMutation.mutateAsync(id);
   };
 
+  const toggleArchive = async (id: string, currentIsArchived: boolean): Promise<void> => {
+    await toggleArchiveMutation.mutateAsync({ id, isArchived: !currentIsArchived });
+  };
+
   return {
     sessions: data?.sessions ?? [],
     total: data?.total ?? 0,
@@ -87,6 +121,7 @@ export function useSessions() {
     error,
     createSession,
     deleteSession,
+    toggleArchive,
   };
 }
 

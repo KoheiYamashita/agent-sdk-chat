@@ -46,13 +46,19 @@ export function ChatContainer({ sessionId }: ChatContainerProps) {
         onToolApprovalRespond={respondToToolApproval}
       />
 
-      <InputArea
-        onSubmit={sendMessage}
-        onStop={stopGeneration}
-        disabled={isLoading || !!pendingToolApproval}
-        isGenerating={isGenerating}
-        defaultPermissionMode={defaultPermissionMode}
-      />
+      {session?.isArchived ? (
+        <div className="border-t bg-muted/50 p-4 text-center text-sm text-muted-foreground">
+          このチャットはアーカイブされています（閲覧専用）
+        </div>
+      ) : (
+        <InputArea
+          onSubmit={sendMessage}
+          onStop={stopGeneration}
+          disabled={isLoading || !!pendingToolApproval}
+          isGenerating={isGenerating}
+          defaultPermissionMode={defaultPermissionMode}
+        />
+      )}
     </div>
   );
 }

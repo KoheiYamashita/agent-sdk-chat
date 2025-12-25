@@ -8,10 +8,11 @@ interface SessionListProps {
   sessions: SessionSummary[];
   isLoading: boolean;
   onDelete: (id: string) => void;
+  onToggleArchive: (id: string, isArchived: boolean) => void;
   onSessionClick?: () => void;
 }
 
-export function SessionList({ sessions, isLoading, onDelete, onSessionClick }: SessionListProps) {
+export function SessionList({ sessions, isLoading, onDelete, onToggleArchive, onSessionClick }: SessionListProps) {
   if (isLoading) {
     return (
       <div className="space-y-2 p-2">
@@ -31,12 +32,13 @@ export function SessionList({ sessions, isLoading, onDelete, onSessionClick }: S
   }
 
   return (
-    <div className="space-y-1 p-2">
+    <div className="space-y-1 p-2 w-full min-w-0 overflow-hidden">
       {sessions.map((session) => (
         <SessionItem
           key={session.id}
           session={session}
           onDelete={onDelete}
+          onToggleArchive={onToggleArchive}
           onClick={onSessionClick}
         />
       ))}
