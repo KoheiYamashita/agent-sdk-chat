@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useCallback, useRef, useState } from 'react';
-import { Plus, Settings } from 'lucide-react';
+import { Plus, Settings, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
@@ -68,7 +68,13 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
 
       <Separator />
 
-      <div className="p-4">
+      <div className="p-4 space-y-1">
+        <Link href="/usage" onClick={onNavigate}>
+          <Button variant="ghost" className="w-full justify-start">
+            <BarChart3 className="h-4 w-4 mr-2" />
+            使用量
+          </Button>
+        </Link>
         <Link href="/settings" onClick={onNavigate}>
           <Button variant="ghost" className="w-full justify-start">
             <Settings className="h-4 w-4 mr-2" />
