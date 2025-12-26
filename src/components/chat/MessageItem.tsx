@@ -31,6 +31,20 @@ interface MessageItemProps {
   appearanceSettings?: AppearanceSettings;
 }
 
+// モデルIDから表示名を取得
+function getModelDisplayName(modelId: string): string {
+  const modelMap: Record<string, string> = {
+    'claude-opus-4-5-20251101': 'Claude 4.5 Opus',
+    'claude-sonnet-4-20250514': 'Claude 4 Sonnet',
+    'claude-3-5-sonnet-20241022': 'Claude 3.5 Sonnet',
+    'claude-3-5-haiku-20241022': 'Claude 3.5 Haiku',
+    'claude-3-opus-20240229': 'Claude 3 Opus',
+    'claude-3-sonnet-20240229': 'Claude 3 Sonnet',
+    'claude-3-haiku-20240307': 'Claude 3 Haiku',
+  };
+  return modelMap[modelId] || modelId;
+}
+
 function getUserIconComponent(type: AvatarIconType) {
   switch (type) {
     case 'user': return User;
@@ -83,27 +97,35 @@ export function MessageItem({ message, appearanceSettings }: MessageItemProps) {
   const botInitials = appearanceSettings?.botInitials ?? '';
   const userImageUrl = appearanceSettings?.userImageUrl ?? '';
   const botImageUrl = appearanceSettings?.botImageUrl ?? '';
+  const userName = appearanceSettings?.userName ?? '';
 
   const UserIcon = getUserIconComponent(userIcon);
   const BotIcon = getBotIconComponent(botIcon);
 
   const renderUserAvatar = () => {
     if (userIcon === 'initials' && userInitials) {
-      return <span className="text-xs font-medium">{userInitials}</span>;
+      return <span className="text-sm font-medium">{userInitials}</span>;
     }
-    return <UserIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />;
+    return <UserIcon className="h-4 w-4 sm:h-5 sm:w-5" />;
   };
 
   const renderBotAvatar = () => {
     if (botIcon === 'initials' && botInitials) {
-      return <span className="text-xs font-medium">{botInitials}</span>;
+      return <span className="text-sm font-medium">{botInitials}</span>;
     }
-    return <BotIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />;
+    return <BotIcon className="h-4 w-4 sm:h-5 sm:w-5" />;
   };
 
   // セキュリティ: 画像URLの検証を通過した場合のみ表示
   const showUserImage = userIcon === 'image' && isValidImageUrl(userImageUrl);
   const showBotImage = botIcon === 'image' && isValidImageUrl(botImageUrl);
+
+  // 表示名を決定
+  // DBにモデル情報がある場合のみモデル名を表示、ない場合は「Claude」
+  const modelId = message.metadata?.model;
+  const displayName = isUser
+    ? (userName || 'あなた')
+    : (modelId ? getModelDisplayName(modelId) : 'Claude');
 
   return (
     <div
@@ -112,7 +134,7 @@ export function MessageItem({ message, appearanceSettings }: MessageItemProps) {
         isUser ? 'bg-muted/30' : 'bg-transparent'
       )}
     >
-      <Avatar className="h-7 w-7 sm:h-8 sm:w-8 shrink-0 ring-2 ring-background shadow-sm">
+      <Avatar className="h-8 w-8 sm:h-9 sm:w-9 shrink-0 ring-2 ring-background shadow-sm mt-0.5">
         {isUser && showUserImage && <AvatarImage src={userImageUrl} alt="User" />}
         {!isUser && showBotImage && <AvatarImage src={botImageUrl} alt="Claude" />}
         <AvatarFallback className={cn(
@@ -123,11 +145,18 @@ export function MessageItem({ message, appearanceSettings }: MessageItemProps) {
           {isUser ? renderUserAvatar() : renderBotAvatar()}
         </AvatarFallback>
       </Avatar>
-      <div className="flex-1 space-y-3 overflow-hidden min-w-0 pt-0.5">
-        <MarkdownRenderer content={message.content} />
-        {message.toolCalls && message.toolCalls.length > 0 && (
-          <ToolCallList toolCalls={message.toolCalls} />
-        )}
+      <div className="flex-1 overflow-hidden min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-[15px] font-bold text-foreground">
+            {displayName}
+          </span>
+        </div>
+        <div className="space-y-3">
+          <MarkdownRenderer content={message.content} />
+          {message.toolCalls && message.toolCalls.length > 0 && (
+            <ToolCallList toolCalls={message.toolCalls} />
+          )}
+        </div>
       </div>
     </div>
   );

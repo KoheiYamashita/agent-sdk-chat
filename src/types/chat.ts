@@ -47,7 +47,7 @@ export type ChatEvent =
   | { type: 'tool_approval_request'; request: ToolApprovalRequest }
   | { type: 'tool_approval_resolved'; requestId: string }
   | { type: 'thinking'; content: string }
-  | { type: 'done'; result: string; usage: MessageMetadata['usage'] }
+  | { type: 'done'; result: string; usage: MessageMetadata['usage']; model?: string }
   | { type: 'error'; message: string };
 
 /** ツール確認リクエスト */

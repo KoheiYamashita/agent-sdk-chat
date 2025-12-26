@@ -231,6 +231,7 @@ export async function POST(request: Request) {
 
         let assistantContent = '';
         let claudeSessionId = session.claudeSessionId;
+        let currentModel: string | undefined;
         const toolCalls: Array<{
           id: string;
           name: string;
@@ -266,9 +267,10 @@ export async function POST(request: Request) {
             }
           }
 
-          // Capture session ID from init message
+          // Capture session ID and model from init message
           if (msg.type === 'system' && msg.subtype === 'init') {
             claudeSessionId = msg.session_id;
+            currentModel = msg.model;
 
             // Update session with Claude session ID
             if (session.claudeSessionId !== claudeSessionId) {
@@ -326,6 +328,7 @@ export async function POST(request: Request) {
                   usage,
                   cost: msg.total_cost_usd,
                   duration_ms: msg.duration_ms,
+                  model: currentModel,
                 }),
               },
             });
@@ -343,6 +346,7 @@ export async function POST(request: Request) {
               type: 'done',
               result: resultContent,
               usage,
+              model: currentModel,
             });
           }
         }

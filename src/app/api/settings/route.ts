@@ -19,6 +19,11 @@ function sanitizeInitials(input: string): string {
   return input.replace(/[^a-zA-Z0-9]/g, '').slice(0, 2).toUpperCase();
 }
 
+// セキュリティ: 名前のサニタイズ（スクリプトインジェクション防止）
+function sanitizeName(input: string): string {
+  return input.replace(/[<>'"&]/g, '').slice(0, 50);
+}
+
 // セキュリティ: AppearanceSettingsのサニタイズ
 function sanitizeAppearanceSettings(settings: AppearanceSettings): AppearanceSettings {
   return {
@@ -27,6 +32,7 @@ function sanitizeAppearanceSettings(settings: AppearanceSettings): AppearanceSet
     botInitials: sanitizeInitials(settings.botInitials || ''),
     userImageUrl: isValidImageUrl(settings.userImageUrl || '') ? settings.userImageUrl : '',
     botImageUrl: isValidImageUrl(settings.botImageUrl || '') ? settings.botImageUrl : '',
+    userName: sanitizeName(settings.userName || ''),
   };
 }
 
@@ -50,6 +56,7 @@ const DEFAULT_SETTINGS: SettingsData = {
     userIcon: 'user',
     userInitials: '',
     userImageUrl: '',
+    userName: '',
     botIcon: 'bot',
     botInitials: '',
     botImageUrl: '',

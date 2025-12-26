@@ -14,6 +14,7 @@ export interface AppearanceSettings {
   userIcon: AvatarIconType;
   userInitials: string;
   userImageUrl: string;
+  userName: string;
   botIcon: BotIconType;
   botInitials: string;
   botImageUrl: string;

@@ -435,6 +435,7 @@ export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseCh
                 case 'done': {
                   // Final result - add or update assistant message with the result
                   if (event.result) {
+                    const messageMetadata = event.model ? { model: event.model } : undefined;
                     setMessages((prev) => {
                       // Check if we have an existing assistant message to update
                       const existingIndex = assistantMessageId
@@ -453,6 +454,7 @@ export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseCh
                             id: newId,
                             role: 'assistant',
                             content: event.result,
+                            metadata: messageMetadata,
                             createdAt: new Date().toISOString(),
                           },
                         ];
@@ -464,6 +466,7 @@ export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseCh
                         updated[existingIndex] = {
                           ...updated[existingIndex],
                           content: event.result,
+                          metadata: messageMetadata,
                         };
                         return updated;
                       }
@@ -475,6 +478,7 @@ export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseCh
                           id: generateUUID(),
                           role: 'assistant',
                           content: event.result,
+                          metadata: messageMetadata,
                           createdAt: new Date().toISOString(),
                         },
                       ];

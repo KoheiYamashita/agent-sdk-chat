@@ -85,6 +85,11 @@ function sanitizeInitials(input: string): string {
   return input.replace(/[^a-zA-Z0-9]/g, '').slice(0, 2).toUpperCase();
 }
 
+// セキュリティ: 名前のサニタイズ（スクリプトインジェクション防止）
+function sanitizeName(input: string): string {
+  return input.replace(/[<>'"&]/g, '').slice(0, 50);
+}
+
 export function AppearanceSettingsForm({
   settings,
   onChange,
@@ -126,6 +131,16 @@ export function AppearanceSettingsForm({
     (initials: string) => {
       const sanitized = sanitizeInitials(initials);
       const newSettings = { ...localSettings, botInitials: sanitized };
+      setLocalSettings(newSettings);
+      onChange(newSettings);
+    },
+    [localSettings, onChange]
+  );
+
+  const handleUserNameChange = useCallback(
+    (name: string) => {
+      const sanitized = sanitizeName(name);
+      const newSettings = { ...localSettings, userName: sanitized };
       setLocalSettings(newSettings);
       onChange(newSettings);
     },
@@ -315,6 +330,20 @@ export function AppearanceSettingsForm({
         )}
       </div>
 
+      {/* User Name */}
+      <div className="space-y-3">
+        <Label className="text-sm font-medium">表示名</Label>
+        <Input
+          placeholder="例: Taro"
+          value={localSettings.userName ?? ''}
+          onChange={(e) => handleUserNameChange(e.target.value)}
+          maxLength={50}
+          disabled={disabled}
+          className="w-full max-w-xs"
+        />
+        <p className="text-xs text-muted-foreground">チャットで表示される名前（空白の場合は「あなた」と表示）</p>
+      </div>
+
       {/* Bot Icon Selection */}
       <div className="space-y-3">
         <Label className="text-sm font-medium">Claudeアイコン</Label>
@@ -427,7 +456,7 @@ export function AppearanceSettingsForm({
                 {renderUserAvatarContent()}
               </AvatarFallback>
             </Avatar>
-            <span className="text-sm text-muted-foreground">あなた</span>
+            <span className="text-sm text-muted-foreground">{localSettings.userName || 'あなた'}</span>
           </div>
           <div className="flex items-center gap-2">
             <Avatar className="h-8 w-8 ring-2 ring-background shadow-sm">
