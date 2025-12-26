@@ -16,6 +16,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'Claude Code Web UI',
   description: 'Claude Code CLI の Web インターフェース',
+  icons: {
+    icon: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({
