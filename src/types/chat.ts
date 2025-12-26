@@ -78,6 +78,8 @@ export interface ChatSettings {
   permissionMode?: PermissionMode;
   systemPrompt?: string;
   maxTurns?: number;
+  workspacePath?: string;
+  workspaceDisplayPath?: string;
 }
 
 export type PermissionMode = 'default' | 'acceptEdits' | 'bypassPermissions' | 'plan';

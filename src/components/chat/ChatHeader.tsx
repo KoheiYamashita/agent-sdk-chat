@@ -2,14 +2,16 @@
 
 import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { WorkspaceBadge } from '@/components/workspace';
 import type { Session } from '@/types';
 
 interface ChatHeaderProps {
   session: Session | null;
+  workspacePath?: string | null;
   onMenuClick?: () => void;
 }
 
-export function ChatHeader({ session, onMenuClick }: ChatHeaderProps) {
+export function ChatHeader({ session, workspacePath, onMenuClick }: ChatHeaderProps) {
   return (
     <header className="border-b bg-background px-2 sm:px-4 py-2 sm:py-3 flex items-center gap-2 sm:gap-4">
       <Button
@@ -25,6 +27,9 @@ export function ChatHeader({ session, onMenuClick }: ChatHeaderProps) {
           {session?.title || '新規チャット'}
         </h1>
       </div>
+      {workspacePath !== undefined && (
+        <WorkspaceBadge path={workspacePath} />
+      )}
     </header>
   );
 }

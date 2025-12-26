@@ -75,7 +75,15 @@ export async function POST(request: Request) {
   const session = sessionId
     ? await prisma.session.findUnique({ where: { id: sessionId } })
     : await prisma.session.create({
-        data: { title: message.slice(0, 50) },
+        data: {
+          title: message.slice(0, 50),
+          settings: settings?.workspacePath
+            ? JSON.stringify({
+                workspacePath: settings.workspacePath,
+                workspaceDisplayPath: settings.workspaceDisplayPath,
+              })
+            : null,
+        },
       });
 
   if (!session) {
@@ -113,10 +121,25 @@ export async function POST(request: Request) {
         // Get sandbox settings
         const sandboxSettings = await getSandboxSettings();
 
-        // Resolve workspace path (relative to cwd or absolute)
-        const workspacePath = sandboxSettings.workspacePath.startsWith('/')
+        // Determine the effective workspace path:
+        // 1. Use session-specific workspacePath from request if provided
+        // 2. Fall back to global sandbox settings
+        const requestedWorkspacePath = settings?.workspacePath;
+        const baseWorkspacePath = sandboxSettings.workspacePath.startsWith('/')
           ? sandboxSettings.workspacePath
           : path.resolve(process.cwd(), sandboxSettings.workspacePath);
+
+        // If session-specific workspace is provided, resolve it relative to base workspace
+        let workspacePath: string;
+        if (requestedWorkspacePath && requestedWorkspacePath !== '.') {
+          workspacePath = path.resolve(baseWorkspacePath, requestedWorkspacePath);
+          // Security check: ensure it's still within base workspace
+          if (!workspacePath.startsWith(baseWorkspacePath)) {
+            workspacePath = baseWorkspacePath;
+          }
+        } else {
+          workspacePath = baseWorkspacePath;
+        }
 
         // Create workspace directory if it doesn't exist (when sandbox is enabled)
         if (sandboxSettings.enabled) {
