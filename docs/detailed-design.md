@@ -2554,6 +2554,13 @@ class SessionManager {
   getActiveQueryCount(): number {
     return this.activeQueries.size;
   }
+
+  /**
+   * 全てのアクティブなセッションIDを取得
+   */
+  getActiveSessionIds(): string[] {
+    return Array.from(this.activeQueries.keys());
+  }
 }
 
 export const sessionManager = new SessionManager();
@@ -2639,9 +2646,14 @@ const stream = new ReadableStream({
 // src/hooks/useChat.ts
 
 const stopGeneration = useCallback(async () => {
-  if (!session?.id) return;
+  if (!session?.id) {
+    // セッションがない場合はfetchのAbortControllerをabort
+    abortControllerRef.current?.abort();
+    return;
+  }
 
   try {
+    // バックエンドにSDKクエリの中断をリクエスト
     const response = await fetch('/api/chat/abort', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2649,12 +2661,16 @@ const stopGeneration = useCallback(async () => {
     });
 
     if (!response.ok) {
+      // 中断失敗時はフォールバックとしてfetch接続をabort
       console.error('Failed to abort:', await response.text());
+      abortControllerRef.current?.abort();
     }
-    // 注意: setIsGenerating(false) は呼ばない
-    // SDKからの完了/中断イベントで自動的に更新される
+    // 成功時: SDKのinterrupt()がクエリを停止し、ストリームが正常に終了する
+    // isGeneratingはSSEストリームが閉じた時点で自動的に更新される
   } catch (err) {
+    // ネットワークエラー時はフォールバックとしてfetch接続をabort
     console.error('Failed to abort:', err);
+    abortControllerRef.current?.abort();
   }
 }, [session?.id]);
 ```
@@ -2678,3 +2694,5 @@ const stopGeneration = useCallback(async () => {
 3. **エラーハンドリング**: 中断失敗時のUIフィードバック（トースト通知等）を実装することを推奨。
 
 4. **重複リクエスト**: 同一セッションで複数のクエリが開始された場合、古いクエリは新しいクエリで置き換えられる。
+
+5. **フォールバック処理**: SDK中断API（`/api/chat/abort`）が失敗した場合や、セッションIDがない状態での停止要求時は、fetchのAbortControllerをabortすることでフォールバックする。これによりネットワーク接続を切断し、クライアント側でストリーミングを停止できる。
