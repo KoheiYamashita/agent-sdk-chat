@@ -98,6 +98,7 @@ export function ChatContainer({ sessionId }: ChatContainerProps) {
           onLoadMore={loadMoreMessages}
           pendingToolApproval={pendingToolApproval}
           onToolApprovalRespond={respondToToolApproval}
+          appearanceSettings={settings?.appearance}
         />
       )}
 

@@ -36,17 +36,21 @@ export function WorkspaceSelector({
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[400px] p-4">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-semibold mb-2">新しいチャットを開始</h2>
-        <p className="text-muted-foreground">
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-semibold mb-3 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+          新しいチャットを開始
+        </h2>
+        <p className="text-muted-foreground text-sm">
           作業スペースを選択してメッセージを入力してください
         </p>
       </div>
 
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md bg-card/80 hover:bg-card transition-colors duration-300">
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <FolderOpen className="h-5 w-5" />
+            <div className="p-1.5 rounded-md bg-foreground/10">
+              <FolderOpen className="h-4 w-4 text-foreground/80" />
+            </div>
             作業スペースを選択
           </CardTitle>
           <CardDescription>
@@ -54,15 +58,15 @@ export function WorkspaceSelector({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="border rounded-md h-[250px] overflow-hidden">
+          <div className="border border-border/50 rounded-lg h-[250px] overflow-hidden bg-background/50">
             <WorkspaceTree
               selectedPath={localSelectedPath}
               onSelect={handleSelect}
             />
           </div>
           {displayPath && (
-            <p className="text-xs text-muted-foreground mt-2">
-              選択中: <code className="bg-muted px-1 py-0.5 rounded">{displayPath}</code>
+            <p className="text-xs text-muted-foreground mt-3">
+              選択中: <code className="bg-foreground/10 text-foreground/80 px-1.5 py-0.5 rounded">{displayPath}</code>
             </p>
           )}
         </CardContent>

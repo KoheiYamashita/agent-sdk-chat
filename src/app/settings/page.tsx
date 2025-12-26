@@ -4,12 +4,13 @@ import { useSettings } from '@/hooks/useSettings';
 import { PermissionModeRadioGroup } from '@/components/settings/PermissionModeRadioGroup';
 import { DefaultToolsCheckboxGroup } from '@/components/settings/DefaultToolsCheckboxGroup';
 import { SandboxSettingsForm } from '@/components/settings/SandboxSettingsForm';
+import { AppearanceSettingsForm } from '@/components/settings/AppearanceSettingsForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { PermissionMode, SandboxSettings } from '@/types';
+import type { PermissionMode, SandboxSettings, AppearanceSettings } from '@/types';
 
 export default function SettingsPage() {
-  const { settings, isLoading, error, isSaving, updateGeneralSettings, saveSettings } = useSettings();
+  const { settings, isLoading, error, isSaving, updateGeneralSettings, updateAppearanceSettings, saveSettings } = useSettings();
 
   const handlePermissionModeChange = async (mode: PermissionMode) => {
     await updateGeneralSettings({ defaultPermissionMode: mode });
@@ -29,6 +30,10 @@ export default function SettingsPage() {
     await saveSettings({ sandbox });
   };
 
+  const handleAppearanceSettingsChange = async (appearance: AppearanceSettings) => {
+    await updateAppearanceSettings(appearance);
+  };
+
   if (error) {
     return (
       <div className="max-w-2xl mx-auto">
@@ -43,9 +48,12 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <Card>
+      <Card className="bg-card/80 hover:bg-card transition-colors duration-300">
         <CardHeader>
-          <CardTitle>一般設定</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <div className="h-1.5 w-1.5 rounded-full bg-foreground/50" />
+            一般設定
+          </CardTitle>
           <CardDescription>
             アプリケーションの基本設定を変更します。
           </CardDescription>
@@ -82,9 +90,12 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="bg-card/80 hover:bg-card transition-colors duration-300">
         <CardHeader>
-          <CardTitle>デフォルトで許可するツール</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <div className="h-1.5 w-1.5 rounded-full bg-foreground/50" />
+            デフォルトで許可するツール
+          </CardTitle>
           <CardDescription>
             チェックしたツールは新しいチャット開始時から自動的に許可されます。
             チェックしていないツールは毎回確認を求めます。
@@ -113,9 +124,12 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="bg-card/80 hover:bg-card transition-colors duration-300">
         <CardHeader>
-          <CardTitle>サンドボックス設定</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <div className="h-1.5 w-1.5 rounded-full bg-foreground/50" />
+            サンドボックス設定
+          </CardTitle>
           <CardDescription>
             Claude Codeの実行環境を制限し、安全性を高めます。
             サンドボックスモードでは、指定したワークスペース内でのみ動作します。
@@ -138,6 +152,40 @@ export default function SettingsPage() {
             <SandboxSettingsForm
               settings={settings?.sandbox ?? { enabled: true, workspacePath: './workspace' }}
               onChange={handleSandboxSettingsChange}
+              disabled={isSaving}
+            />
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="bg-card/80 hover:bg-card transition-colors duration-300">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <div className="h-1.5 w-1.5 rounded-full bg-foreground/50" />
+            外観設定
+          </CardTitle>
+          <CardDescription>
+            チャット画面に表示されるユーザーとClaudeのアイコンをカスタマイズします。
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="space-y-4">
+              {[1, 2].map((i) => (
+                <div key={i} className="space-y-3">
+                  <Skeleton className="h-4 w-24" />
+                  <div className="grid grid-cols-4 gap-2">
+                    {[1, 2, 3, 4].map((j) => (
+                      <Skeleton key={j} className="h-20 rounded-lg" />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <AppearanceSettingsForm
+              settings={settings?.appearance ?? { userIcon: 'user', userInitials: '', userImageUrl: '', botIcon: 'bot', botInitials: '', botImageUrl: '' }}
+              onChange={handleAppearanceSettingsChange}
               disabled={isSaving}
             />
           )}

@@ -67,10 +67,10 @@ export function SessionItem({ session, onDelete, onToggleArchive, onClick }: Ses
         href={`/chat/${session.id}`}
         onClick={onClick}
         className={cn(
-          'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors group w-full min-w-0',
+          'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 group w-full min-w-0',
           isActive
-            ? 'bg-accent text-accent-foreground'
-            : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+            ? 'bg-accent text-foreground'
+            : 'hover:bg-accent/50 text-muted-foreground hover:text-foreground'
         )}
       >
         <span className="flex-1 truncate">{session.title}</span>
@@ -79,7 +79,7 @@ export function SessionItem({ session, onDelete, onToggleArchive, onClick }: Ses
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 shrink-0"
+              className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();

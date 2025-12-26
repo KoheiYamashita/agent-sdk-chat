@@ -1,17 +1,75 @@
 'use client';
 
-import { User, Bot, Shield, ShieldCheck, ShieldX, ShieldAlert } from 'lucide-react';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import {
+  User,
+  UserCircle,
+  UserRound,
+  Smile,
+  Star,
+  Heart,
+  CircleUser,
+  Bot,
+  Brain,
+  Sparkles,
+  Cpu,
+  Zap,
+  Wand,
+  MessageCircle,
+  Shield,
+  ShieldCheck,
+  ShieldX,
+  ShieldAlert,
+} from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { ToolCallList } from './ToolCallList';
-import type { Message } from '@/types';
+import type { Message, AppearanceSettings, AvatarIconType, BotIconType } from '@/types';
 
 interface MessageItemProps {
   message: Message;
+  appearanceSettings?: AppearanceSettings;
 }
 
-export function MessageItem({ message }: MessageItemProps) {
+function getUserIconComponent(type: AvatarIconType) {
+  switch (type) {
+    case 'user': return User;
+    case 'user-circle': return UserCircle;
+    case 'user-round': return UserRound;
+    case 'circle-user': return CircleUser;
+    case 'smile': return Smile;
+    case 'star': return Star;
+    case 'heart': return Heart;
+    default: return User;
+  }
+}
+
+function getBotIconComponent(type: BotIconType) {
+  switch (type) {
+    case 'bot': return Bot;
+    case 'brain': return Brain;
+    case 'sparkles': return Sparkles;
+    case 'cpu': return Cpu;
+    case 'zap': return Zap;
+    case 'wand': return Wand;
+    case 'message-circle': return MessageCircle;
+    default: return Bot;
+  }
+}
+
+// セキュリティ: 画像URLの検証（data: URLまたは有効なhttps URLのみ許可）
+function isValidImageUrl(url: string): boolean {
+  if (!url) return false;
+  if (url.startsWith('data:image/')) return true;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+export function MessageItem({ message, appearanceSettings }: MessageItemProps) {
   const isUser = message.role === 'user';
   const isToolApproval = message.role === 'tool_approval';
 
@@ -19,19 +77,53 @@ export function MessageItem({ message }: MessageItemProps) {
     return <ToolApprovalMessage message={message} />;
   }
 
+  const userIcon = appearanceSettings?.userIcon ?? 'user';
+  const botIcon = appearanceSettings?.botIcon ?? 'bot';
+  const userInitials = appearanceSettings?.userInitials ?? '';
+  const botInitials = appearanceSettings?.botInitials ?? '';
+  const userImageUrl = appearanceSettings?.userImageUrl ?? '';
+  const botImageUrl = appearanceSettings?.botImageUrl ?? '';
+
+  const UserIcon = getUserIconComponent(userIcon);
+  const BotIcon = getBotIconComponent(botIcon);
+
+  const renderUserAvatar = () => {
+    if (userIcon === 'initials' && userInitials) {
+      return <span className="text-xs font-medium">{userInitials}</span>;
+    }
+    return <UserIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />;
+  };
+
+  const renderBotAvatar = () => {
+    if (botIcon === 'initials' && botInitials) {
+      return <span className="text-xs font-medium">{botInitials}</span>;
+    }
+    return <BotIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />;
+  };
+
+  // セキュリティ: 画像URLの検証を通過した場合のみ表示
+  const showUserImage = userIcon === 'image' && isValidImageUrl(userImageUrl);
+  const showBotImage = botIcon === 'image' && isValidImageUrl(botImageUrl);
+
   return (
     <div
       className={cn(
-        'flex gap-2 sm:gap-4 p-2 sm:p-4',
-        isUser ? 'bg-muted/50' : 'bg-background'
+        'flex gap-3 sm:gap-4 px-3 sm:px-6 py-4 sm:py-5 transition-colors',
+        isUser ? 'bg-muted/30' : 'bg-transparent'
       )}
     >
-      <Avatar className="h-6 w-6 sm:h-8 sm:w-8 shrink-0">
-        <AvatarFallback className={cn(isUser ? 'bg-primary' : 'bg-secondary')}>
-          {isUser ? <User className="h-3 w-3 sm:h-4 sm:w-4" /> : <Bot className="h-3 w-3 sm:h-4 sm:w-4" />}
+      <Avatar className="h-7 w-7 sm:h-8 sm:w-8 shrink-0 ring-2 ring-background shadow-sm">
+        {isUser && showUserImage && <AvatarImage src={userImageUrl} alt="User" />}
+        {!isUser && showBotImage && <AvatarImage src={botImageUrl} alt="Claude" />}
+        <AvatarFallback className={cn(
+          isUser
+            ? 'bg-gradient-to-br from-primary to-primary/80 text-primary-foreground'
+            : 'bg-gradient-to-br from-secondary to-secondary/80'
+        )}>
+          {isUser ? renderUserAvatar() : renderBotAvatar()}
         </AvatarFallback>
       </Avatar>
-      <div className="flex-1 space-y-2 overflow-hidden min-w-0">
+      <div className="flex-1 space-y-3 overflow-hidden min-w-0 pt-0.5">
         <MarkdownRenderer content={message.content} />
         {message.toolCalls && message.toolCalls.length > 0 && (
           <ToolCallList toolCalls={message.toolCalls} />

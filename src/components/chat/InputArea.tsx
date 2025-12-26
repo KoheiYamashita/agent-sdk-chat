@@ -57,13 +57,13 @@ export function InputArea({
   }, [onStop]);
 
   return (
-    <div className="border-t bg-background">
+    <div className="border-t border-border/50 bg-gradient-to-t from-background to-background/80 backdrop-blur-sm">
       <PermissionModeSelector
         value={permissionMode}
         onChange={setPermissionMode}
         disabled={disabled || isGenerating}
       />
-      <div className="p-2 sm:p-4">
+      <div className="p-3 sm:p-4">
           <div className="relative">
             <Textarea
               ref={textareaRef}
@@ -71,7 +71,7 @@ export function InputArea({
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="メッセージを入力... (Shift+Enter送信)"
-              className="min-h-[60px] max-h-[200px] resize-none pr-12 sm:pr-14 text-sm sm:text-base"
+              className="min-h-[56px] max-h-[200px] resize-none pr-14 sm:pr-16 text-sm sm:text-base bg-card/50 border-border/40 focus-visible:bg-card"
               disabled={disabled || isGenerating}
               rows={1}
             />
@@ -82,6 +82,7 @@ export function InputArea({
                   variant="destructive"
                   onClick={handleStopClick}
                   title="生成を停止"
+                  className="rounded-lg"
                 >
                   <Square className="h-4 w-4" />
                 </Button>
@@ -91,13 +92,14 @@ export function InputArea({
                   onClick={handleSubmit}
                   disabled={!input.trim() || disabled}
                   title="送信"
+                  className="rounded-lg"
                 >
                   <Send className="h-4 w-4" />
                 </Button>
               )}
             </div>
           </div>
-          <p className="text-xs text-muted-foreground mt-2 text-center hidden sm:block">
+          <p className="text-xs text-muted-foreground/70 mt-3 text-center hidden sm:block">
             Claude Code Web UI - Claude Agent SDK を使用
           </p>
       </div>

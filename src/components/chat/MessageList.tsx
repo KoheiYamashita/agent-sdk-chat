@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2 } from 'lucide-react';
 import { MessageItem } from './MessageItem';
 import { ToolApprovalCard } from './ToolApprovalCard';
-import type { Message, ToolApprovalRequest, ToolApprovalResponse } from '@/types';
+import type { Message, ToolApprovalRequest, ToolApprovalResponse, AppearanceSettings } from '@/types';
 
 interface MessageListProps {
   messages: Message[];
@@ -16,6 +16,7 @@ interface MessageListProps {
   onLoadMore: () => void;
   pendingToolApproval?: ToolApprovalRequest | null;
   onToolApprovalRespond?: (response: ToolApprovalResponse) => void;
+  appearanceSettings?: AppearanceSettings;
 }
 
 export function MessageList({
@@ -26,6 +27,7 @@ export function MessageList({
   onLoadMore,
   pendingToolApproval,
   onToolApprovalRespond,
+  appearanceSettings,
 }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
@@ -130,7 +132,7 @@ export function MessageList({
         )}
 
         {messages.map((message) => (
-          <MessageItem key={message.id} message={message} />
+          <MessageItem key={message.id} message={message} appearanceSettings={appearanceSettings} />
         ))}
 
         {isLoading && (
