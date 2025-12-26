@@ -75,7 +75,10 @@ src/
 │   │       └── page.tsx
 │   ├── settings/                 # 設定ページ
 │   │   ├── layout.tsx            # 設定レイアウト
-│   │   └── page.tsx              # 設定メイン（権限モード、デフォルトツール等）
+│   │   └── page.tsx              # 設定メイン（権限モード、デフォルトツール、外観設定等）
+│   ├── usage/                    # 使用量表示ページ
+│   │   ├── layout.tsx            # 使用量レイアウト
+│   │   └── page.tsx              # 使用量メイン
 │   ├── api/                      # API Routes
 │   │   ├── chat/                 # チャットAPI
 │   │   │   ├── route.ts          # POST /api/chat
@@ -97,6 +100,13 @@ src/
 │   │   │   ├── route.ts          # GET/POST /api/agents
 │   │   │   └── [id]/
 │   │   │       └── route.ts      # GET/PATCH/DELETE /api/agents/[id]
+│   │   ├── workspace/            # ワークスペース管理API
+│   │   │   ├── list/
+│   │   │   │   └── route.ts      # GET /api/workspace/list
+│   │   │   └── create/
+│   │   │       └── route.ts      # POST /api/workspace/create
+│   │   ├── usage/                # 使用量API
+│   │   │   └── route.ts          # GET /api/usage
 │   │   └── health/               # ヘルスチェックAPI
 │   │       └── route.ts          # GET /api/health
 │   ├── page.tsx                  # ルートページ（/chatへリダイレクト）
@@ -137,9 +147,16 @@ src/
 │   │   ├── Sidebar.tsx           # サイドバーメイン
 │   │   ├── SessionList.tsx       # セッション一覧
 │   │   └── SessionItem.tsx       # セッションアイテム
-│   └── settings/                 # 設定関連
-│       ├── PermissionModeRadioGroup.tsx  # 権限モード設定
-│       └── DefaultToolsCheckboxGroup.tsx # デフォルトツール選択
+│   ├── settings/                 # 設定関連
+│   │   ├── PermissionModeRadioGroup.tsx  # 権限モード設定
+│   │   ├── DefaultToolsCheckboxGroup.tsx # デフォルトツール選択
+│   │   └── AppearanceSettingsForm.tsx    # 外観設定（アイコンカスタマイズ等）
+│   └── workspace/                # ワークスペース関連
+│       ├── index.ts              # エクスポート
+│       ├── WorkspaceBadge.tsx    # ワークスペースバッジ表示
+│       ├── WorkspaceSelector.tsx # ワークスペース選択UI
+│       ├── WorkspaceTree.tsx     # ディレクトリツリー
+│       └── WorkspaceTreeItem.tsx # ツリーアイテム
 ├── contexts/                     # React Context
 │   └── SidebarContext.tsx        # サイドバー状態管理
 ├── lib/                          # ユーティリティ
@@ -158,12 +175,15 @@ src/
 ├── hooks/                        # カスタムフック
 │   ├── useChat.ts                # チャット管理
 │   ├── useSessions.ts            # セッション管理
-│   └── useSettings.ts            # 設定管理
+│   ├── useSettings.ts            # 設定管理
+│   └── useUsage.ts               # 使用量取得
 ├── types/                        # 型定義
 │   ├── index.ts                  # 共通型定義
 │   ├── chat.ts                   # チャット関連型
 │   ├── session.ts                # セッション関連型
-│   └── settings.ts               # 設定関連型
+│   ├── settings.ts               # 設定関連型
+│   ├── workspace.ts              # ワークスペース関連型
+│   └── usage.ts                  # 使用量関連型
 └── generated/                    # 自動生成ファイル
     └── prisma/                   # Prisma生成コード
 ```
@@ -410,6 +430,7 @@ CMD ["node", "server.js"]
 | メッセージ差分ロード | `src/app/api/sessions/[id]/messages/route.ts` | カーソルベースページネーション |
 | サイドバー横幅調整 | `src/contexts/SidebarContext.tsx` | ドラッグ可能 |
 | 新規チャットリセット | `src/contexts/SidebarContext.tsx` | `/chat`ページで新規チャットボタン押下時に状態リセット |
+| セッション削除確認 | `src/components/sidebar/SessionItem.tsx` | AlertDialogによる確認、削除後リダイレクト |
 
 #### Claude Agent SDK統合
 | 機能 | ファイル | 備考 |
@@ -438,6 +459,32 @@ CMD ["node", "server.js"]
 | 設定フック | `src/hooks/useSettings.ts` | React Query使用 |
 | デフォルトツール選択UI | `src/components/settings/DefaultToolsCheckboxGroup.tsx` | カテゴリ別チェックボックス |
 | ビルトインツール定義 | `src/lib/constants/tools.ts` | ツール名、説明、危険度 |
+
+#### 外観設定機能
+| 機能 | ファイル | 備考 |
+|------|---------|------|
+| 外観設定UI | `src/components/settings/AppearanceSettingsForm.tsx` | ユーザー/Claudeアイコンのカスタマイズ |
+| アイコン種類選択 | `src/components/settings/AppearanceSettingsForm.tsx` | デフォルト、イニシャル、カスタム画像 |
+| ユーザー表示名設定 | `src/app/settings/page.tsx` | チャット画面で表示される名前 |
+| ユーザー名・モデル名表示 | `src/components/chat/MessageItem.tsx` | メッセージにユーザー名・モデル名を表示 |
+
+#### ワークスペース機能
+| 機能 | ファイル | 備考 |
+|------|---------|------|
+| ワークスペース一覧API | `src/app/api/workspace/list/route.ts` | ディレクトリ一覧取得 |
+| ワークスペース作成API | `src/app/api/workspace/create/route.ts` | ディレクトリ作成 |
+| ワークスペースバッジ | `src/components/workspace/WorkspaceBadge.tsx` | ChatHeaderに表示 |
+| ワークスペース選択UI | `src/components/workspace/WorkspaceSelector.tsx` | セッションごとにワークスペース設定 |
+| ディレクトリツリー | `src/components/workspace/WorkspaceTree.tsx` | フォルダ構造表示 |
+| セキュリティチェック | `src/app/api/workspace/list/route.ts` | ベースワークスペース外へのアクセス防止 |
+
+#### 使用量表示機能
+| 機能 | ファイル | 備考 |
+|------|---------|------|
+| 使用量API | `src/app/api/usage/route.ts` | Anthropic APIから使用量データ取得 |
+| 使用量表示ページ | `src/app/usage/page.tsx` | 5時間/7日間の使用量表示 |
+| 使用量フック | `src/hooks/useUsage.ts` | 使用量データ取得 |
+| サイドバー使用量ボタン | `src/components/sidebar/Sidebar.tsx` | 使用量ページへのリンク |
 
 #### MCP管理API
 | 機能 | ファイル | 備考 |
@@ -474,7 +521,7 @@ CMD ["node", "server.js"]
 | MCP設定UI | 高 | サーバー追加・編集・削除（APIは実装済み） |
 | Subagent設定UI | 中 | カスタムエージェント定義（APIは実装済み） |
 | Skills設定UI | 中 | スラッシュコマンド設定 |
-| 一般設定UI | 中 | テーマ、言語、デフォルトモデル |
+| 一般設定UI | 中 | 言語、デフォルトモデル（外観設定は実装済み） |
 
 #### チャット拡張
 | 機能 | 優先度 | 備考 |
@@ -492,7 +539,7 @@ CMD ["node", "server.js"]
 #### UI/UX
 | 機能 | 優先度 | 備考 |
 |------|--------|------|
-| ダークモード | 中 | テーマ切替 |
+| ダークモード切替UI | 中 | テーマ切替ボタン（ダークテーマ自体は実装済み） |
 | レスポンシブデザイン | 中 | モバイル対応（一部実装済み） |
 | エラートースト通知 | 中 | 操作フィードバック |
 
@@ -537,17 +584,23 @@ CMD ["node", "server.js"]
 - [x] ストリーミングテキスト表示
 
 #### Phase 5: 設定UI 🚧 進行中
+- [x] 外観設定UI（アイコンカスタマイズ、ユーザー表示名）
 - [ ] MCP設定UI（APIは実装済み）
 - [ ] Subagent設定UI（APIは実装済み）
 - [ ] Skills設定UI
 
-#### Phase 6: UI/UX改善
-- [ ] ダークモード
+#### Phase 6: ワークスペース・使用量 ✅ 完了
+- [x] ワークスペース選択機能
+- [x] Claude Code使用量表示機能
+- [x] ユーザー名・モデル名表示
+
+#### Phase 7: UI/UX改善
+- [ ] ダークモード切替UI
 - [ ] レスポンシブデザイン強化
 - [ ] セッション検索
 - [ ] エラー通知改善
 
-#### Phase 7: 品質・最適化
+#### Phase 8: 品質・最適化
 - [ ] テスト追加
 - [ ] 入力バリデーション（Zod）
 - [ ] セキュリティ強化

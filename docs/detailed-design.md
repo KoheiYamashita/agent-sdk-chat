@@ -1065,6 +1065,9 @@ __tests__/
 | `/api/agents/[id]` | GET | ✅ 実装済 | `src/app/api/agents/[id]/route.ts` |
 | `/api/agents/[id]` | PATCH | ✅ 実装済 | `src/app/api/agents/[id]/route.ts` |
 | `/api/agents/[id]` | DELETE | ✅ 実装済 | `src/app/api/agents/[id]/route.ts` |
+| `/api/workspace/list` | GET | ✅ 実装済 | `src/app/api/workspace/list/route.ts` |
+| `/api/workspace/create` | POST | ✅ 実装済 | `src/app/api/workspace/create/route.ts` |
+| `/api/usage` | GET | ✅ 実装済 | `src/app/api/usage/route.ts` |
 | `/api/health` | GET | ✅ 実装済 | `src/app/api/health/route.ts` |
 
 ### 10.2 コンポーネント実装状況
@@ -1075,7 +1078,7 @@ __tests__/
 | ChatContainer | ✅ 実装済 | `src/components/chat/ChatContainer.tsx` | - |
 | ChatHeader | ✅ 実装済 | `src/components/chat/ChatHeader.tsx` | セッションタイトル表示 |
 | MessageList | ✅ 実装済 | `src/components/chat/MessageList.tsx` | - |
-| MessageItem | ✅ 実装済 | `src/components/chat/MessageItem.tsx` | Markdown対応済み |
+| MessageItem | ✅ 実装済 | `src/components/chat/MessageItem.tsx` | Markdown対応、ユーザー名・モデル名表示 |
 | InputArea | ✅ 実装済 | `src/components/chat/InputArea.tsx` | 権限モード選択統合済み |
 | PermissionModeSelector | ✅ 実装済 | `src/components/chat/PermissionModeSelector.tsx` | チャット入力欄上部 |
 | ToolApprovalCard | ✅ 実装済 | `src/components/chat/ToolApprovalCard.tsx` | インライン表示、キーボードショートカット対応 |
@@ -1087,22 +1090,31 @@ __tests__/
 #### サイドバー関連
 | コンポーネント | 状況 | ファイル | 備考 |
 |---------------|------|----------|------|
-| Sidebar | ✅ 実装済 | `src/components/sidebar/Sidebar.tsx` | 横幅調整対応 |
+| Sidebar | ✅ 実装済 | `src/components/sidebar/Sidebar.tsx` | 横幅調整対応、使用量ボタン |
 | SessionList | ✅ 実装済 | `src/components/sidebar/SessionList.tsx` | 差分ロード対応 |
-| SessionItem | ✅ 実装済 | `src/components/sidebar/SessionItem.tsx` | メニュー付き |
+| SessionItem | ✅ 実装済 | `src/components/sidebar/SessionItem.tsx` | メニュー付き、削除確認AlertDialog |
 | SearchBar | ❌ 未実装 | - | セッション検索 |
 
 #### 設定関連
 | コンポーネント | 状況 | ファイル | 備考 |
 |---------------|------|----------|------|
 | SettingsLayout | ✅ 実装済 | `src/app/settings/layout.tsx` | 設定ページレイアウト |
-| SettingsPage | ✅ 実装済 | `src/app/settings/page.tsx` | 権限モード、デフォルトツール、サンドボックス設定 |
+| SettingsPage | ✅ 実装済 | `src/app/settings/page.tsx` | 権限モード、デフォルトツール、外観設定 |
 | PermissionModeRadioGroup | ✅ 実装済 | `src/components/settings/PermissionModeRadioGroup.tsx` | 設定画面用 |
 | DefaultToolsCheckboxGroup | ✅ 実装済 | `src/components/settings/DefaultToolsCheckboxGroup.tsx` | カテゴリ別ツール選択 |
 | SandboxSettingsForm | ✅ 実装済 | `src/components/settings/SandboxSettingsForm.tsx` | サンドボックス設定（有効/無効、ワークスペースパス） |
+| AppearanceSettingsForm | ✅ 実装済 | `src/components/settings/AppearanceSettingsForm.tsx` | 外観設定（アイコン、表示名） |
 | MCPConfig | ❌ 未実装 | - | MCP設定UI（APIは実装済み） |
 | AgentsConfig | ❌ 未実装 | - | Subagent設定UI（APIは実装済み） |
 | SkillsConfig | ❌ 未実装 | - | Skills設定 |
+
+#### ワークスペース関連
+| コンポーネント | 状況 | ファイル | 備考 |
+|---------------|------|----------|------|
+| WorkspaceBadge | ✅ 実装済 | `src/components/workspace/WorkspaceBadge.tsx` | ChatHeaderに表示 |
+| WorkspaceSelector | ✅ 実装済 | `src/components/workspace/WorkspaceSelector.tsx` | セッションごとにワークスペース設定 |
+| WorkspaceTree | ✅ 実装済 | `src/components/workspace/WorkspaceTree.tsx` | ディレクトリツリー表示 |
+| WorkspaceTreeItem | ✅ 実装済 | `src/components/workspace/WorkspaceTreeItem.tsx` | ツリーアイテム |
 
 #### 共通UI
 | コンポーネント | 状況 | ファイル | 備考 |
@@ -1135,6 +1147,7 @@ __tests__/
 | useChat | ✅ 実装済 | `src/hooks/useChat.ts` | React Query使用、permissionMode対応、ツール承認対応 |
 | useSessions | ✅ 実装済 | `src/hooks/useSessions.ts` | セッション一覧取得、差分ロード対応 |
 | useSettings | ✅ 実装済 | `src/hooks/useSettings.ts` | 設定管理、デフォルトツール対応 |
+| useUsage | ✅ 実装済 | `src/hooks/useUsage.ts` | Claude Code使用量取得 |
 | useMCP | ❌ 未実装 | - | MCP管理（APIは実装済み） |
 | useAgents | ❌ 未実装 | - | エージェント管理（APIは実装済み） |
 
@@ -1146,8 +1159,10 @@ __tests__/
 | 新規チャット | ✅ 実装済 | `src/app/chat/page.tsx` | - |
 | セッションチャット | ✅ 実装済 | `src/app/chat/[sessionId]/page.tsx` | - |
 | チャットレイアウト | ✅ 実装済 | `src/app/chat/layout.tsx` | サイドバー付き |
-| 設定メイン | ✅ 実装済 | `src/app/settings/page.tsx` | 権限モード、デフォルトツール設定 |
+| 設定メイン | ✅ 実装済 | `src/app/settings/page.tsx` | 権限モード、デフォルトツール、外観設定 |
 | 設定レイアウト | ✅ 実装済 | `src/app/settings/layout.tsx` | - |
+| 使用量表示 | ✅ 実装済 | `src/app/usage/page.tsx` | 5時間/7日間使用量 |
+| 使用量レイアウト | ✅ 実装済 | `src/app/usage/layout.tsx` | - |
 | MCP設定 | ❌ 未実装 | - | APIは実装済み |
 | Subagent設定 | ❌ 未実装 | - | APIは実装済み |
 | Skills設定 | ❌ 未実装 | - | - |
@@ -1190,6 +1205,10 @@ __tests__/
 - ✅ **権限制御**: [11章参照](#11-権限モード切替ui設計)
 - ✅ **ツール実行確認**: [12章参照](#12-ツール実行確認ui設計)
 - ✅ **MCP/エージェントAPI**: GET/POST/PATCH/DELETE完全実装
+- ✅ **ワークスペース選択機能**: セッションごとにワークスペース設定可能
+- ✅ **使用量表示機能**: Claude Code使用量（5時間/7日間）表示
+- ✅ **外観設定機能**: ユーザー/Claudeアイコンのカスタマイズ
+- ✅ **ユーザー名・モデル名表示**: メッセージにユーザー名・モデル名を表示
 
 ---
 
