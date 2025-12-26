@@ -394,7 +394,7 @@ CMD ["node", "server.js"]
 | メッセージ送受信 | `src/app/api/chat/route.ts` | SSEストリーミング対応 |
 | チャット履歴表示 | `src/hooks/useChat.ts` | React Query使用 |
 | ストリーミングレスポンス | `src/app/api/chat/route.ts` | Server-Sent Events |
-| 生成中止機能 | `src/hooks/useChat.ts` | AbortController使用 |
+| 生成中断機能 | `src/hooks/useChat.ts`, `src/lib/claude/session-manager.ts` | SDK interrupt()使用 |
 | Markdownレンダリング | `src/components/chat/MarkdownRenderer.tsx` | react-markdown, rehype-highlight使用 |
 | ストリーミングテキスト表示 | `src/components/chat/MessageItem.tsx` | リアルタイム文字表示 |
 
@@ -480,7 +480,6 @@ CMD ["node", "server.js"]
 |------|--------|------|
 | シンキング表示 | 中 | Claude思考過程の表示 |
 | ファイルアップロード | 中 | 画像・ファイル添付 |
-| 生成中止のClaude側反映 | 中 | SDK abort機能 |
 
 #### セッション拡張
 | 機能 | 優先度 | 備考 |

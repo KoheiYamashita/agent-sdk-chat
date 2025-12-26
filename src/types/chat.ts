@@ -88,3 +88,14 @@ export interface MessageListResponse {
   nextCursor: string | null;
   hasMore: boolean;
 }
+
+/** 中断リクエスト */
+export interface AbortRequest {
+  sessionId: string;
+}
+
+/** 中断レスポンス */
+export interface AbortResponse {
+  success: boolean;
+  message?: string;
+}

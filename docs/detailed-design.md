@@ -2365,3 +2365,316 @@ canUseTool: async (toolName: string, input: Record<string, unknown>) => {
      │◄──────────────│               │               │
      │               │               │               │
 ```
+
+---
+
+## 14. セッション中断機能設計
+
+### 14.1 概要
+
+ユーザーが停止ボタンを押した際に、フロントエンドだけでなくバックエンドのSDKクエリも適切に中断する機能。
+
+### 14.2 問題点（修正前）
+
+修正前の実装では以下の問題があった：
+
+1. **UIのみ停止**: 停止ボタンを押すとfetchのAbortControllerをabortするだけで、UIは停止状態になる
+2. **バックエンド継続**: SDKの`query()`は継続して実行される
+3. **リソース浪費**: APIトークンが消費され続け、ツール実行も継続される
+4. **状態の乖離**: UIとバックエンドの状態が一致しない
+
+### 14.3 解決策
+
+1. **Queryオブジェクト保持**: セッションごとにSDKのQueryオブジェクトを保持
+2. **中断API**: 停止ボタン押下時にバックエンドに中断リクエストを送信
+3. **SDK interrupt()**: バックエンドでSDKの`interrupt()`メソッドを呼び出し
+4. **状態同期**: SDKからの完了/中断イベントでUIを更新
+
+### 14.4 アーキテクチャ
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Client (Browser)                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│  ┌─────────────────┐    ┌─────────────────────────────────────┐ │
+│  │   停止ボタン    │───►│ useChat Hook                        │ │
+│  │   (Square)      │    │ - stopGeneration()                  │ │
+│  └─────────────────┘    │   → POST /api/chat/abort            │ │
+│                         │ - isGenerating (SDKイベントで更新)   │ │
+│                         └──────────────┬──────────────────────┘ │
+│                                         │                        │
+│                                         │ POST /api/chat/abort   │
+│                                         ▼                        │
+├─────────────────────────────────────────────────────────────────┤
+│                        Server (API Routes)                       │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │ session-manager.ts                                          │ │
+│  │                                                              │ │
+│  │  activeQueries: Map<sessionId, Query>                       │ │
+│  │                                                              │ │
+│  │  registerQuery(sessionId, query)                            │ │
+│  │  unregisterQuery(sessionId)                                 │ │
+│  │  interruptQuery(sessionId) → query.interrupt()              │ │
+│  │  getActiveQueryCount()                                      │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │ /api/chat/route.ts                                          │ │
+│  │                                                              │ │
+│  │  const queryResult = query({ ... });                        │ │
+│  │  registerQuery(session.id, queryResult);                    │ │
+│  │                                                              │ │
+│  │  try {                                                       │ │
+│  │    for await (const msg of queryResult) { ... }             │ │
+│  │  } finally {                                                 │ │
+│  │    unregisterQuery(session.id);                             │ │
+│  │  }                                                           │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │ /api/chat/abort/route.ts                                    │ │
+│  │                                                              │ │
+│  │  POST: { sessionId } → interruptQuery(sessionId)            │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 14.5 通信フロー
+
+```
+Client                          Server                      Claude SDK
+   │                               │                              │
+   │  POST /api/chat              │                              │
+   │──────────────────────────────►│                              │
+   │                               │  queryResult = query(...)    │
+   │                               │  registerQuery(sessionId,    │
+   │                               │    queryResult)              │
+   │                               │─────────────────────────────►│
+   │                               │                              │
+   │  SSE: message/tool events    │◄─────────────────────────────│
+   │◄──────────────────────────────│                              │
+   │                               │                              │
+   │  [User clicks Stop]          │                              │
+   │                               │                              │
+   │  POST /api/chat/abort        │                              │
+   │  { sessionId }               │                              │
+   │──────────────────────────────►│                              │
+   │                               │  queryResult.interrupt()     │
+   │                               │─────────────────────────────►│
+   │                               │                              │
+   │  200 OK                      │                              │
+   │◄──────────────────────────────│                              │
+   │                               │                              │
+   │                               │  (query stops, returns)      │
+   │                               │◄─────────────────────────────│
+   │                               │                              │
+   │  SSE: [DONE] or result       │                              │
+   │◄──────────────────────────────│                              │
+   │                               │                              │
+   │  [UI updates isGenerating    │                              │
+   │   based on SSE events]       │                              │
+   │                               │                              │
+```
+
+### 14.6 型定義
+
+```typescript
+// types/index.ts に追加
+export interface AbortRequest {
+  sessionId: string;
+}
+
+export interface AbortResponse {
+  success: boolean;
+  message?: string;
+}
+```
+
+### 14.7 サーバー側実装
+
+#### 14.7.1 session-manager.ts
+
+```typescript
+// src/lib/claude/session-manager.ts
+import type { Query } from '@anthropic-ai/claude-agent-sdk';
+
+class SessionManager {
+  private activeQueries = new Map<string, Query>();
+
+  /**
+   * Queryオブジェクトを登録
+   */
+  registerQuery(sessionId: string, query: Query): void {
+    // 既存のクエリがあれば先に中断
+    if (this.activeQueries.has(sessionId)) {
+      console.warn(`Session ${sessionId} already has an active query, will be replaced`);
+    }
+    this.activeQueries.set(sessionId, query);
+  }
+
+  /**
+   * Queryオブジェクトを登録解除
+   */
+  unregisterQuery(sessionId: string): void {
+    this.activeQueries.delete(sessionId);
+  }
+
+  /**
+   * クエリを中断
+   */
+  async interruptQuery(sessionId: string): Promise<boolean> {
+    const query = this.activeQueries.get(sessionId);
+    if (!query) {
+      return false;
+    }
+
+    try {
+      await query.interrupt();
+      return true;
+    } catch (error) {
+      console.error(`Failed to interrupt query for session ${sessionId}:`, error);
+      return false;
+    }
+  }
+
+  /**
+   * セッションにアクティブなクエリがあるか確認
+   */
+  hasActiveQuery(sessionId: string): boolean {
+    return this.activeQueries.has(sessionId);
+  }
+
+  /**
+   * アクティブなクエリ数を取得
+   */
+  getActiveQueryCount(): number {
+    return this.activeQueries.size;
+  }
+}
+
+export const sessionManager = new SessionManager();
+```
+
+#### 14.7.2 /api/chat/abort/route.ts
+
+```typescript
+// src/app/api/chat/abort/route.ts
+import { NextResponse } from 'next/server';
+import { sessionManager } from '@/lib/claude/session-manager';
+import type { AbortRequest, AbortResponse } from '@/types';
+
+export async function POST(request: Request) {
+  try {
+    const body = (await request.json()) as AbortRequest;
+    const { sessionId } = body;
+
+    if (!sessionId) {
+      return NextResponse.json<AbortResponse>(
+        { success: false, message: 'sessionId is required' },
+        { status: 400 }
+      );
+    }
+
+    const success = await sessionManager.interruptQuery(sessionId);
+
+    if (!success) {
+      return NextResponse.json<AbortResponse>(
+        { success: false, message: 'No active query found for this session' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json<AbortResponse>({ success: true });
+  } catch (error) {
+    console.error('Abort error:', error);
+    return NextResponse.json<AbortResponse>(
+      { success: false, message: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
+  }
+}
+```
+
+#### 14.7.3 /api/chat/route.ts の更新
+
+```typescript
+// src/app/api/chat/route.ts
+import { sessionManager } from '@/lib/claude/session-manager';
+
+// ... 既存のコード ...
+
+// SSEストリーム内で
+const stream = new ReadableStream({
+  async start(controller) {
+    // ... 既存のセットアップ ...
+
+    // Queryオブジェクトを作成して登録
+    const queryResult = query(queryOptions);
+    sessionManager.registerQuery(session.id, queryResult);
+
+    try {
+      for await (const msg of queryResult) {
+        // ... 既存のメッセージ処理 ...
+      }
+    } catch (error) {
+      // エラー処理
+    } finally {
+      // 必ず登録解除
+      sessionManager.unregisterQuery(session.id);
+      controller.close();
+    }
+  }
+});
+```
+
+### 14.8 クライアント側実装
+
+#### 14.8.1 useChat.ts の更新
+
+```typescript
+// src/hooks/useChat.ts
+
+const stopGeneration = useCallback(async () => {
+  if (!session?.id) return;
+
+  try {
+    const response = await fetch('/api/chat/abort', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: session.id }),
+    });
+
+    if (!response.ok) {
+      console.error('Failed to abort:', await response.text());
+    }
+    // 注意: setIsGenerating(false) は呼ばない
+    // SDKからの完了/中断イベントで自動的に更新される
+  } catch (err) {
+    console.error('Failed to abort:', err);
+  }
+}, [session?.id]);
+```
+
+### 14.9 実装ファイル一覧
+
+| ファイル | 種別 | 説明 |
+|---------|------|------|
+| `src/lib/claude/session-manager.ts` | 新規 | Queryオブジェクト管理 |
+| `src/app/api/chat/abort/route.ts` | 新規 | 中断APIエンドポイント |
+| `src/app/api/chat/route.ts` | 更新 | Query登録/解除の追加 |
+| `src/hooks/useChat.ts` | 更新 | stopGenerationの修正 |
+| `src/types/index.ts` | 更新 | AbortRequest/Response型追加 |
+
+### 14.10 注意事項
+
+1. **状態の一貫性**: UIの`isGenerating`状態は、SDKからのイベント（`done`、`error`等）で更新される。停止ボタン押下時に手動で`false`に設定しない。
+
+2. **タイムアウト**: `interrupt()`は即座に完了しない場合がある。クライアント側でタイムアウト処理を実装することを検討。
+
+3. **エラーハンドリング**: 中断失敗時のUIフィードバック（トースト通知等）を実装することを推奨。
+
+4. **重複リクエスト**: 同一セッションで複数のクエリが開始された場合、古いクエリは新しいクエリで置き換えられる。

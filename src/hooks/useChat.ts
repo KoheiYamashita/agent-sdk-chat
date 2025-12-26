@@ -464,10 +464,34 @@ export function useChat({ sessionId }: UseChatOptions = {}): UseChatReturn {
     [session, queryClient]
   );
 
-  const stopGeneration = useCallback(() => {
-    abortControllerRef.current?.abort();
-    setIsGenerating(false);
-  }, []);
+  const stopGeneration = useCallback(async () => {
+    if (!session?.id) {
+      // No session, just abort the fetch
+      abortControllerRef.current?.abort();
+      return;
+    }
+
+    try {
+      // Request backend to interrupt the SDK query
+      const response = await fetch('/api/chat/abort', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: session.id }),
+      });
+
+      if (!response.ok) {
+        // Interrupt failed - fallback to aborting the fetch connection
+        console.error('Failed to abort:', await response.text());
+        abortControllerRef.current?.abort();
+      }
+      // On success: SDK's interrupt() will stop the query and stream will end normally
+      // isGenerating will be updated automatically when the SSE stream closes
+    } catch (err) {
+      // Network error - fallback to aborting the fetch connection
+      console.error('Failed to abort:', err);
+      abortControllerRef.current?.abort();
+    }
+  }, [session?.id]);
 
   const respondToToolApproval = useCallback(
     async (response: ToolApprovalResponse) => {

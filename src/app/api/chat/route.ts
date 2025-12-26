@@ -4,6 +4,7 @@ import fs from 'fs/promises';
 import { query, type SDKMessage } from '@anthropic-ai/claude-agent-sdk';
 import { prisma } from '@/lib/db/prisma';
 import { approvalManager } from '@/lib/approval-manager';
+import { sessionManager } from '@/lib/claude/session-manager';
 import { generateUUID } from '@/lib/utils/uuid';
 import { getAllToolNames, getDangerousToolNames } from '@/lib/constants/tools';
 import type { ChatRequest, ChatEvent, MessageMetadata, ToolApprovalRequest, SandboxSettings } from '@/types';
@@ -215,7 +216,12 @@ export async function POST(request: Request) {
           output?: unknown;
         }> = [];
 
-        for await (const msg of query(queryOptions)) {
+        // Create query and register it for potential interruption
+        const queryResult = query(queryOptions);
+        sessionManager.registerQuery(session.id, queryResult);
+
+        try {
+        for await (const msg of queryResult) {
           const events = processSDKMessage(msg);
           for (const event of events) {
             sendEvent(event);
@@ -317,16 +323,36 @@ export async function POST(request: Request) {
             });
           }
         }
+        } finally {
+          // Always unregister the query when done (success or interrupt)
+          sessionManager.unregisterQuery(session.id);
+        }
 
-        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-        controller.close();
+        if (!isControllerClosed) {
+          try {
+            controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+            controller.close();
+            isControllerClosed = true;
+          } catch {
+            // Controller may already be closed by client disconnect
+          }
+        }
       } catch (error) {
         console.error('Chat error:', error);
+        // Ensure query is unregistered on error
+        sessionManager.unregisterQuery(session.id);
         sendEvent({
           type: 'error',
           message: error instanceof Error ? error.message : 'Unknown error',
         });
-        controller.close();
+        if (!isControllerClosed) {
+          try {
+            controller.close();
+            isControllerClosed = true;
+          } catch {
+            // Controller may already be closed
+          }
+        }
       }
     },
   });
