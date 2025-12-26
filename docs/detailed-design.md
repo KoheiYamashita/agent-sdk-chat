@@ -510,6 +510,11 @@ export function Sidebar() {
 ### 3.1 useChat
 ```typescript
 // hooks/useChat.ts
+interface UseChatOptions {
+  sessionId?: string;
+  resetKey?: number;  // 変更時に全状態をリセット（新規チャットボタン用）
+}
+
 interface UseChatReturn {
   messages: Message[];
   isLoading: boolean;
@@ -519,7 +524,7 @@ interface UseChatReturn {
   stopGeneration: () => void;
 }
 
-export function useChat(sessionId?: string): UseChatReturn {
+export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseChatReturn {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

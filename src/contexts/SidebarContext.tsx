@@ -17,6 +17,9 @@ interface SidebarContextValue {
   setWidth: (width: number, saveToStorage?: boolean) => void;
   minWidth: number;
   maxWidth: number;
+  // Chat reset functionality
+  chatResetKey: number;
+  resetChat: () => void;
 }
 
 const SidebarContext = createContext<SidebarContextValue | null>(null);
@@ -24,6 +27,7 @@ const SidebarContext = createContext<SidebarContextValue | null>(null);
 export function SidebarProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [width, setWidthState] = useState(DEFAULT_WIDTH);
+  const [chatResetKey, setChatResetKey] = useState(0);
 
   useEffect(() => {
     const savedWidth = localStorage.getItem(SIDEBAR_WIDTH_KEY);
@@ -48,10 +52,15 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const resetChat = useCallback(() => {
+    setChatResetKey((prev) => prev + 1);
+  }, []);
+
   return (
     <SidebarContext.Provider value={{
       isOpen, open, close, toggle, setOpen,
-      width, setWidth, minWidth: MIN_WIDTH, maxWidth: MAX_WIDTH
+      width, setWidth, minWidth: MIN_WIDTH, maxWidth: MAX_WIDTH,
+      chatResetKey, resetChat
     }}>
       {children}
     </SidebarContext.Provider>

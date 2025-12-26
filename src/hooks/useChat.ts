@@ -17,10 +17,13 @@ import { generateUUID } from '@/lib/utils/uuid';
 
 interface UseChatOptions {
   sessionId?: string;
+  resetKey?: number;
 }
 
 interface SendMessageOptions {
   permissionMode?: PermissionMode;
+  workspacePath?: string;
+  workspaceDisplayPath?: string;
 }
 
 interface UseChatReturn {
@@ -54,7 +57,7 @@ async function fetchMessages(
   return response.json();
 }
 
-export function useChat({ sessionId }: UseChatOptions = {}): UseChatReturn {
+export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseChatReturn {
   const queryClient = useQueryClient();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -66,6 +69,24 @@ export function useChat({ sessionId }: UseChatOptions = {}): UseChatReturn {
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [isLoadingMoreMessages, setIsLoadingMoreMessages] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const lastResetKeyRef = useRef(resetKey);
+
+  // Reset all state when resetKey changes (triggered by "New Chat" button)
+  useEffect(() => {
+    if (resetKey !== lastResetKeyRef.current) {
+      lastResetKeyRef.current = resetKey;
+      // Abort any ongoing generation
+      abortControllerRef.current?.abort();
+      // Reset all state
+      setMessages([]);
+      setIsGenerating(false);
+      setError(null);
+      setSession(null);
+      setPendingToolApproval(null);
+      setHasMoreMessages(false);
+      setNextCursor(null);
+    }
+  }, [resetKey]);
 
   // Fetch session info only
   const { data: sessionData, isLoading: isLoadingSession } = useQuery({
@@ -148,15 +169,24 @@ export function useChat({ sessionId }: UseChatOptions = {}): UseChatReturn {
       try {
         abortControllerRef.current = new AbortController();
 
+        const settings: { permissionMode?: PermissionMode; workspacePath?: string; workspaceDisplayPath?: string } = {};
+        if (options?.permissionMode) {
+          settings.permissionMode = options.permissionMode;
+        }
+        if (options?.workspacePath) {
+          settings.workspacePath = options.workspacePath;
+        }
+        if (options?.workspaceDisplayPath) {
+          settings.workspaceDisplayPath = options.workspaceDisplayPath;
+        }
+
         const response = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             message: content,
             sessionId: session?.id,
-            settings: options?.permissionMode
-              ? { permissionMode: options.permissionMode }
-              : undefined,
+            settings: Object.keys(settings).length > 0 ? settings : undefined,
           }),
           signal: abortControllerRef.current.signal,
         });
@@ -188,13 +218,19 @@ export function useChat({ sessionId }: UseChatOptions = {}): UseChatReturn {
               switch (event.type) {
                 case 'init':
                   if (!session) {
+                    const sessionSettings = options?.workspacePath
+                      ? {
+                          workspacePath: options.workspacePath,
+                          workspaceDisplayPath: options.workspaceDisplayPath,
+                        }
+                      : null;
                     setSession({
                       id: event.sessionId,
                       title: content.slice(0, 50),
                       claudeSessionId: event.claudeSessionId,
                       createdAt: new Date().toISOString(),
                       updatedAt: new Date().toISOString(),
-                      settings: null,
+                      settings: sessionSettings,
                       isArchived: false,
                     });
                     queryClient.invalidateQueries({ queryKey: ['sessions'] });

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useCallback, useRef, useState } from 'react';
 import { Plus, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -24,14 +24,18 @@ interface SidebarContentProps {
 
 function SidebarContent({ onNavigate }: SidebarContentProps) {
   const router = useRouter();
-  const { sessions, isLoading, hasMore, isLoadingMore, loadMore, createSession, deleteSession, toggleArchive } = useSessions();
+  const pathname = usePathname();
+  const { resetChat } = useSidebar();
+  const { sessions, isLoading, hasMore, isLoadingMore, loadMore, deleteSession, toggleArchive } = useSessions();
 
-  const handleNewChat = async () => {
-    const newSession = await createSession();
-    if (newSession) {
-      router.push(`/chat/${newSession.id}`);
-      onNavigate?.();
+  const handleNewChat = () => {
+    if (pathname === '/chat') {
+      // Already on /chat page, reset chat state instead of navigating
+      resetChat();
+    } else {
+      router.push('/chat');
     }
+    onNavigate?.();
   };
 
   const handleSessionClick = () => {

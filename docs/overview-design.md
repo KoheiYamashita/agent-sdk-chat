@@ -409,6 +409,7 @@ CMD ["node", "server.js"]
 | セッション切替 | `src/hooks/useSessions.ts` | staleTime:0で常に最新取得 |
 | メッセージ差分ロード | `src/app/api/sessions/[id]/messages/route.ts` | カーソルベースページネーション |
 | サイドバー横幅調整 | `src/contexts/SidebarContext.tsx` | ドラッグ可能 |
+| 新規チャットリセット | `src/contexts/SidebarContext.tsx` | `/chat`ページで新規チャットボタン押下時に状態リセット |
 
 #### Claude Agent SDK統合
 | 機能 | ファイル | 備考 |
