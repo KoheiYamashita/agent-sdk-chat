@@ -1,14 +1,9 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { spawn } from 'node-pty';
-import { createServer } from 'http';
-import { parse } from 'url';
 import path from 'path';
 import { sessionStore } from './session-store';
 
-const PORT = parseInt(process.env.TERMINAL_PORT || '3001', 10);
 const WORKSPACE_BASE = process.env.WORKSPACE_BASE_PATH || './workspace';
-// Allow all origins in development, or specify via env
-const ALLOWED_ORIGINS = process.env.TERMINAL_ALLOWED_ORIGINS?.split(',') || null;
 
 // Validate workspace path to prevent path traversal
 function isAllowedWorkspace(requestedPath: string): boolean {
@@ -21,81 +16,64 @@ function isAllowedWorkspace(requestedPath: string): boolean {
 // Map WebSocket to chatSessionId for cleanup
 const wsToSession = new Map<WebSocket, string>();
 
-const server = createServer((req, res) => {
-  // Health check endpoint
-  if (req.url === '/health') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'ok', sessions: sessionStore.list().length }));
-    return;
-  }
-  res.writeHead(404);
-  res.end();
-});
+export function setupTerminalHandler(wss: WebSocketServer): void {
+  console.log(`Terminal handler initialized. Workspace base: ${path.resolve(WORKSPACE_BASE)}`);
 
-const wss = new WebSocketServer({ server });
+  wss.on('connection', (ws, req) => {
+    console.log(`New WebSocket connection from: ${req.socket.remoteAddress || 'unknown'}`);
 
-wss.on('connection', (ws, req) => {
-  // CORS check (skip if ALLOWED_ORIGINS is not set)
-  const origin = req.headers.origin;
-  if (ALLOWED_ORIGINS && origin && !ALLOWED_ORIGINS.includes(origin)) {
-    console.log(`Rejected connection from origin: ${origin}`);
-    ws.close(4001, 'Unauthorized origin');
-    return;
-  }
+    ws.on('message', (rawMessage) => {
+      try {
+        const message = JSON.parse(rawMessage.toString());
 
-  console.log(`New WebSocket connection from origin: ${origin || 'unknown'}`);
+        switch (message.type) {
+          case 'create':
+            handleCreate(ws, message);
+            break;
 
-  ws.on('message', (rawMessage) => {
-    try {
-      const message = JSON.parse(rawMessage.toString());
+          case 'destroy':
+            handleDestroy(ws, message);
+            break;
 
-      switch (message.type) {
-        case 'create':
-          handleCreate(ws, message);
-          break;
+          case 'input':
+            handleInput(ws, message);
+            break;
 
-        case 'destroy':
-          handleDestroy(ws, message);
-          break;
+          case 'resize':
+            handleResize(ws, message);
+            break;
 
-        case 'input':
-          handleInput(ws, message);
-          break;
+          case 'ping':
+            ws.send(JSON.stringify({ type: 'pong' }));
+            break;
 
-        case 'resize':
-          handleResize(ws, message);
-          break;
-
-        case 'ping':
-          ws.send(JSON.stringify({ type: 'pong' }));
-          break;
-
-        default:
-          console.log(`Unknown message type: ${message.type}`);
+          default:
+            console.log(`Unknown message type: ${message.type}`);
+        }
+      } catch (error) {
+        console.error('Failed to parse message:', error);
+        ws.send(JSON.stringify({ type: 'error', error: 'Invalid message format' }));
       }
-    } catch (error) {
-      console.error('Failed to parse message:', error);
-      ws.send(JSON.stringify({ type: 'error', error: 'Invalid message format' }));
-    }
-  });
+    });
 
-  ws.on('close', () => {
-    const sessionId = wsToSession.get(ws);
-    if (sessionId) {
-      console.log(`WebSocket closed for session: ${sessionId}`);
-      // Don't destroy PTY on disconnect - keep it alive for reconnection
-      // Clear activeWs if this was the active connection
-      if (sessionStore.getActiveWs(sessionId) === ws) {
-        sessionStore.setActiveWs(sessionId, null);
+    ws.on('close', () => {
+      const sessionId = wsToSession.get(ws);
+      if (sessionId) {
+        console.log(`WebSocket closed for session: ${sessionId}`);
+        // Don't destroy PTY on disconnect - keep it alive for reconnection
+        // Clear activeWs if this was the active connection
+        if (sessionStore.getActiveWs(sessionId) === ws) {
+          sessionStore.setActiveWs(sessionId, null);
+        }
+        wsToSession.delete(ws);
       }
-      wsToSession.delete(ws);
-    }
-  });
+    });
 
-  ws.on('error', (error) => {
-    console.error('WebSocket error:', error);
+    ws.on('error', (error) => {
+      console.error('WebSocket error:', error);
+    });
   });
-});
+}
 
 function handleCreate(ws: WebSocket, message: { chatSessionId?: string; workspacePath?: string }) {
   const { chatSessionId, workspacePath } = message;
@@ -260,29 +238,7 @@ function handleResize(ws: WebSocket, message: { cols?: number; rows?: number }) 
   }
 }
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('Received SIGTERM, shutting down...');
+// Export for cleanup on shutdown
+export function destroyAllSessions(): void {
   sessionStore.destroyAll();
-  wss.close(() => {
-    server.close(() => {
-      process.exit(0);
-    });
-  });
-});
-
-process.on('SIGINT', () => {
-  console.log('Received SIGINT, shutting down...');
-  sessionStore.destroyAll();
-  wss.close(() => {
-    server.close(() => {
-      process.exit(0);
-    });
-  });
-});
-
-server.listen(PORT, () => {
-  console.log(`Terminal server running on port ${PORT}`);
-  console.log(`Allowed origins: ${ALLOWED_ORIGINS ? ALLOWED_ORIGINS.join(', ') : 'all (no restriction)'}`);
-  console.log(`Workspace base: ${path.resolve(WORKSPACE_BASE)}`);
-});
+}

@@ -15,16 +15,14 @@ interface TerminalProps {
   onConnectionChange?: (connected: boolean) => void;
 }
 
-const TERMINAL_PORT = process.env.NEXT_PUBLIC_TERMINAL_PORT || '3001';
-
-// Dynamically determine WebSocket URL based on current host
+// Get WebSocket URL for terminal (same origin, /api/terminal path)
 function getTerminalWsUrl(): string {
   if (typeof window === 'undefined') {
-    return `ws://localhost:${TERMINAL_PORT}`;
+    return 'ws://localhost:3000/api/terminal';
   }
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const host = window.location.hostname;
-  return `${protocol}//${host}:${TERMINAL_PORT}`;
+  const host = window.location.host; // includes port if non-standard
+  return `${protocol}//${host}/api/terminal`;
 }
 
 export function Terminal({
