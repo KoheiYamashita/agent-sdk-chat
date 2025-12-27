@@ -325,6 +325,70 @@ Subagentを削除。
 
 ---
 
+### 1.7 ターミナルWebSocket API
+
+ターミナル機能はHTTP APIではなく、WebSocketを使用してリアルタイム通信を行う。
+Next.jsのカスタムサーバー（`server.ts`）でWebSocketサーバーを統合。
+
+#### 接続エンドポイント
+```
+ws://localhost:3000/api/terminal
+wss://example.com/api/terminal  # HTTPS環境
+```
+
+#### クライアント → サーバー メッセージ
+```typescript
+type TerminalClientMessage =
+  | { type: 'create'; chatSessionId: string; workspacePath: string }
+  | { type: 'destroy'; chatSessionId: string }
+  | { type: 'input'; data: string }
+  | { type: 'resize'; cols: number; rows: number }
+  | { type: 'ping' };
+```
+
+| type | 説明 |
+|------|------|
+| `create` | 新しいPTYセッションを作成（既存セッションがあれば再接続） |
+| `destroy` | PTYセッションを破棄 |
+| `input` | ユーザー入力をPTYに送信 |
+| `resize` | ターミナルサイズ変更を通知 |
+| `ping` | ハートビート（30秒間隔） |
+
+#### サーバー → クライアント メッセージ
+```typescript
+type TerminalServerMessage =
+  | { type: 'ready'; sessionId: string }
+  | { type: 'reconnect'; sessionId: string; buffer: string }
+  | { type: 'output'; data: string }
+  | { type: 'error'; error: string }
+  | { type: 'pong' };
+```
+
+| type | 説明 |
+|------|------|
+| `ready` | 新しいPTYセッションが準備完了 |
+| `reconnect` | 既存セッションに再接続（バッファ付き） |
+| `output` | PTYからの出力データ |
+| `error` | エラーメッセージ |
+| `pong` | ハートビート応答 |
+
+#### PTYセッション管理
+```typescript
+interface PtySession {
+  chatSessionId: string;     // チャットセッションと1:1で紐付け
+  workspacePath: string;     // 作業ディレクトリ
+  outputBuffer: string[];    // 再接続用出力バッファ（最大100KB）
+  createdAt: Date;
+}
+```
+
+**セキュリティ:**
+- ワークスペースパスのバリデーション（パストラバーサル防止）
+- `WORKSPACE_BASE_PATH` 環境変数で制限
+- WebSocket切断時もPTYは維持（再接続可能）
+
+---
+
 ## 2. フロントエンド コンポーネント設計
 
 ### 2.1 ページ構成
@@ -499,6 +563,147 @@ export function Sidebar() {
         </Link>
       </div>
     </aside>
+  );
+}
+```
+
+#### Terminal
+```typescript
+// components/terminal/Terminal.tsx
+interface TerminalProps {
+  chatSessionId: string;      // チャットセッションID
+  workspacePath: string;      // 作業ディレクトリ
+  onReady?: () => void;       // PTYセッション準備完了時
+  onError?: (error: string) => void;
+  onConnectionChange?: (connected: boolean) => void;
+}
+
+export function Terminal({
+  chatSessionId,
+  workspacePath,
+  onReady,
+  onError,
+  onConnectionChange,
+}: TerminalProps) {
+  // xterm.js インスタンス
+  const terminalRef = useRef<XTerm | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const fitAddonRef = useRef<FitAddon | null>(null);
+
+  // WebSocket接続
+  const connect = useCallback(() => {
+    const ws = new WebSocket(getTerminalWsUrl());
+
+    ws.onopen = () => {
+      onConnectionChange?.(true);
+      // セッション作成リクエスト
+      ws.send(JSON.stringify({
+        type: 'create',
+        chatSessionId,
+        workspacePath,
+      }));
+    };
+
+    ws.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      switch (message.type) {
+        case 'ready':
+        case 'reconnect':
+          if (message.buffer) {
+            terminalRef.current?.write(message.buffer);
+          }
+          onReady?.();
+          break;
+        case 'output':
+          terminalRef.current?.write(message.data);
+          break;
+        case 'error':
+          onError?.(message.error);
+          break;
+      }
+    };
+
+    ws.onclose = () => {
+      onConnectionChange?.(false);
+      // 3秒後に再接続
+      setTimeout(() => connect(), 3000);
+    };
+  }, [chatSessionId, workspacePath]);
+
+  // ターミナル初期化
+  useEffect(() => {
+    const term = new XTerm({
+      cursorBlink: true,
+      fontSize: 14,
+      theme: { background: '#1e1e2e', foreground: '#cdd6f4' },
+    });
+
+    const fitAddon = new FitAddon();
+    term.loadAddon(fitAddon);
+    term.open(containerRef.current);
+    fitAddon.fit();
+
+    // ユーザー入力をWebSocketに送信
+    term.onData((data) => {
+      wsRef.current?.send(JSON.stringify({ type: 'input', data }));
+    });
+
+    connect();
+    return () => term.dispose();
+  }, []);
+
+  return <div ref={containerRef} className="w-full h-full" />;
+}
+```
+
+#### TerminalPanel
+```typescript
+// components/terminal/TerminalPanel.tsx
+interface TerminalPanelProps {
+  chatSessionId: string;
+  workspacePath: string;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export function TerminalPanel({
+  chatSessionId,
+  workspacePath,
+  isOpen,
+  onClose,
+}: TerminalPanelProps) {
+  const [height, setHeight] = useState(300);  // ドラッグでリサイズ可能
+  const [isMaximized, setIsMaximized] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="border-t" style={{ height: isMaximized ? '100%' : height }}>
+      {/* リサイズハンドル */}
+      <div className="h-1 cursor-row-resize" onMouseDown={handleResize} />
+
+      {/* ヘッダー */}
+      <div className="flex items-center justify-between px-3 py-1.5 border-b">
+        <div className="flex items-center gap-2">
+          <span>Terminal</span>
+          <Circle className={isConnected ? 'text-green-500' : 'text-red-500'} />
+        </div>
+        <div className="flex gap-1">
+          <Button onClick={() => setIsMaximized(!isMaximized)}>
+            {isMaximized ? <Minimize2 /> : <Maximize2 />}
+          </Button>
+          <Button onClick={onClose}><X /></Button>
+        </div>
+      </div>
+
+      {/* ターミナル本体 */}
+      <Terminal
+        chatSessionId={chatSessionId}
+        workspacePath={workspacePath}
+        onConnectionChange={setIsConnected}
+      />
+    </div>
   );
 }
 ```
@@ -846,6 +1051,53 @@ export interface AgentConfig {
   tools?: string[];
   model?: 'sonnet' | 'opus' | 'haiku' | 'inherit';
   isEnabled: boolean;
+}
+```
+
+### 4.4 ターミナル関連
+```typescript
+// types/terminal.ts
+
+/**
+ * クライアント → サーバー メッセージ
+ */
+export interface TerminalClientMessage {
+  type: 'create' | 'destroy' | 'input' | 'resize' | 'ping';
+  chatSessionId?: string;  // create/destroy時に必要
+  workspacePath?: string;  // create時に必要
+  data?: string;           // input時のデータ
+  cols?: number;           // resize時の列数
+  rows?: number;           // resize時の行数
+}
+
+/**
+ * サーバー → クライアント メッセージ
+ */
+export interface TerminalServerMessage {
+  type: 'output' | 'ready' | 'reconnect' | 'error' | 'pong';
+  data?: string;           // output時のデータ
+  buffer?: string;         // reconnect時の出力バッファ
+  sessionId?: string;      // ready/reconnect時のセッションID
+  error?: string;          // error時のエラーメッセージ
+}
+
+/**
+ * PTYセッション（サーバー側）
+ */
+export interface PtySession {
+  chatSessionId: string;
+  workspacePath: string;
+  outputBuffer: string[];
+  createdAt: Date;
+}
+
+/**
+ * ターミナルパネル状態
+ */
+export interface TerminalState {
+  isOpen: boolean;
+  isConnected: boolean;
+  height: number;
 }
 ```
 
@@ -2720,3 +2972,250 @@ const stopGeneration = useCallback(async () => {
 4. **重複リクエスト**: 同一セッションで複数のクエリが開始された場合、古いクエリは新しいクエリで置き換えられる。
 
 5. **フォールバック処理**: SDK中断API（`/api/chat/abort`）が失敗した場合や、セッションIDがない状態での停止要求時は、fetchのAbortControllerをabortすることでフォールバックする。これによりネットワーク接続を切断し、クライアント側でストリーミングを停止できる。
+
+---
+
+## 15. ターミナル機能設計
+
+### 15.1 概要
+
+チャットセッションに紐付いたターミナル機能。ワークスペースディレクトリで直接コマンドを実行できる。
+
+**主な特徴:**
+- チャットセッションごとに独立したPTYセッション
+- WebSocket切断時もPTYは維持（再接続可能）
+- 出力バッファにより再接続時に履歴を復元
+- ワークスペースパスの検証によるセキュリティ保護
+
+### 15.2 アーキテクチャ
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Client (Browser)                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │  Terminal.tsx                                                │ │
+│  │  - xterm.js でターミナルUI表示                                │ │
+│  │  - WebSocketでサーバーと通信                                  │ │
+│  │  - FitAddon でリサイズ対応                                    │ │
+│  │  - WebLinksAddon でリンククリック対応                         │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+│                              │ WebSocket                          │
+│                              ▼                                    │
+├─────────────────────────────────────────────────────────────────┤
+│                        Server (Next.js)                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │  server.ts (カスタムサーバー)                                 │ │
+│  │  - Next.jsサーバーにWebSocketサーバーを統合                   │ │
+│  │  - /api/terminal パスへのUpgradeリクエストをハンドル          │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+│                              │                                    │
+│                              ▼                                    │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │  terminal-server/handler.ts                                  │ │
+│  │  - WebSocketメッセージのルーティング                          │ │
+│  │  - create/destroy/input/resize/ping メッセージ処理           │ │
+│  │  - ワークスペースパス検証（パストラバーサル防止）             │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+│                              │                                    │
+│                              ▼                                    │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │  terminal-server/session-store.ts                            │ │
+│  │  - PTYセッションのメモリ内管理                                │ │
+│  │  - 出力バッファ管理（最大100KB）                              │ │
+│  │  - アクティブWebSocket管理（再接続対応）                      │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+│                              │                                    │
+│                              ▼                                    │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │  node-pty                                                     │ │
+│  │  - 擬似ターミナル（PTY）の作成・管理                          │ │
+│  │  - OS別シェル設定（bash/zsh/PowerShell）                      │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 15.3 サーバー実装
+
+#### 15.3.1 session-store.ts
+
+PTYセッションをメモリ内で管理するシングルトンクラス。
+
+```typescript
+// src/terminal-server/session-store.ts
+import type { IPty } from 'node-pty';
+import type { WebSocket } from 'ws';
+
+const MAX_BUFFER_SIZE = 100000; // 最大100KB
+
+interface StoredSession {
+  pty: IPty;
+  chatSessionId: string;
+  workspacePath: string;
+  outputBuffer: string[];
+  bufferSize: number;
+  createdAt: Date;
+  activeWs: WebSocket | null;  // 現在アクティブなWebSocket
+}
+
+class SessionStore {
+  private sessions = new Map<string, StoredSession>();
+
+  create(chatSessionId: string, workspacePath: string, pty: IPty): StoredSession;
+  setActiveWs(chatSessionId: string, ws: WebSocket | null): void;
+  getActiveWs(chatSessionId: string): WebSocket | null;
+  get(chatSessionId: string): StoredSession | undefined;
+  has(chatSessionId: string): boolean;
+  appendOutput(chatSessionId: string, data: string): void;
+  getBuffer(chatSessionId: string): string;
+  destroy(chatSessionId: string): boolean;
+  destroyAll(): void;
+}
+
+export const sessionStore = new SessionStore();
+```
+
+#### 15.3.2 handler.ts
+
+WebSocketメッセージのハンドリング。
+
+```typescript
+// src/terminal-server/handler.ts
+import { WebSocketServer, WebSocket } from 'ws';
+import { spawn } from 'node-pty';
+import path from 'path';
+import { sessionStore } from './session-store';
+
+const WORKSPACE_BASE = process.env.WORKSPACE_BASE_PATH || './workspace';
+
+// パストラバーサル防止
+function isAllowedWorkspace(requestedPath: string): boolean {
+  const basePath = path.resolve(WORKSPACE_BASE);
+  const resolvedPath = path.resolve(basePath, requestedPath);
+  return resolvedPath === basePath || resolvedPath.startsWith(basePath + path.sep);
+}
+
+export function setupTerminalHandler(wss: WebSocketServer): void {
+  wss.on('connection', (ws, req) => {
+    ws.on('message', (rawMessage) => {
+      const message = JSON.parse(rawMessage.toString());
+      switch (message.type) {
+        case 'create': handleCreate(ws, message); break;
+        case 'destroy': handleDestroy(ws, message); break;
+        case 'input': handleInput(ws, message); break;
+        case 'resize': handleResize(ws, message); break;
+        case 'ping': ws.send(JSON.stringify({ type: 'pong' })); break;
+      }
+    });
+
+    ws.on('close', () => {
+      // WebSocket切断時はactiveWsをクリアするが、PTYは維持
+      // → 再接続時にバッファ付きで復元可能
+    });
+  });
+}
+```
+
+### 15.4 クライアント実装
+
+#### 15.4.1 Terminal.tsx
+
+xterm.jsを使用したターミナルUI。
+
+```typescript
+// src/components/terminal/Terminal.tsx
+import { Terminal as XTerm } from '@xterm/xterm';
+import { FitAddon } from '@xterm/addon-fit';
+import { WebLinksAddon } from '@xterm/addon-web-links';
+
+interface TerminalProps {
+  chatSessionId: string;
+  workspacePath: string;
+  onReady?: () => void;
+  onError?: (error: string) => void;
+  onConnectionChange?: (connected: boolean) => void;
+}
+
+// 機能:
+// - WebSocket接続管理（自動再接続）
+// - ターミナル初期化（Catppuccinテーマ）
+// - ユーザー入力のサーバー送信
+// - サーバー出力の表示
+// - リサイズイベントの通知
+// - ハートビート（30秒間隔）
+```
+
+#### 15.4.2 TerminalPanel.tsx
+
+ターミナルパネルのコンテナ。
+
+```typescript
+// src/components/terminal/TerminalPanel.tsx
+interface TerminalPanelProps {
+  chatSessionId: string;
+  workspacePath: string;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+// 機能:
+// - 高さ調整（ドラッグでリサイズ、150-600px）
+// - 最大化/復元
+// - 接続状態表示
+// - 閉じるボタン
+// - 高さ設定のlocalStorage永続化
+```
+
+### 15.5 シェル設定
+
+OS別に適切なシェルとプロンプトを設定。
+
+| OS | シェル | プロンプト形式 |
+|----|--------|---------------|
+| Windows | PowerShell | デフォルト |
+| Linux/macOS (bash) | bash | `workspace/path $` (青色) |
+| Linux/macOS (zsh) | zsh | `workspace/path $` (青色) |
+
+**カスタムプロンプトの特徴:**
+- ワークスペースベースからの相対パスを表示
+- rcファイルによる上書きを防止（`--norc`/`--no-rcs`オプション）
+- ANSIエスケープシーケンスで色付け
+
+### 15.6 セキュリティ
+
+1. **パストラバーサル防止**: ワークスペースパスを`WORKSPACE_BASE_PATH`配下に制限
+2. **入力バリデーション**: WebSocketメッセージの型チェック
+3. **セッション分離**: チャットセッションごとに独立したPTY
+
+### 15.7 実装ファイル一覧
+
+| ファイル | 種別 | 説明 |
+|---------|------|------|
+| `server.ts` | 新規 | カスタムサーバー（Next.js + WebSocket統合） |
+| `src/terminal-server/handler.ts` | 新規 | WebSocketメッセージハンドラー |
+| `src/terminal-server/session-store.ts` | 新規 | PTYセッション管理 |
+| `src/components/terminal/Terminal.tsx` | 新規 | ターミナルUIコンポーネント |
+| `src/components/terminal/TerminalPanel.tsx` | 新規 | ターミナルパネルUI |
+| `src/types/terminal.ts` | 新規 | WebSocketメッセージ型定義 |
+| `package.json` | 更新 | xterm.js, node-pty, ws 依存追加 |
+
+### 15.8 依存パッケージ
+
+```json
+{
+  "dependencies": {
+    "@xterm/xterm": "^5.x",
+    "@xterm/addon-fit": "^0.10.x",
+    "@xterm/addon-web-links": "^0.11.x",
+    "node-pty": "^1.x",
+    "ws": "^8.x"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.x"
+  }
+}
+```

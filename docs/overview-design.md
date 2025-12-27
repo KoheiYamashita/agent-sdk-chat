@@ -151,6 +151,9 @@ src/
 │   │   ├── PermissionModeRadioGroup.tsx  # 権限モード設定
 │   │   ├── DefaultToolsCheckboxGroup.tsx # デフォルトツール選択
 │   │   └── AppearanceSettingsForm.tsx    # 外観設定（アイコンカスタマイズ等）
+│   ├── terminal/                 # ターミナル関連
+│   │   ├── Terminal.tsx          # ターミナルコンポーネント（xterm.js）
+│   │   └── TerminalPanel.tsx     # ターミナルパネルUI
 │   └── workspace/                # ワークスペース関連
 │       ├── index.ts              # エクスポート
 │       ├── WorkspaceBadge.tsx    # ワークスペースバッジ表示
@@ -183,7 +186,11 @@ src/
 │   ├── session.ts                # セッション関連型
 │   ├── settings.ts               # 設定関連型
 │   ├── workspace.ts              # ワークスペース関連型
-│   └── usage.ts                  # 使用量関連型
+│   ├── usage.ts                  # 使用量関連型
+│   └── terminal.ts               # ターミナル関連型
+├── terminal-server/              # ターミナルサーバー（Next.js統合）
+│   ├── handler.ts                # WebSocketハンドラー
+│   └── session-store.ts          # PTYセッション管理
 └── generated/                    # 自動生成ファイル
     └── prisma/                   # Prisma生成コード
 ```
@@ -498,6 +505,23 @@ CMD ["node", "server.js"]
 | 使用量フック | `src/hooks/useUsage.ts` | 使用量データ取得 |
 | サイドバー使用量ボタン | `src/components/sidebar/Sidebar.tsx` | 使用量ページへのリンク |
 
+#### ターミナル機能
+| 機能 | ファイル | 備考 |
+|------|---------|------|
+| ターミナルUI | `src/components/terminal/Terminal.tsx` | xterm.js使用、WebSocket通信 |
+| ターミナルパネル | `src/components/terminal/TerminalPanel.tsx` | リサイズ・最大化対応、接続状態表示 |
+| WebSocketハンドラー | `src/terminal-server/handler.ts` | node-pty使用、PTYセッション管理 |
+| セッションストア | `src/terminal-server/session-store.ts` | PTYセッションのメモリ内管理 |
+| 型定義 | `src/types/terminal.ts` | WebSocketメッセージ型定義 |
+| Next.js統合 | `server.ts` | カスタムサーバーでWebSocket対応 |
+
+**ターミナル機能の特徴:**
+- チャットセッションごとに独立したPTYセッション
+- 再接続時に出力バッファを復元
+- ワークスペースパスの検証（パストラバーサル防止）
+- OS別シェル設定（bash/zsh/PowerShell）
+- カスタムプロンプト（ワークスペース相対パス表示）
+
 #### MCP管理API
 | 機能 | ファイル | 備考 |
 |------|---------|------|
@@ -606,13 +630,20 @@ CMD ["node", "server.js"]
 - [x] Claude Code使用量表示機能
 - [x] ユーザー名・モデル名表示
 
-#### Phase 7: UI/UX改善
+#### Phase 7: ターミナル機能 ✅ 完了
+- [x] ターミナルUI（xterm.js）
+- [x] WebSocketサーバー（Next.js統合）
+- [x] PTYセッション管理（node-pty）
+- [x] 再接続・バッファ復元
+- [x] パストラバーサル防止
+
+#### Phase 8: UI/UX改善
 - [ ] ダークモード切替UI
 - [ ] レスポンシブデザイン強化
 - [ ] セッション検索
 - [ ] エラー通知改善
 
-#### Phase 8: 品質・最適化
+#### Phase 9: 品質・最適化
 - [ ] テスト追加
 - [ ] 入力バリデーション（Zod）
 - [ ] セキュリティ強化
