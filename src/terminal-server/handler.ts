@@ -133,17 +133,20 @@ function handleCreate(ws: WebSocket, message: { chatSessionId?: string; workspac
     const isZsh = shell.endsWith('zsh');
     const isBash = shell.endsWith('bash');
 
-    // Custom PS1: show path relative to workspace parent (e.g., "workspace/project/src $")
-    const customPS1 = '\\[\\e[1;34m\\]${PWD#$WORKSPACE_PARENT/}\\[\\e[0m\\] $ ';
+    // Custom prompt: show path relative to workspace parent (e.g., "workspace/project/src $")
+    // zsh uses PROMPT with %{...%} for escape sequences, bash uses PS1 with \[...\]
+    const bashPS1 = '\\[\\e[1;34m\\]${PWD#$WORKSPACE_PARENT/}\\[\\e[0m\\] $ ';
+    const zshPrompt = '%{\x1b[1;34m%}${PWD#$WORKSPACE_PARENT/}%{\x1b[0m%} $ ';
 
-    // Shell arguments to prevent rc files from overriding PS1
-    shellArgs = isBash ? ['--norc'] : isZsh ? ['--no-rcs'] : [];
+    // Shell arguments to prevent rc files from overriding prompt
+    // zsh needs -o PROMPT_SUBST to enable variable expansion in prompt
+    shellArgs = isBash ? ['--norc'] : isZsh ? ['--no-rcs', '-o', 'PROMPT_SUBST'] : [];
 
     envVars = {
       ...process.env as Record<string, string>,
       TERM: 'xterm-256color',
       WORKSPACE_PARENT: workspaceParent,
-      PS1: customPS1,
+      ...(isZsh ? { PROMPT: zshPrompt } : { PS1: bashPS1 }),
     };
   }
 
