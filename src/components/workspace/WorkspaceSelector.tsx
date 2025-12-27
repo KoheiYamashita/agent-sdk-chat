@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { FolderOpen } from 'lucide-react';
+import { FolderOpen, GitBranch } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { WorkspaceTree } from './WorkspaceTree';
+import { GitCloneForm } from './GitCloneForm';
 
 // Helper to get display path from basePath and relativePath
 function getDisplayPath(basePath: string, relativePath: string): string {
@@ -34,6 +36,12 @@ export function WorkspaceSelector({
     onSelect(path, display);
   }, [onSelect]);
 
+  const handleCloneSuccess = useCallback((path: string, display: string) => {
+    setLocalSelectedPath(path);
+    setDisplayPath(display);
+    onSelect(path, display);
+  }, [onSelect]);
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[400px] p-4">
       <div className="text-center mb-8">
@@ -58,12 +66,34 @@ export function WorkspaceSelector({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="border border-border/50 rounded-lg h-[250px] overflow-hidden bg-background/50">
-            <WorkspaceTree
-              selectedPath={localSelectedPath}
-              onSelect={handleSelect}
-            />
-          </div>
+          <Tabs defaultValue="folder" className="w-full">
+            <TabsList className="w-full mb-3">
+              <TabsTrigger value="folder" className="flex-1 gap-1.5">
+                <FolderOpen className="h-3.5 w-3.5" />
+                フォルダ選択
+              </TabsTrigger>
+              <TabsTrigger value="git" className="flex-1 gap-1.5">
+                <GitBranch className="h-3.5 w-3.5" />
+                Git Clone
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="folder">
+              <div className="border border-border/50 rounded-lg h-[250px] overflow-hidden bg-background/50">
+                <WorkspaceTree
+                  selectedPath={localSelectedPath}
+                  onSelect={handleSelect}
+                />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="git">
+              <div className="border border-border/50 rounded-lg min-h-[250px] bg-background/50">
+                <GitCloneForm onCloneSuccess={handleCloneSuccess} />
+              </div>
+            </TabsContent>
+          </Tabs>
+
           {displayPath && (
             <p className="text-xs text-muted-foreground mt-3">
               選択中: <code className="bg-foreground/10 text-foreground/80 px-1.5 py-0.5 rounded">{displayPath}</code>
