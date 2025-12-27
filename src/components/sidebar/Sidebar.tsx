@@ -32,7 +32,11 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
     if (pathname === '/chat') {
       // Already on /chat page, reset chat state instead of navigating
       resetChat();
+    } else if (pathname.startsWith('/chat/')) {
+      // From session page, go back to /chat root
+      router.back();
     } else {
+      // From other pages (settings, usage), push to /chat
       router.push('/chat');
     }
     onNavigate?.();

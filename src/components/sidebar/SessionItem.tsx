@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
+import { useState, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Trash2, MoreHorizontal, Archive, ArchiveRestore } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -50,7 +49,7 @@ export function SessionItem({ session, onDelete, onToggleArchive, onClick }: Ses
     await Promise.resolve(onDelete(session.id));
     setShowDeleteDialog(false);
     if (wasActive) {
-      router.push('/chat');
+      router.replace('/chat');
     }
   };
 
@@ -61,12 +60,28 @@ export function SessionItem({ session, onDelete, onToggleArchive, onClick }: Ses
     onToggleArchive(session.id, session.isArchived);
   };
 
+  const handleSessionClick = useCallback(() => {
+    if (!isActive) {
+      if (pathname === '/chat') {
+        // From /chat root, push to create history entry
+        router.push(`/chat/${session.id}`);
+      } else {
+        // Between sessions, replace to avoid stack buildup
+        router.replace(`/chat/${session.id}`);
+      }
+    }
+    onClick?.();
+  }, [isActive, pathname, router, session.id, onClick]);
+
   return (
     <>
-      <Link
-        href={`/chat/${session.id}`}
-        onClick={onClick}
+      <div
+        onClick={handleSessionClick}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => e.key === 'Enter' && handleSessionClick()}
         className={cn(
+          'cursor-pointer',
           'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 group w-full min-w-0',
           isActive
             ? 'bg-accent text-foreground'
@@ -111,7 +126,7 @@ export function SessionItem({ session, onDelete, onToggleArchive, onClick }: Ses
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </Link>
+      </div>
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
