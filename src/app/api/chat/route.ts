@@ -284,6 +284,7 @@ export async function POST(request: Request) {
               type: 'init',
               sessionId: session.id,
               claudeSessionId: claudeSessionId,
+              model: currentModel,
             });
           }
 

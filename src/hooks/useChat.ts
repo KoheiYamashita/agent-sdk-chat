@@ -199,6 +199,7 @@ export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseCh
         const decoder = new TextDecoder();
         let assistantContent = '';
         let assistantMessageId: string | null = null;
+        let currentModel: string | undefined;
 
         while (reader) {
           const { done, value } = await reader.read();
@@ -217,6 +218,7 @@ export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseCh
 
               switch (event.type) {
                 case 'init':
+                  currentModel = event.model;
                   if (!session) {
                     const sessionSettings = options?.workspacePath
                       ? {
@@ -258,6 +260,7 @@ export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseCh
 
                   const currentContent = assistantContent;
                   const currentId = assistantMessageId;
+                  const modelForMessage = currentModel;
 
                   setMessages((prev) => {
                     const existingIndex = prev.findIndex(
@@ -278,6 +281,7 @@ export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseCh
                         id: currentId!,
                         role: 'assistant',
                         content: currentContent,
+                        metadata: modelForMessage ? { model: modelForMessage } : undefined,
                         createdAt: new Date().toISOString(),
                       },
                     ];
@@ -307,6 +311,7 @@ export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseCh
                           id: assistantMessageId,
                           role: 'assistant',
                           content: assistantContent,
+                          metadata: currentModel ? { model: currentModel } : undefined,
                           createdAt: new Date().toISOString(),
                         },
                       ];
@@ -333,6 +338,7 @@ export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseCh
                         id: assistantMessageId!,
                         role: 'assistant',
                         content: assistantContent,
+                        metadata: currentModel ? { model: currentModel } : undefined,
                         createdAt: new Date().toISOString(),
                       },
                     ];
@@ -373,6 +379,7 @@ export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseCh
                         role: 'assistant',
                         content: assistantContent,
                         toolCalls: [newToolCall],
+                        metadata: currentModel ? { model: currentModel } : undefined,
                         createdAt: new Date().toISOString(),
                       },
                     ];
