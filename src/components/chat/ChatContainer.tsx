@@ -1,13 +1,15 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useChat } from '@/hooks/useChat';
 import { useSettings } from '@/hooks/useSettings';
 import { useSidebar } from '@/contexts/SidebarContext';
+import { useTerminal } from '@/contexts/TerminalContext';
 import { ChatHeader } from './ChatHeader';
 import { MessageList } from './MessageList';
 import { InputArea } from './InputArea';
 import { WorkspaceSelector } from '@/components/workspace';
+import { TerminalPanel } from '@/components/terminal/TerminalPanel';
 import type { PermissionMode } from '@/types';
 
 interface ChatContainerProps {
@@ -16,16 +18,10 @@ interface ChatContainerProps {
 
 export function ChatContainer({ sessionId }: ChatContainerProps) {
   const { open: openSidebar, chatResetKey } = useSidebar();
+  const { isOpen: isTerminalOpen, toggleTerminal, closeTerminal, destroySession } = useTerminal();
   const [workspacePath, setWorkspacePath] = useState<string | null>(null);
   const [workspaceDisplayPath, setWorkspaceDisplayPath] = useState<string | null>(null);
-
-  // Reset local state when chatResetKey changes (triggered by "New Chat" button)
-  useEffect(() => {
-    if (chatResetKey > 0) {
-      setWorkspacePath(null);
-      setWorkspaceDisplayPath(null);
-    }
-  }, [chatResetKey]);
+  const prevSessionIdRef = useRef<string | undefined>(undefined);
 
   const {
     messages,
@@ -44,6 +40,38 @@ export function ChatContainer({ sessionId }: ChatContainerProps) {
 
   const { settings } = useSettings();
   const defaultPermissionMode: PermissionMode = settings?.general.defaultPermissionMode ?? 'default';
+
+  // Use session.id if available, otherwise fall back to sessionId prop
+  const effectiveSessionId = session?.id ?? sessionId;
+
+  // Reset local state when chatResetKey changes (triggered by "New Chat" button)
+  useEffect(() => {
+    if (chatResetKey > 0) {
+      setWorkspacePath(null);
+      setWorkspaceDisplayPath(null);
+      closeTerminal();
+    }
+  }, [chatResetKey, closeTerminal]);
+
+  // Destroy terminal session when switching chat sessions
+  useEffect(() => {
+    const prevSessionId = prevSessionIdRef.current;
+    if (prevSessionId && prevSessionId !== effectiveSessionId) {
+      destroySession(prevSessionId);
+      closeTerminal();
+    }
+    prevSessionIdRef.current = effectiveSessionId;
+  }, [effectiveSessionId, destroySession, closeTerminal]);
+
+  // Cleanup terminal session on component unmount
+  useEffect(() => {
+    return () => {
+      const currentSessionId = prevSessionIdRef.current;
+      if (currentSessionId) {
+        destroySession(currentSessionId);
+      }
+    };
+  }, [destroySession]);
 
   // Handle workspace selection
   const handleWorkspaceSelect = useCallback((path: string, displayPath: string) => {
@@ -65,6 +93,8 @@ export function ChatContainer({ sessionId }: ChatContainerProps) {
 
   // Show workspace selector for new chats with no messages
   const isNewChat = !sessionId && messages.length === 0 && !isLoading;
+  // Get workspace path from session settings or local state (fallback to default workspace)
+  const effectiveWorkspacePath = session?.settings?.workspacePath ?? workspacePath ?? '.';
   // Get display path from session settings or local state
   const displayPath = session?.settings?.workspaceDisplayPath ?? workspaceDisplayPath;
 
@@ -113,6 +143,19 @@ export function ChatContainer({ sessionId }: ChatContainerProps) {
           disabled={isLoading || !!pendingToolApproval}
           isGenerating={isGenerating}
           defaultPermissionMode={defaultPermissionMode}
+          onTerminalToggle={toggleTerminal}
+          isTerminalOpen={isTerminalOpen}
+          showTerminalButton={!!effectiveSessionId}
+        />
+      )}
+
+      {/* Terminal Panel */}
+      {effectiveSessionId && effectiveWorkspacePath && (
+        <TerminalPanel
+          chatSessionId={effectiveSessionId}
+          workspacePath={effectiveWorkspacePath}
+          isOpen={isTerminalOpen}
+          onClose={closeTerminal}
         />
       )}
     </div>

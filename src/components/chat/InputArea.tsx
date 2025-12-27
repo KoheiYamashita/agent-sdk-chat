@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Send, Square } from 'lucide-react';
+import { Send, Square, Terminal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { PermissionModeSelector } from './PermissionModeSelector';
+import { cn } from '@/lib/utils';
 import type { PermissionMode } from '@/types';
 
 interface SendOptions {
@@ -17,6 +18,9 @@ interface InputAreaProps {
   disabled?: boolean;
   isGenerating?: boolean;
   defaultPermissionMode?: PermissionMode;
+  onTerminalToggle?: () => void;
+  isTerminalOpen?: boolean;
+  showTerminalButton?: boolean;
 }
 
 export function InputArea({
@@ -25,6 +29,9 @@ export function InputArea({
   disabled = false,
   isGenerating = false,
   defaultPermissionMode = 'default',
+  onTerminalToggle,
+  isTerminalOpen = false,
+  showTerminalButton = false,
 }: InputAreaProps) {
   const [input, setInput] = useState('');
   const [permissionMode, setPermissionMode] = useState<PermissionMode>(defaultPermissionMode);
@@ -64,39 +71,57 @@ export function InputArea({
         disabled={disabled || isGenerating}
       />
       <div className="p-3 sm:p-4">
-          <div className="relative">
-            <Textarea
-              ref={textareaRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="メッセージを入力... (Shift+Enter送信)"
-              className="min-h-[56px] max-h-[200px] resize-none pr-14 sm:pr-16 text-sm sm:text-base bg-card/50 border-border/40 focus-visible:bg-card"
-              disabled={disabled || isGenerating}
-              rows={1}
-            />
-            <div className="absolute right-2 bottom-2">
-              {isGenerating ? (
-                <Button
-                  size="icon"
-                  variant="destructive"
-                  onClick={handleStopClick}
-                  title="生成を停止"
-                  className="rounded-lg"
-                >
-                  <Square className="h-4 w-4" />
-                </Button>
-              ) : (
-                <Button
-                  size="icon"
-                  onClick={handleSubmit}
-                  disabled={!input.trim() || disabled}
-                  title="送信"
-                  className="rounded-lg"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              )}
+          <div className="flex gap-2 items-end">
+            {/* Terminal toggle button */}
+            {showTerminalButton && (
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={onTerminalToggle}
+                title={isTerminalOpen ? 'ターミナルを閉じる' : 'ターミナルを開く'}
+                className={cn(
+                  'rounded-lg flex-shrink-0 h-10 w-10',
+                  isTerminalOpen && 'bg-primary/10 text-primary'
+                )}
+              >
+                <Terminal className="h-4 w-4" />
+              </Button>
+            )}
+
+            <div className="relative flex-1">
+              <Textarea
+                ref={textareaRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="メッセージを入力... (Shift+Enter送信)"
+                className="min-h-[56px] max-h-[200px] resize-none pr-14 sm:pr-16 text-sm sm:text-base bg-card/50 border-border/40 focus-visible:bg-card"
+                disabled={disabled || isGenerating}
+                rows={1}
+              />
+              <div className="absolute right-2 bottom-2">
+                {isGenerating ? (
+                  <Button
+                    size="icon"
+                    variant="destructive"
+                    onClick={handleStopClick}
+                    title="生成を停止"
+                    className="rounded-lg"
+                  >
+                    <Square className="h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button
+                    size="icon"
+                    onClick={handleSubmit}
+                    disabled={!input.trim() || disabled}
+                    title="送信"
+                    className="rounded-lg"
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
           <p className="text-xs text-muted-foreground/70 mt-3 text-center hidden sm:block">

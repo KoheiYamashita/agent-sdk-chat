@@ -2,6 +2,7 @@
 
 import { Sidebar, MobileSidebar } from '@/components/sidebar';
 import { SidebarProvider, useSidebar } from '@/contexts/SidebarContext';
+import { TerminalProvider } from '@/contexts/TerminalContext';
 
 function ChatLayoutContent({ children }: { children: React.ReactNode }) {
   const { isOpen, setOpen } = useSidebar();
@@ -30,7 +31,9 @@ export default function ChatLayout({
 }) {
   return (
     <SidebarProvider>
-      <ChatLayoutContent>{children}</ChatLayoutContent>
+      <TerminalProvider>
+        <ChatLayoutContent>{children}</ChatLayoutContent>
+      </TerminalProvider>
     </SidebarProvider>
   );
 }
