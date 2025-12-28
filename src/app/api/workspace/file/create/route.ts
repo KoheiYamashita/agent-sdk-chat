@@ -26,7 +26,7 @@ async function getSandboxSettings(): Promise<SandboxSettings> {
 export async function POST(request: Request) {
   try {
     const body: FileCreateRequest = await request.json();
-    const { parentPath, name, isDirectory } = body;
+    const { parentPath, name, isDirectory, workspacePath: workspacePathParam } = body;
 
     if (!name) {
       return NextResponse.json(
@@ -44,9 +44,10 @@ export async function POST(request: Request) {
     }
 
     const sandboxSettings = await getSandboxSettings();
-    const basePath = sandboxSettings.workspacePath.startsWith('/')
-      ? sandboxSettings.workspacePath
-      : path.resolve(process.cwd(), sandboxSettings.workspacePath);
+    const workspaceSource = workspacePathParam || sandboxSettings.workspacePath;
+    const basePath = workspaceSource.startsWith('/')
+      ? workspaceSource
+      : path.resolve(process.cwd(), workspaceSource);
 
     // Resolve parent path
     const parentAbsPath = parentPath

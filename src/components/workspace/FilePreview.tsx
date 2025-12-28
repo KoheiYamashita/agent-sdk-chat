@@ -11,6 +11,7 @@ import type { DirectoryItem, FileReadResponse } from '@/types/workspace';
 interface FilePreviewProps {
   item: DirectoryItem | null;
   onClose: () => void;
+  workspacePath?: string;
   className?: string;
 }
 
@@ -39,23 +40,30 @@ function getLanguage(name: string): string {
   return langMap[ext] || 'text';
 }
 
-// Check if file is likely binary
-function isBinaryFile(name: string): boolean {
+// Check if file is an image that can be previewed
+function isImageFile(name: string): boolean {
   const ext = name.split('.').pop()?.toLowerCase() || '';
-  const binaryExts = [
-    'png', 'jpg', 'jpeg', 'gif', 'bmp', 'ico', 'webp', 'svg',
+  const imageExts = ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'ico', 'webp', 'svg'];
+  return imageExts.includes(ext);
+}
+
+// Check if file is binary (non-previewable)
+function isNonPreviewableBinary(name: string): boolean {
+  const ext = name.split('.').pop()?.toLowerCase() || '';
+  const nonPreviewableExts = [
     'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx',
     'zip', 'tar', 'gz', 'rar', '7z',
     'exe', 'dll', 'so', 'dylib',
     'mp3', 'mp4', 'wav', 'avi', 'mov', 'mkv',
     'ttf', 'otf', 'woff', 'woff2', 'eot',
   ];
-  return binaryExts.includes(ext);
+  return nonPreviewableExts.includes(ext);
 }
 
 export function FilePreview({
   item,
   onClose,
+  workspacePath,
   className,
 }: FilePreviewProps) {
   const [content, setContent] = useState<string>('');
@@ -66,20 +74,23 @@ export function FilePreview({
   const [fileInfo, setFileInfo] = useState<FileReadResponse | null>(null);
 
   const isDirty = content !== originalContent;
+  const isImage = item ? isImageFile(item.name) : false;
 
   // Load file content
   const loadFile = useCallback(async () => {
     if (!item || item.isDirectory) return;
 
-    if (isBinaryFile(item.name)) {
-      setError('バイナリファイルは表示できません');
+    if (isNonPreviewableBinary(item.name)) {
+      setError('このファイル形式は表示できません');
       return;
     }
 
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/workspace/file?path=${encodeURIComponent(item.path)}`);
+      const params = new URLSearchParams({ path: item.path });
+      if (workspacePath) params.set('workspacePath', workspacePath);
+      const response = await fetch(`/api/workspace/file?${params}`);
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error || 'Failed to load file');
@@ -93,18 +104,23 @@ export function FilePreview({
     } finally {
       setIsLoading(false);
     }
-  }, [item]);
+  }, [item, workspacePath]);
 
   // Save file content
   const handleSave = useCallback(async () => {
-    if (!item || !isDirty) return;
+    if (!item || !isDirty || isImage) return;
 
     setIsSaving(true);
     try {
       const response = await fetch('/api/workspace/file', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path: item.path, content }),
+        body: JSON.stringify({
+          path: item.path,
+          content,
+          encoding: fileInfo?.encoding,
+          workspacePath,
+        }),
       });
       if (!response.ok) {
         const data = await response.json();
@@ -116,7 +132,7 @@ export function FilePreview({
     } finally {
       setIsSaving(false);
     }
-  }, [item, content, isDirty]);
+  }, [item, content, isDirty, isImage, fileInfo?.encoding, workspacePath]);
 
   // Load file when item changes
   useEffect(() => {
@@ -205,6 +221,16 @@ export function FilePreview({
             <p className="text-sm text-destructive">{error}</p>
           </div>
         </div>
+      ) : isImage && fileInfo?.encoding === 'base64' ? (
+        <ScrollArea className="flex-1">
+          <div className="flex items-center justify-center p-4">
+            <img
+              src={`data:${fileInfo.mimeType};base64,${content}`}
+              alt={item.name}
+              className="max-w-full max-h-[500px] object-contain rounded"
+            />
+          </div>
+        </ScrollArea>
       ) : (
         <ScrollArea className="flex-1">
           <Textarea

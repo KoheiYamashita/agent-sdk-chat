@@ -72,7 +72,6 @@ export function PermissionModeSelector({
 
   return (
     <div className="flex items-center gap-2 px-2 sm:px-4 py-2 border-b bg-muted/30">
-      <span className="text-xs text-muted-foreground shrink-0 hidden sm:inline">権限モード:</span>
       <Select
         value={value}
         onValueChange={(v) => onChange(v as PermissionMode)}
@@ -109,19 +108,17 @@ export function PermissionModeSelector({
           })}
         </SelectContent>
       </Select>
-      <span className="text-xs text-muted-foreground hidden sm:inline flex-1">
-        {currentMode.description}
-      </span>
       {onFilesClick && (
         <Button
           variant="ghost"
-          size="icon"
+          size="sm"
           onClick={onFilesClick}
           disabled={disabled}
-          className="h-8 w-8 shrink-0"
+          className="h-8 shrink-0 gap-1.5 text-xs"
           title="ファイルを開く"
         >
           <FolderOpen className="h-4 w-4" />
+          <span>ファイル</span>
         </Button>
       )}
     </div>

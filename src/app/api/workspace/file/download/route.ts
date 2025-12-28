@@ -27,6 +27,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const relativePath = searchParams.get('path');
+    const workspacePathParam = searchParams.get('workspacePath') || undefined;
 
     if (!relativePath) {
       return NextResponse.json(
@@ -36,9 +37,10 @@ export async function GET(request: Request) {
     }
 
     const sandboxSettings = await getSandboxSettings();
-    const basePath = sandboxSettings.workspacePath.startsWith('/')
-      ? sandboxSettings.workspacePath
-      : path.resolve(process.cwd(), sandboxSettings.workspacePath);
+    const workspaceSource = workspacePathParam || sandboxSettings.workspacePath;
+    const basePath = workspaceSource.startsWith('/')
+      ? workspaceSource
+      : path.resolve(process.cwd(), workspaceSource);
 
     const targetPath = path.resolve(basePath, relativePath);
 

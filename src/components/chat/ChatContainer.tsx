@@ -86,14 +86,19 @@ export function ChatContainer({ sessionId }: ChatContainerProps) {
   // because the file browser API expects a path relative to cwd, not relative to the workspace base
   const handleFilesClick = useCallback(() => {
     const displayPath = session?.settings?.workspaceDisplayPath ?? workspaceDisplayPath;
+    const params = new URLSearchParams();
     if (displayPath) {
       // Ensure path starts with "./" for consistency
       const wsPath = displayPath.startsWith('./') ? displayPath : `./${displayPath}`;
-      router.push(`/files?workspace=${encodeURIComponent(wsPath)}`);
-    } else {
-      router.push('/files');
+      params.set('workspace', wsPath);
     }
-  }, [router, session?.settings?.workspaceDisplayPath, workspaceDisplayPath]);
+    // Pass return URL so the files page can navigate back to the correct session
+    if (effectiveSessionId) {
+      params.set('returnTo', `/chat/${effectiveSessionId}`);
+    }
+    const query = params.toString();
+    router.push(query ? `/files?${query}` : '/files');
+  }, [router, session?.settings?.workspaceDisplayPath, workspaceDisplayPath, effectiveSessionId]);
 
   // Wrap sendMessage to include workspacePath and displayPath
   const sendMessage = useCallback(

@@ -53,6 +53,7 @@ function FilesPageContent() {
           parentPath: getParentPath(),
           name: newName.trim(),
           isDirectory,
+          workspacePath,
         }),
       });
       if (!response.ok) {
@@ -68,12 +69,13 @@ function FilesPageContent() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [newName, getParentPath]);
+  }, [newName, getParentPath, workspacePath]);
 
   // Handle file upload
   const handleUpload = useCallback(async (files: FileList) => {
     const formData = new FormData();
     formData.append('path', getParentPath());
+    if (workspacePath) formData.append('workspacePath', workspacePath);
     for (let i = 0; i < files.length; i++) {
       formData.append('files', files[i]);
     }
@@ -94,7 +96,7 @@ function FilesPageContent() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [getParentPath]);
+  }, [getParentPath, workspacePath]);
 
   const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -251,6 +253,7 @@ function FilesPageContent() {
           <FilePreview
             item={selectedItem}
             onClose={handleClosePreview}
+            workspacePath={workspacePath}
             className="h-full"
           />
         </div>

@@ -74,7 +74,7 @@ export function FileBrowserTree({
     const response = await fetch('/api/workspace/rename', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ oldPath: item.path, newName }),
+      body: JSON.stringify({ oldPath: item.path, newName, workspacePath }),
     });
     if (!response.ok) {
       const data = await response.json();
@@ -83,14 +83,14 @@ export function FileBrowserTree({
     // Refresh tree
     await loadRootItems();
     onRefresh?.();
-  }, [loadRootItems, onRefresh]);
+  }, [loadRootItems, onRefresh, workspacePath]);
 
   // Delete item
   const handleDelete = useCallback(async (item: DirectoryItem) => {
     const response = await fetch('/api/workspace/delete', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path: item.path }),
+      body: JSON.stringify({ path: item.path, workspacePath }),
     });
     if (!response.ok) {
       const data = await response.json();
@@ -103,13 +103,15 @@ export function FileBrowserTree({
     // Refresh tree
     await loadRootItems();
     onRefresh?.();
-  }, [selectedItem, onSelect, loadRootItems, onRefresh]);
+  }, [selectedItem, onSelect, loadRootItems, onRefresh, workspacePath]);
 
   // Download file
   const handleDownload = useCallback((item: DirectoryItem) => {
-    const url = `/api/workspace/file/download?path=${encodeURIComponent(item.path)}`;
+    const params = new URLSearchParams({ path: item.path });
+    if (workspacePath) params.set('workspacePath', workspacePath);
+    const url = `/api/workspace/file/download?${params}`;
     window.open(url, '_blank');
-  }, []);
+  }, [workspacePath]);
 
   // Handle selecting root
   const handleSelectRoot = useCallback(() => {

@@ -1319,6 +1319,14 @@ __tests__/
 | `/api/agents/[id]` | DELETE | ✅ 実装済 | `src/app/api/agents/[id]/route.ts` |
 | `/api/workspace/list` | GET | ✅ 実装済 | `src/app/api/workspace/list/route.ts` |
 | `/api/workspace/create` | POST | ✅ 実装済 | `src/app/api/workspace/create/route.ts` |
+| `/api/workspace/clone` | POST | ✅ 実装済 | `src/app/api/workspace/clone/route.ts` |
+| `/api/workspace/file` | GET | ✅ 実装済 | `src/app/api/workspace/file/route.ts` |
+| `/api/workspace/file` | PUT | ✅ 実装済 | `src/app/api/workspace/file/route.ts` |
+| `/api/workspace/file/create` | POST | ✅ 実装済 | `src/app/api/workspace/file/create/route.ts` |
+| `/api/workspace/file/download` | GET | ✅ 実装済 | `src/app/api/workspace/file/download/route.ts` |
+| `/api/workspace/delete` | DELETE | ✅ 実装済 | `src/app/api/workspace/delete/route.ts` |
+| `/api/workspace/rename` | POST | ✅ 実装済 | `src/app/api/workspace/rename/route.ts` |
+| `/api/workspace/upload` | POST | ✅ 実装済 | `src/app/api/workspace/upload/route.ts` |
 | `/api/usage` | GET | ✅ 実装済 | `src/app/api/usage/route.ts` |
 | `/api/health` | GET | ✅ 実装済 | `src/app/api/health/route.ts` |
 
@@ -1367,6 +1375,9 @@ __tests__/
 | WorkspaceSelector | ✅ 実装済 | `src/components/workspace/WorkspaceSelector.tsx` | セッションごとにワークスペース設定 |
 | WorkspaceTree | ✅ 実装済 | `src/components/workspace/WorkspaceTree.tsx` | ディレクトリツリー表示 |
 | WorkspaceTreeItem | ✅ 実装済 | `src/components/workspace/WorkspaceTreeItem.tsx` | ツリーアイテム |
+| FileBrowserTree | ✅ 実装済 | `src/components/workspace/FileBrowserTree.tsx` | ファイルブラウザツリー |
+| FileBrowserItem | ✅ 実装済 | `src/components/workspace/FileBrowserItem.tsx` | ファイルブラウザ項目（展開、アクション） |
+| FilePreview | ✅ 実装済 | `src/components/workspace/FilePreview.tsx` | ファイルプレビュー・編集（画像プレビュー対応） |
 
 #### 共通UI
 | コンポーネント | 状況 | ファイル | 備考 |
@@ -1415,6 +1426,8 @@ __tests__/
 | 設定レイアウト | ✅ 実装済 | `src/app/settings/layout.tsx` | - |
 | 使用量表示 | ✅ 実装済 | `src/app/usage/page.tsx` | 5時間/7日間使用量 |
 | 使用量レイアウト | ✅ 実装済 | `src/app/usage/layout.tsx` | - |
+| ファイルブラウザ | ✅ 実装済 | `src/app/files/page.tsx` | ファイル一覧・プレビュー・編集 |
+| ファイルレイアウト | ✅ 実装済 | `src/app/files/layout.tsx` | - |
 | MCP設定 | ❌ 未実装 | - | APIは実装済み |
 | Subagent設定 | ❌ 未実装 | - | APIは実装済み |
 | Skills設定 | ❌ 未実装 | - | - |

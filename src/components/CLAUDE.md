@@ -41,6 +41,9 @@ UIコンポーネントを格納するディレクトリです。
 - `WorkspaceTreeItem.tsx` - ツリー項目
 - `WorkspaceBadge.tsx` - ワークスペースバッジ
 - `GitCloneForm.tsx` - Gitクローンフォーム
+- `FileBrowserTree.tsx` - ファイルブラウザツリー
+- `FileBrowserItem.tsx` - ファイルブラウザ項目（展開、アクション）
+- `FilePreview.tsx` - ファイルプレビュー・編集（画像プレビュー対応）
 
 ### ui/
 shadcn/ui ベースの基本UIコンポーネント

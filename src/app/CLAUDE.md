@@ -8,6 +8,7 @@ Next.js App Routerのルーティングとページを管理するディレク�
 - `/` (`page.tsx`) - ルートページ（チャットへリダイレクト）
 - `/chat` - チャット一覧ページ
 - `/chat/[sessionId]` - 個別チャットセッションページ
+- `/files` - ファイルブラウザページ
 - `/settings` - 設定ページ
 - `/usage` - 使用状況ページ
 
@@ -23,7 +24,16 @@ Next.js App Routerのルーティングとページを管理するディレク�
 - `GET/PUT /api/settings` - 設定管理
 - `GET /api/usage` - 使用状況取得
 - `GET /api/health` - ヘルスチェック
-- `/api/workspace/*` - ワークスペース管理（list, create, clone）
+- `/api/workspace/*` - ワークスペース管理
+  - `GET /api/workspace/list` - ディレクトリ一覧
+  - `POST /api/workspace/create` - ワークスペース作成
+  - `POST /api/workspace/clone` - Gitクローン
+  - `GET/PUT /api/workspace/file` - ファイル読み書き
+  - `POST /api/workspace/file/create` - ファイル・フォルダ作成
+  - `GET /api/workspace/file/download` - ファイルダウンロード
+  - `DELETE /api/workspace/delete` - ファイル・フォルダ削除
+  - `POST /api/workspace/rename` - ファイル・フォルダ名変更
+  - `POST /api/workspace/upload` - ファイルアップロード
 
 ## 主要ファイル
 

@@ -58,11 +58,14 @@ export interface FileReadResponse {
   path: string;
   size: number;
   mimeType: string;
+  encoding: 'utf-8' | 'base64';
 }
 
 export interface FileSaveRequest {
   path: string;
   content: string;
+  encoding?: 'utf-8' | 'base64';
+  workspacePath?: string;
 }
 
 export interface FileSaveResponse {
@@ -74,6 +77,7 @@ export interface FileCreateRequest {
   parentPath: string;
   name: string;
   isDirectory: boolean;
+  workspacePath?: string;
 }
 
 export interface FileCreateResponse {
@@ -85,6 +89,7 @@ export interface FileCreateResponse {
 
 export interface DeleteRequest {
   path: string;
+  workspacePath?: string;
 }
 
 export interface DeleteResponse {
@@ -95,6 +100,7 @@ export interface DeleteResponse {
 export interface RenameRequest {
   oldPath: string;
   newName: string;
+  workspacePath?: string;
 }
 
 export interface RenameResponse {

@@ -31,8 +31,14 @@ TypeScript型定義を格納するディレクトリです。
 
 ### workspace.ts
 ワークスペース関連の型定義
-- `Workspace`: ワークスペース型
-- `FileNode`: ファイルノード型
+- `DirectoryItem`: ディレクトリ項目型
+- `DirectoryListResponse`: ディレクトリ一覧レスポンス型
+- `GitCloneRequest/Response`: Gitクローン型
+- `FileReadResponse`: ファイル読み取りレスポンス型（encoding対応）
+- `FileSaveRequest/Response`: ファイル保存型
+- `FileCreateRequest/Response`: ファイル作成型
+- `DeleteRequest/Response`: 削除型
+- `RenameRequest/Response`: 名前変更型
 
 ### index.ts
 型のエクスポート集約

@@ -79,6 +79,9 @@ src/
 │   ├── usage/                    # 使用量表示ページ
 │   │   ├── layout.tsx            # 使用量レイアウト
 │   │   └── page.tsx              # 使用量メイン
+│   ├── files/                    # ファイルブラウザページ
+│   │   ├── layout.tsx            # ファイルレイアウト
+│   │   └── page.tsx              # ファイルブラウザメイン
 │   ├── api/                      # API Routes
 │   │   ├── chat/                 # チャットAPI
 │   │   │   ├── route.ts          # POST /api/chat
@@ -103,8 +106,20 @@ src/
 │   │   ├── workspace/            # ワークスペース管理API
 │   │   │   ├── list/
 │   │   │   │   └── route.ts      # GET /api/workspace/list
-│   │   │   └── create/
-│   │   │       └── route.ts      # POST /api/workspace/create
+│   │   │   ├── create/
+│   │   │   │   └── route.ts      # POST /api/workspace/create
+│   │   │   ├── file/
+│   │   │   │   ├── route.ts      # GET/PUT /api/workspace/file
+│   │   │   │   ├── create/
+│   │   │   │   │   └── route.ts  # POST /api/workspace/file/create
+│   │   │   │   └── download/
+│   │   │   │       └── route.ts  # GET /api/workspace/file/download
+│   │   │   ├── delete/
+│   │   │   │   └── route.ts      # DELETE /api/workspace/delete
+│   │   │   ├── rename/
+│   │   │   │   └── route.ts      # POST /api/workspace/rename
+│   │   │   └── upload/
+│   │   │       └── route.ts      # POST /api/workspace/upload
 │   │   ├── usage/                # 使用量API
 │   │   │   └── route.ts          # GET /api/usage
 │   │   └── health/               # ヘルスチェックAPI
@@ -159,7 +174,10 @@ src/
 │       ├── WorkspaceBadge.tsx    # ワークスペースバッジ表示
 │       ├── WorkspaceSelector.tsx # ワークスペース選択UI
 │       ├── WorkspaceTree.tsx     # ディレクトリツリー
-│       └── WorkspaceTreeItem.tsx # ツリーアイテム
+│       ├── WorkspaceTreeItem.tsx # ツリーアイテム
+│       ├── FileBrowserTree.tsx   # ファイルブラウザツリー
+│       ├── FileBrowserItem.tsx   # ファイルブラウザ項目
+│       └── FilePreview.tsx       # ファイルプレビュー・編集
 ├── contexts/                     # React Context
 │   └── SidebarContext.tsx        # サイドバー状態管理
 ├── lib/                          # ユーティリティ
@@ -490,12 +508,26 @@ CMD ["node", "server.js"]
 #### ワークスペース機能
 | 機能 | ファイル | 備考 |
 |------|---------|------|
-| ワークスペース一覧API | `src/app/api/workspace/list/route.ts` | ディレクトリ一覧取得 |
+| ワークスペース一覧API | `src/app/api/workspace/list/route.ts` | ディレクトリ一覧取得、ファイル含む |
 | ワークスペース作成API | `src/app/api/workspace/create/route.ts` | ディレクトリ作成 |
 | ワークスペースバッジ | `src/components/workspace/WorkspaceBadge.tsx` | ChatHeaderに表示 |
 | ワークスペース選択UI | `src/components/workspace/WorkspaceSelector.tsx` | セッションごとにワークスペース設定 |
 | ディレクトリツリー | `src/components/workspace/WorkspaceTree.tsx` | フォルダ構造表示 |
 | セキュリティチェック | `src/app/api/workspace/list/route.ts` | ベースワークスペース外へのアクセス防止 |
+
+#### ファイルブラウザ機能
+| 機能 | ファイル | 備考 |
+|------|---------|------|
+| ファイルブラウザページ | `src/app/files/page.tsx` | ファイル一覧・プレビュー・編集 |
+| ファイルブラウザツリー | `src/components/workspace/FileBrowserTree.tsx` | ファイル・フォルダ一覧表示 |
+| ファイルブラウザ項目 | `src/components/workspace/FileBrowserItem.tsx` | 展開・アクション対応 |
+| ファイルプレビュー | `src/components/workspace/FilePreview.tsx` | テキスト編集・画像プレビュー |
+| ファイル読み書きAPI | `src/app/api/workspace/file/route.ts` | バイナリ/テキスト対応 |
+| ファイル作成API | `src/app/api/workspace/file/create/route.ts` | ファイル・フォルダ作成 |
+| ファイルダウンロードAPI | `src/app/api/workspace/file/download/route.ts` | バイナリダウンロード |
+| 削除API | `src/app/api/workspace/delete/route.ts` | ファイル・フォルダ削除 |
+| 名前変更API | `src/app/api/workspace/rename/route.ts` | ファイル・フォルダ名変更 |
+| アップロードAPI | `src/app/api/workspace/upload/route.ts` | 複数ファイルアップロード |
 
 #### 使用量表示機能
 | 機能 | ファイル | 備考 |

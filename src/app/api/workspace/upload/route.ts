@@ -26,6 +26,7 @@ export async function POST(request: Request) {
   try {
     const formData = await request.formData();
     const targetPath = formData.get('path') as string || '';
+    const workspacePathParam = formData.get('workspacePath') as string || undefined;
     const files = formData.getAll('files') as File[];
 
     if (files.length === 0) {
@@ -36,9 +37,10 @@ export async function POST(request: Request) {
     }
 
     const sandboxSettings = await getSandboxSettings();
-    const basePath = sandboxSettings.workspacePath.startsWith('/')
-      ? sandboxSettings.workspacePath
-      : path.resolve(process.cwd(), sandboxSettings.workspacePath);
+    const workspaceSource = workspacePathParam || sandboxSettings.workspacePath;
+    const basePath = workspaceSource.startsWith('/')
+      ? workspaceSource
+      : path.resolve(process.cwd(), workspaceSource);
 
     const targetAbsPath = targetPath
       ? path.resolve(basePath, targetPath)

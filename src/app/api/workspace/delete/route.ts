@@ -26,7 +26,7 @@ async function getSandboxSettings(): Promise<SandboxSettings> {
 export async function DELETE(request: Request) {
   try {
     const body: DeleteRequest = await request.json();
-    const { path: relativePath } = body;
+    const { path: relativePath, workspacePath: workspacePathParam } = body;
 
     if (!relativePath) {
       return NextResponse.json(
@@ -36,9 +36,10 @@ export async function DELETE(request: Request) {
     }
 
     const sandboxSettings = await getSandboxSettings();
-    const basePath = sandboxSettings.workspacePath.startsWith('/')
-      ? sandboxSettings.workspacePath
-      : path.resolve(process.cwd(), sandboxSettings.workspacePath);
+    const workspaceSource = workspacePathParam || sandboxSettings.workspacePath;
+    const basePath = workspaceSource.startsWith('/')
+      ? workspaceSource
+      : path.resolve(process.cwd(), workspaceSource);
 
     const targetPath = path.resolve(basePath, relativePath);
 

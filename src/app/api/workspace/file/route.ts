@@ -24,11 +24,12 @@ async function getSandboxSettings(): Promise<SandboxSettings> {
 }
 
 // Helper to resolve and validate path
-async function resolveAndValidatePath(relativePath: string): Promise<{ basePath: string; targetPath: string } | null> {
+async function resolveAndValidatePath(relativePath: string, workspacePathParam?: string): Promise<{ basePath: string; targetPath: string } | null> {
   const sandboxSettings = await getSandboxSettings();
-  const basePath = sandboxSettings.workspacePath.startsWith('/')
-    ? sandboxSettings.workspacePath
-    : path.resolve(process.cwd(), sandboxSettings.workspacePath);
+  const workspaceSource = workspacePathParam || sandboxSettings.workspacePath;
+  const basePath = workspaceSource.startsWith('/')
+    ? workspaceSource
+    : path.resolve(process.cwd(), workspaceSource);
 
   const targetPath = path.resolve(basePath, relativePath);
 
@@ -40,11 +41,32 @@ async function resolveAndValidatePath(relativePath: string): Promise<{ basePath:
   return { basePath, targetPath };
 }
 
+// Helper to check if MIME type is text-based
+function isTextMimeType(mimeType: string): boolean {
+  if (mimeType.startsWith('text/')) return true;
+  if (mimeType.startsWith('application/json')) return true;
+  if (mimeType.startsWith('application/javascript')) return true;
+  if (mimeType.startsWith('application/typescript')) return true;
+  if (mimeType.startsWith('application/xml')) return true;
+  if (mimeType.includes('+xml')) return true;
+  if (mimeType.includes('+json')) return true;
+  // Common text-based types
+  const textTypes = [
+    'application/x-sh',
+    'application/x-httpd-php',
+    'application/x-python',
+    'application/x-ruby',
+    'application/x-perl',
+  ];
+  return textTypes.includes(mimeType);
+}
+
 // GET: Read file content
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const relativePath = searchParams.get('path');
+    const workspacePathParam = searchParams.get('workspacePath') || undefined;
 
     if (!relativePath) {
       return NextResponse.json(
@@ -53,7 +75,7 @@ export async function GET(request: Request) {
       );
     }
 
-    const resolved = await resolveAndValidatePath(relativePath);
+    const resolved = await resolveAndValidatePath(relativePath, workspacePathParam);
     if (!resolved) {
       return NextResponse.json(
         { error: 'Access denied: path outside workspace' },
@@ -64,8 +86,9 @@ export async function GET(request: Request) {
     const { targetPath } = resolved;
 
     // Check if file exists
+    let stats;
     try {
-      const stats = await fs.stat(targetPath);
+      stats = await fs.stat(targetPath);
       if (!stats.isFile()) {
         return NextResponse.json(
           { error: 'Path is not a file' },
@@ -79,16 +102,28 @@ export async function GET(request: Request) {
       );
     }
 
-    // Read file content
-    const content = await fs.readFile(targetPath, 'utf-8');
-    const stats = await fs.stat(targetPath);
     const mimeType = mime.lookup(targetPath) || 'application/octet-stream';
+    const isText = isTextMimeType(mimeType);
+
+    // Read file content with appropriate encoding
+    let content: string;
+    let encoding: 'utf-8' | 'base64';
+
+    if (isText) {
+      content = await fs.readFile(targetPath, 'utf-8');
+      encoding = 'utf-8';
+    } else {
+      const buffer = await fs.readFile(targetPath);
+      content = buffer.toString('base64');
+      encoding = 'base64';
+    }
 
     const response: FileReadResponse = {
       content,
       path: relativePath,
       size: stats.size,
       mimeType,
+      encoding,
     };
 
     return NextResponse.json(response);
@@ -105,7 +140,7 @@ export async function GET(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body: FileSaveRequest = await request.json();
-    const { path: relativePath, content } = body;
+    const { path: relativePath, content, encoding, workspacePath: workspacePathParam } = body;
 
     if (!relativePath) {
       return NextResponse.json(
@@ -114,7 +149,7 @@ export async function PUT(request: Request) {
       );
     }
 
-    const resolved = await resolveAndValidatePath(relativePath);
+    const resolved = await resolveAndValidatePath(relativePath, workspacePathParam);
     if (!resolved) {
       return NextResponse.json(
         { error: 'Access denied: path outside workspace' },
@@ -140,8 +175,13 @@ export async function PUT(request: Request) {
       );
     }
 
-    // Write file content
-    await fs.writeFile(targetPath, content, 'utf-8');
+    // Write file content with appropriate encoding
+    if (encoding === 'base64') {
+      const buffer = Buffer.from(content, 'base64');
+      await fs.writeFile(targetPath, buffer);
+    } else {
+      await fs.writeFile(targetPath, content, 'utf-8');
+    }
 
     const response: FileSaveResponse = {
       success: true,

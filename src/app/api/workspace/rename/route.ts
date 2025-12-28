@@ -26,7 +26,7 @@ async function getSandboxSettings(): Promise<SandboxSettings> {
 export async function POST(request: Request) {
   try {
     const body: RenameRequest = await request.json();
-    const { oldPath, newName } = body;
+    const { oldPath, newName, workspacePath: workspacePathParam } = body;
 
     if (!oldPath || !newName) {
       return NextResponse.json(
@@ -44,9 +44,10 @@ export async function POST(request: Request) {
     }
 
     const sandboxSettings = await getSandboxSettings();
-    const basePath = sandboxSettings.workspacePath.startsWith('/')
-      ? sandboxSettings.workspacePath
-      : path.resolve(process.cwd(), sandboxSettings.workspacePath);
+    const workspaceSource = workspacePathParam || sandboxSettings.workspacePath;
+    const basePath = workspaceSource.startsWith('/')
+      ? workspaceSource
+      : path.resolve(process.cwd(), workspaceSource);
 
     const oldAbsPath = path.resolve(basePath, oldPath);
     const parentDir = path.dirname(oldAbsPath);
