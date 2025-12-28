@@ -3,53 +3,124 @@ import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
 
-interface ClaudeCredentials {
-  claudeAiOauth?: {
-    accessToken: string;
-    refreshToken: string;
-    expiresAt: number;
-    scopes: string[];
-    subscriptionType: string;
-  };
+interface OAuthTokens {
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: number;
+  scopes: string[];
+  subscriptionType: string;
 }
+
+interface ClaudeCredentials {
+  claudeAiOauth?: OAuthTokens;
+}
+
+interface TokenRefreshResponse {
+  access_token: string;
+  refresh_token?: string;
+  expires_in: number;
+  token_type: string;
+}
+
+const CREDENTIALS_PATH = path.join(os.homedir(), '.claude', '.credentials.json');
+// Refresh token 5 minutes before expiry to avoid edge cases
+const TOKEN_EXPIRY_BUFFER_MS = 5 * 60 * 1000;
 
 async function getCredentials(): Promise<ClaudeCredentials | null> {
   try {
-    const credentialsPath = path.join(os.homedir(), '.claude', '.credentials.json');
-    const content = await fs.readFile(credentialsPath, 'utf-8');
+    const content = await fs.readFile(CREDENTIALS_PATH, 'utf-8');
     return JSON.parse(content) as ClaudeCredentials;
   } catch {
     return null;
   }
 }
 
+async function saveCredentials(credentials: ClaudeCredentials): Promise<void> {
+  await fs.writeFile(CREDENTIALS_PATH, JSON.stringify(credentials, null, 2), 'utf-8');
+}
+
+async function refreshAccessToken(oauth: OAuthTokens): Promise<OAuthTokens | null> {
+  try {
+    const response = await fetch('https://api.anthropic.com/oauth/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token: oauth.refreshToken,
+      }).toString(),
+    });
+
+    if (!response.ok) {
+      console.error('Token refresh failed:', response.status, await response.text());
+      return null;
+    }
+
+    const data = await response.json() as TokenRefreshResponse;
+
+    return {
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token ?? oauth.refreshToken,
+      expiresAt: Date.now() + data.expires_in * 1000,
+      scopes: oauth.scopes,
+      subscriptionType: oauth.subscriptionType,
+    };
+  } catch (error) {
+    console.error('Token refresh error:', error);
+    return null;
+  }
+}
+
+async function getValidAccessToken(): Promise<{ token: string } | { error: string; message: string }> {
+  const credentials = await getCredentials();
+
+  if (!credentials?.claudeAiOauth?.accessToken) {
+    return { error: 'credentials_not_found', message: '認証情報が見つかりません。Claude Codeにログインしてください。' };
+  }
+
+  const oauth = credentials.claudeAiOauth;
+  const isExpired = oauth.expiresAt < Date.now() + TOKEN_EXPIRY_BUFFER_MS;
+
+  if (!isExpired) {
+    return { token: oauth.accessToken };
+  }
+
+  // Token is expired or about to expire, try to refresh
+  console.log('Access token expired, attempting refresh...');
+  const newOauth = await refreshAccessToken(oauth);
+
+  if (!newOauth) {
+    return { error: 'refresh_failed', message: 'トークンの更新に失敗しました。再ログインしてください。' };
+  }
+
+  // Save the new credentials
+  credentials.claudeAiOauth = newOauth;
+  await saveCredentials(credentials);
+  console.log('Access token refreshed successfully');
+
+  return { token: newOauth.accessToken };
+}
+
 export async function GET() {
   try {
-    // 1. Read credentials from ~/.claude/.credentials.json
-    const credentials = await getCredentials();
+    // 1. Get valid access token (refresh if needed)
+    const tokenResult = await getValidAccessToken();
 
-    if (!credentials?.claudeAiOauth?.accessToken) {
+    if ('error' in tokenResult) {
       return NextResponse.json(
-        { error: 'credentials_not_found', message: '認証情報が見つかりません。Claude Codeにログインしてください。' },
+        { error: tokenResult.error, message: tokenResult.message },
         { status: 401 }
       );
     }
 
-    // 2. Check if token is expired
-    if (credentials.claudeAiOauth.expiresAt < Date.now()) {
-      return NextResponse.json(
-        { error: 'token_expired', message: 'アクセストークンの有効期限が切れています。再ログインしてください。' },
-        { status: 401 }
-      );
-    }
-
-    // 3. Fetch usage data from Anthropic API
+    // 2. Fetch usage data from Anthropic API
     const response = await fetch('https://api.anthropic.com/api/oauth/usage', {
       method: 'GET',
       headers: {
         'Accept': 'application/json, text/plain, */*',
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${credentials.claudeAiOauth.accessToken}`,
+        'Authorization': `Bearer ${tokenResult.token}`,
         'anthropic-beta': 'oauth-2025-04-20',
       },
     });
