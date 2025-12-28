@@ -28,6 +28,8 @@ export function FileBrowserTree({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [basePath, setBasePath] = useState<string>('./workspace');
+  // 展開状態を一元管理（リフレッシュしても維持される）
+  const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
 
   // Load root directory
   const loadRootItems = useCallback(async () => {
@@ -68,6 +70,19 @@ export function FileBrowserTree({
     const data = await response.json();
     return data.items;
   }, [workspacePath]);
+
+  // 展開状態をトグル
+  const toggleExpanded = useCallback((path: string) => {
+    setExpandedPaths((prev) => {
+      const next = new Set(prev);
+      if (next.has(path)) {
+        next.delete(path);
+      } else {
+        next.add(path);
+      }
+      return next;
+    });
+  }, []);
 
   // Rename item
   const handleRename = useCallback(async (item: DirectoryItem, newName: string) => {
@@ -173,6 +188,9 @@ export function FileBrowserTree({
             isSelected={selectedItem?.path === item.path}
             selectedPath={selectedItem?.path ?? null}
             depth={0}
+            isExpanded={expandedPaths.has(item.path)}
+            expandedPaths={expandedPaths}
+            onToggleExpand={toggleExpanded}
             onSelect={handleSelectItem}
             onLoadChildren={loadChildren}
             onRename={handleRename}

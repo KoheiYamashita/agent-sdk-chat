@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   ChevronRight,
   ChevronDown,
@@ -29,6 +29,9 @@ interface FileBrowserItemProps {
   isSelected: boolean;
   selectedPath: string | null;
   depth: number;
+  isExpanded: boolean;
+  expandedPaths: Set<string>;
+  onToggleExpand: (path: string) => void;
   onSelect: (item: DirectoryItem) => void;
   onLoadChildren: (path: string) => Promise<DirectoryItem[]>;
   onRename: (item: DirectoryItem, newName: string) => Promise<void>;
@@ -64,38 +67,61 @@ export function FileBrowserItem({
   isSelected,
   selectedPath,
   depth,
+  isExpanded,
+  expandedPaths,
+  onToggleExpand,
   onSelect,
   onLoadChildren,
   onRename,
   onDelete,
   onDownload,
 }: FileBrowserItemProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  // 子要素のキャッシュはローカルで維持（パフォーマンスのため）
   const [children, setChildren] = useState<DirectoryItem[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [newName, setNewName] = useState(item.name);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // 展開状態だが子要素がない場合（リフレッシュ後など）に自動で再読み込み
+  useEffect(() => {
+    if (isExpanded && children === null && item.isDirectory && !isLoading) {
+      const loadChildren = async () => {
+        setIsLoading(true);
+        try {
+          const loadedChildren = await onLoadChildren(item.path);
+          setChildren(loadedChildren);
+        } catch {
+          console.error('Failed to load children');
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      loadChildren();
+    }
+  }, [isExpanded, children, item.isDirectory, item.path, isLoading, onLoadChildren]);
+
   const handleToggle = useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!item.isDirectory) return;
 
     if (!isExpanded && children === null) {
+      // 初回展開：子要素を読み込む
       setIsLoading(true);
       try {
         const loadedChildren = await onLoadChildren(item.path);
         setChildren(loadedChildren);
-        setIsExpanded(true);
+        onToggleExpand(item.path);
       } catch {
         console.error('Failed to load children');
       } finally {
         setIsLoading(false);
       }
     } else {
-      setIsExpanded(!isExpanded);
+      // 2回目以降：展開状態をトグル
+      onToggleExpand(item.path);
     }
-  }, [item, isExpanded, children, onLoadChildren]);
+  }, [item, isExpanded, children, onLoadChildren, onToggleExpand]);
 
   const handleClick = useCallback(() => {
     onSelect(item);
@@ -242,6 +268,9 @@ export function FileBrowserItem({
               isSelected={selectedPath === child.path}
               selectedPath={selectedPath}
               depth={depth + 1}
+              isExpanded={expandedPaths.has(child.path)}
+              expandedPaths={expandedPaths}
+              onToggleExpand={onToggleExpand}
               onSelect={onSelect}
               onLoadChildren={onLoadChildren}
               onRename={onRename}
