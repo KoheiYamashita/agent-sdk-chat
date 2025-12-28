@@ -22,22 +22,34 @@ import {
   ShieldAlert,
   ChevronDown,
   ChevronRight,
+  Lightbulb,
+  BookOpen,
+  FileCode,
+  Target,
+  Rocket,
+  Code,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { ToolCallList } from './ToolCallList';
-import type { Message, AppearanceSettings, AvatarIconType, BotIconType } from '@/types';
+import type { Message, AppearanceSettings, AvatarIconType, BotIconType, CustomModel } from '@/types';
 
 interface MessageItemProps {
   message: Message;
   appearanceSettings?: AppearanceSettings;
   streamingThinking?: string | null;
+  customModels?: CustomModel[];
 }
 
 // モデルIDから表示名を取得
-function getModelDisplayName(modelId: string): string {
+function getModelDisplayName(modelId: string, modelDisplayName?: string): string {
+  // If custom model display name is provided, use it
+  if (modelDisplayName) {
+    return modelDisplayName;
+  }
+  // Fallback to known model mappings
   const modelMap: Record<string, string> = {
     'claude-opus-4-5-20251101': 'Claude 4.5 Opus',
     'claude-sonnet-4-20250514': 'Claude 4 Sonnet',
@@ -76,6 +88,24 @@ function getBotIconComponent(type: BotIconType) {
   }
 }
 
+// Custom model icon map
+const CUSTOM_MODEL_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+  bot: Bot,
+  brain: Brain,
+  code: Code,
+  sparkles: Sparkles,
+  wand: Wand,
+  message: MessageCircle,
+  zap: Zap,
+  star: Star,
+  lightbulb: Lightbulb,
+  book: BookOpen,
+  'file-code': FileCode,
+  shield: Shield,
+  target: Target,
+  rocket: Rocket,
+};
+
 // セキュリティ: 画像URLの検証（data: URLまたは有効なhttps URLのみ許可）
 function isValidImageUrl(url: string): boolean {
   if (!url) return false;
@@ -88,8 +118,9 @@ function isValidImageUrl(url: string): boolean {
   }
 }
 
-export function MessageItem({ message, appearanceSettings, streamingThinking }: MessageItemProps) {
+export function MessageItem({ message, appearanceSettings, streamingThinking, customModels }: MessageItemProps) {
   const [isThinkingOpen, setIsThinkingOpen] = useState(false);
+  const [customModelImageError, setCustomModelImageError] = useState(false);
   const isUser = message.role === 'user';
   const isToolApproval = message.role === 'tool_approval';
 
@@ -111,6 +142,11 @@ export function MessageItem({ message, appearanceSettings, streamingThinking }: 
   const UserIcon = getUserIconComponent(userIcon);
   const BotIcon = getBotIconComponent(botIcon);
 
+  // Find custom model by displayName if this message was sent by a custom model
+  const customModel = !isUser && message.modelDisplayName
+    ? customModels?.find(m => m.displayName === message.modelDisplayName)
+    : undefined;
+
   const renderUserAvatar = () => {
     if (userIcon === 'initials' && userInitials) {
       return <span className="text-sm font-medium">{userInitials}</span>;
@@ -119,6 +155,12 @@ export function MessageItem({ message, appearanceSettings, streamingThinking }: 
   };
 
   const renderBotAvatar = () => {
+    // If custom model has a lucide icon, show it
+    if (customModel?.icon) {
+      const CustomIcon = CUSTOM_MODEL_ICON_MAP[customModel.icon] ?? Bot;
+      return <CustomIcon className={cn('h-4 w-4 sm:h-5 sm:w-5', customModel.iconColor ?? 'text-primary')} />;
+    }
+    // Default bot icon from appearance settings
     if (botIcon === 'initials' && botInitials) {
       return <span className="text-sm font-medium">{botInitials}</span>;
     }
@@ -127,14 +169,17 @@ export function MessageItem({ message, appearanceSettings, streamingThinking }: 
 
   // セキュリティ: 画像URLの検証を通過した場合のみ表示
   const showUserImage = userIcon === 'image' && isValidImageUrl(userImageUrl);
-  const showBotImage = botIcon === 'image' && isValidImageUrl(botImageUrl);
+  // Show custom model image if available
+  const showCustomModelImage = customModel?.iconImageUrl && isValidImageUrl(customModel.iconImageUrl) && !customModelImageError;
+  // Only show default bot image if not using a custom model with its own icon
+  const showBotImage = !showCustomModelImage && botIcon === 'image' && isValidImageUrl(botImageUrl) && !customModel;
 
   // 表示名を決定
   // DBにモデル情報がある場合のみモデル名を表示、ない場合は「Claude」
   const modelId = message.model;
   const displayName = isUser
     ? (userName || 'あなた')
-    : (modelId ? getModelDisplayName(modelId) : 'Claude');
+    : (modelId ? getModelDisplayName(modelId, message.modelDisplayName ?? undefined) : 'Claude');
 
   return (
     <div
@@ -145,6 +190,13 @@ export function MessageItem({ message, appearanceSettings, streamingThinking }: 
     >
       <Avatar className="h-8 w-8 sm:h-9 sm:w-9 shrink-0 ring-2 ring-background shadow-sm mt-0.5">
         {isUser && showUserImage && <AvatarImage src={userImageUrl} alt="User" />}
+        {!isUser && showCustomModelImage && (
+          <AvatarImage
+            src={customModel!.iconImageUrl!}
+            alt=""
+            onError={() => setCustomModelImageError(true)}
+          />
+        )}
         {!isUser && showBotImage && <AvatarImage src={botImageUrl} alt="Claude" />}
         <AvatarFallback className={cn(
           isUser

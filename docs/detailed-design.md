@@ -396,6 +396,124 @@ interface PtySession {
 
 ---
 
+### 1.8 モデル管理API
+
+カスタムモデルの作成・管理と、利用可能なモデル一覧の取得を行うAPI。
+
+#### GET /api/models
+すべてのモデル（標準+カスタム）を取得。
+
+**レスポンス:**
+```typescript
+interface AllModelsResponse {
+  standardModels: StandardModel[];
+  customModels: CustomModel[];
+}
+
+interface StandardModel {
+  id: string;           // SDK ModelInfo.value - APIで使用するモデルID
+  displayName: string;  // SDK ModelInfo.displayName
+  description: string;  // SDK ModelInfo.description
+}
+
+interface CustomModel {
+  id: string;
+  name: string;         // 一意の識別名（URL-safe）
+  displayName: string;  // 表示名
+  baseModel: string;    // ベースとなる標準モデルID
+  systemPrompt?: string | null;
+  description?: string | null;
+  icon?: string | null;        // Lucideアイコン名
+  iconColor?: string | null;   // Tailwind CSSカラークラス
+  iconImageUrl?: string | null; // カスタム画像URL（data: URLまたはhttps:）
+  isEnabled: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+#### GET /api/models/supported
+標準モデル（SDK提供）のみを取得。
+
+**レスポンス:**
+```typescript
+interface StandardModelsResponse {
+  models: StandardModel[];
+}
+```
+
+#### GET /api/models/custom
+カスタムモデル一覧を取得。
+
+**レスポンス:**
+```typescript
+interface CustomModelsResponse {
+  models: CustomModel[];
+}
+```
+
+#### POST /api/models/custom
+新しいカスタムモデルを作成。
+
+**リクエスト:**
+```typescript
+interface CustomModelCreateRequest {
+  name: string;          // 一意の識別名
+  displayName: string;   // 表示名
+  baseModel: string;     // ベースモデルID
+  systemPrompt?: string;
+  description?: string;
+  icon?: string;
+  iconColor?: string;
+  iconImageUrl?: string;
+}
+```
+
+**レスポンス:**
+```typescript
+// 成功時: 201 Created
+CustomModel
+
+// エラー時: 400 Bad Request
+{ error: "name, displayName, and baseModel are required" }
+
+// エラー時: 409 Conflict
+{ error: "A model with this name already exists" }
+```
+
+#### GET /api/models/custom/[id]
+特定のカスタムモデルを取得。
+
+#### PUT /api/models/custom/[id]
+カスタムモデルを更新。
+
+**リクエスト:**
+```typescript
+interface CustomModelUpdateRequest {
+  name?: string;
+  displayName?: string;
+  baseModel?: string;
+  systemPrompt?: string | null;
+  description?: string | null;
+  icon?: string | null;
+  iconColor?: string | null;
+  iconImageUrl?: string | null;
+  isEnabled?: boolean;
+  sortOrder?: number;
+}
+```
+
+#### DELETE /api/models/custom/[id]
+カスタムモデルを削除。
+
+**レスポンス:**
+```typescript
+{ success: true }
+```
+
+---
+
 ## 2. フロントエンド コンポーネント設計
 
 ### 2.1 ページ構成
@@ -410,7 +528,9 @@ app/
 │       └── page.tsx         # 既存セッション
 ├── settings/
 │   ├── layout.tsx           # 設定ページレイアウト
-│   └── page.tsx             # 一般設定（権限モード、デフォルトツール）
+│   ├── page.tsx             # 一般設定（権限モード、デフォルトツール）
+│   └── models/
+│       └── page.tsx         # カスタムモデル管理
 └── api/                     # APIルート
     ├── chat/
     │   ├── route.ts         # POST チャット送信
@@ -1074,7 +1194,87 @@ export interface AgentConfig {
 }
 ```
 
-### 4.4 ターミナル関連
+### 4.4 モデル関連
+```typescript
+// types/models.ts
+
+/**
+ * 標準モデル（SDK提供）
+ */
+export interface StandardModel {
+  id: string;           // SDK ModelInfo.value - APIで使用するモデルID
+  displayName: string;  // SDK ModelInfo.displayName
+  description: string;  // SDK ModelInfo.description
+}
+
+/**
+ * カスタムモデル（Prisma CustomModel）
+ */
+export interface CustomModel {
+  id: string;
+  name: string;           // 一意の識別名（URL-safe）
+  displayName: string;    // 表示名
+  baseModel: string;      // ベースとなる標準モデルID
+  systemPrompt?: string | null;
+  description?: string | null;
+  icon?: string | null;        // Lucideアイコン名
+  iconColor?: string | null;   // Tailwind CSSカラークラス
+  iconImageUrl?: string | null; // カスタム画像URL
+  isEnabled: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * 選択UI用の統一モデル型
+ */
+export interface SelectableModel {
+  type: 'standard' | 'custom';
+  id: string;             // 標準: モデルID, カスタム: cuid
+  displayName: string;
+  description?: string;
+  icon?: string | null;
+  iconColor?: string | null;
+  iconImageUrl?: string | null;
+  baseModelId: string;    // APIで使用する実際のモデルID
+  systemPrompt?: string | null;
+}
+
+/**
+ * API リクエスト/レスポンス型
+ */
+export interface CustomModelCreateRequest {
+  name: string;
+  displayName: string;
+  baseModel: string;
+  systemPrompt?: string;
+  description?: string;
+  icon?: string;
+  iconColor?: string;
+  iconImageUrl?: string;
+}
+
+export interface CustomModelUpdateRequest {
+  name?: string;
+  displayName?: string;
+  baseModel?: string;
+  systemPrompt?: string | null;
+  description?: string | null;
+  icon?: string | null;
+  iconColor?: string | null;
+  iconImageUrl?: string | null;
+  isEnabled?: boolean;
+  sortOrder?: number;
+}
+
+export interface AllModelsResponse {
+  standardModels: StandardModel[];
+  customModels: CustomModel[];
+}
+```
+
+### 4.5 ターミナル関連
 ```typescript
 // types/terminal.ts
 
@@ -1349,6 +1549,12 @@ __tests__/
 | `/api/workspace/upload` | POST | ✅ 実装済 | `src/app/api/workspace/upload/route.ts` |
 | `/api/usage` | GET | ✅ 実装済 | `src/app/api/usage/route.ts` |
 | `/api/health` | GET | ✅ 実装済 | `src/app/api/health/route.ts` |
+| `/api/models` | GET | ✅ 実装済 | `src/app/api/models/route.ts` |
+| `/api/models/custom` | GET | ✅ 実装済 | `src/app/api/models/custom/route.ts` |
+| `/api/models/custom` | POST | ✅ 実装済 | `src/app/api/models/custom/route.ts` |
+| `/api/models/custom/[id]` | GET | ✅ 実装済 | `src/app/api/models/custom/[id]/route.ts` |
+| `/api/models/custom/[id]` | PUT | ✅ 実装済 | `src/app/api/models/custom/[id]/route.ts` |
+| `/api/models/custom/[id]` | DELETE | ✅ 実装済 | `src/app/api/models/custom/[id]/route.ts` |
 
 ### 10.2 コンポーネント実装状況
 
@@ -1362,6 +1568,7 @@ __tests__/
 | InputArea | ✅ 実装済 | `src/components/chat/InputArea.tsx` | 権限モード選択統合済み |
 | PermissionModeSelector | ✅ 実装済 | `src/components/chat/PermissionModeSelector.tsx` | チャット入力欄上部 |
 | ToolApprovalCard | ✅ 実装済 | `src/components/chat/ToolApprovalCard.tsx` | インライン表示、キーボードショートカット対応 |
+| ModelSelector | ✅ 実装済 | `src/components/chat/ModelSelector.tsx` | モデル選択ドロップダウン |
 | ToolApprovalMessage | ✅ 実装済 | `src/components/chat/MessageItem.tsx` | 承認履歴表示（MessageItem内） |
 | ToolCallList | ✅ 実装済 | `src/components/chat/ToolCallList.tsx` | ツール実行ステータス表示 |
 | MarkdownRenderer | ✅ 実装済 | `src/components/chat/MarkdownRenderer.tsx` | react-markdown, rehype-highlight使用 |
@@ -1384,6 +1591,10 @@ __tests__/
 | DefaultToolsCheckboxGroup | ✅ 実装済 | `src/components/settings/DefaultToolsCheckboxGroup.tsx` | カテゴリ別ツール選択 |
 | SandboxSettingsForm | ✅ 実装済 | `src/components/settings/SandboxSettingsForm.tsx` | サンドボックス設定（有効/無効、ワークスペースパス） |
 | AppearanceSettingsForm | ✅ 実装済 | `src/components/settings/AppearanceSettingsForm.tsx` | 外観設定（アイコン、表示名） |
+| ModelsPage | ✅ 実装済 | `src/app/settings/models/page.tsx` | カスタムモデル管理ページ |
+| CustomModelCard | ✅ 実装済 | `src/components/settings/CustomModelCard.tsx` | カスタムモデルカード表示 |
+| CustomModelForm | ✅ 実装済 | `src/components/settings/CustomModelForm.tsx` | カスタムモデル作成・編集フォーム |
+| IconPicker | ✅ 実装済 | `src/components/settings/IconPicker.tsx` | アイコン・画像選択UI |
 | MCPConfig | ❌ 未実装 | - | MCP設定UI（APIは実装済み） |
 | AgentsConfig | ❌ 未実装 | - | Subagent設定UI（APIは実装済み） |
 | SkillsConfig | ❌ 未実装 | - | Skills設定 |
@@ -1421,6 +1632,8 @@ __tests__/
 | Label | ✅ 実装済 | `src/components/ui/label.tsx` | shadcn/ui |
 | Checkbox | ✅ 実装済 | `src/components/ui/checkbox.tsx` | shadcn/ui |
 | Separator | ✅ 実装済 | `src/components/ui/separator.tsx` | shadcn/ui |
+| Popover | ✅ 実装済 | `src/components/ui/popover.tsx` | shadcn/ui |
+| Switch | ✅ 実装済 | `src/components/ui/switch.tsx` | shadcn/ui |
 | Toast | ❌ 未実装 | - | 通知 |
 
 ### 10.3 カスタムフック実装状況
@@ -1431,6 +1644,7 @@ __tests__/
 | useSessions | ✅ 実装済 | `src/hooks/useSessions.ts` | セッション一覧取得、差分ロード対応 |
 | useSettings | ✅ 実装済 | `src/hooks/useSettings.ts` | 設定管理、デフォルトツール対応 |
 | useUsage | ✅ 実装済 | `src/hooks/useUsage.ts` | Claude Code使用量取得 |
+| useModels | ✅ 実装済 | `src/hooks/useModels.ts` | モデル管理（標準・カスタム） |
 | useMCP | ❌ 未実装 | - | MCP管理（APIは実装済み） |
 | useAgents | ❌ 未実装 | - | エージェント管理（APIは実装済み） |
 
@@ -1444,6 +1658,7 @@ __tests__/
 | チャットレイアウト | ✅ 実装済 | `src/app/chat/layout.tsx` | サイドバー付き |
 | 設定メイン | ✅ 実装済 | `src/app/settings/page.tsx` | 権限モード、デフォルトツール、外観設定 |
 | 設定レイアウト | ✅ 実装済 | `src/app/settings/layout.tsx` | - |
+| モデル設定 | ✅ 実装済 | `src/app/settings/models/page.tsx` | カスタムモデル管理 |
 | 使用量表示 | ✅ 実装済 | `src/app/usage/page.tsx` | 5時間/7日間使用量 |
 | 使用量レイアウト | ✅ 実装済 | `src/app/usage/layout.tsx` | - |
 | ファイルブラウザ | ✅ 実装済 | `src/app/files/page.tsx` | ファイル一覧・プレビュー・編集 |

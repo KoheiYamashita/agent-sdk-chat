@@ -1,19 +1,56 @@
 'use client';
 
+import Link from 'next/link';
+import Image from 'next/image';
 import { useSettings } from '@/hooks/useSettings';
+import { useAllModels } from '@/hooks/useModels';
 import { PermissionModeRadioGroup } from '@/components/settings/PermissionModeRadioGroup';
 import { DefaultToolsCheckboxGroup } from '@/components/settings/DefaultToolsCheckboxGroup';
 import { SandboxSettingsForm } from '@/components/settings/SandboxSettingsForm';
 import { AppearanceSettingsForm } from '@/components/settings/AppearanceSettingsForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Brain } from 'lucide-react';
-import type { PermissionMode, SandboxSettings, AppearanceSettings } from '@/types';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { isValidImageUrl } from '@/lib/image-utils';
+import { Brain, Bot, ChevronRight } from 'lucide-react';
+import type { PermissionMode, SandboxSettings, AppearanceSettings, SelectableModel } from '@/types';
+
+// Render model icon (image or Bot icon)
+function ModelIcon({ model }: { model: SelectableModel }) {
+  if (model.type === 'custom' && model.iconImageUrl && isValidImageUrl(model.iconImageUrl)) {
+    return (
+      <Image
+        src={model.iconImageUrl}
+        alt=""
+        width={16}
+        height={16}
+        className="rounded object-cover"
+        unoptimized
+      />
+    );
+  }
+  return <Bot className={model.type === 'custom' ? 'h-4 w-4 text-primary' : 'h-4 w-4 text-muted-foreground'} />;
+}
 
 export default function SettingsPage() {
   const { settings, isLoading, error, isSaving, updateGeneralSettings, updateAppearanceSettings, saveSettings } = useSettings();
+  const { selectableModels, isLoading: isLoadingModels } = useAllModels();
+
+  const handleDefaultModelChange = async (modelId: string) => {
+    await updateGeneralSettings({ defaultModel: modelId });
+  };
 
   const handlePermissionModeChange = async (mode: PermissionMode) => {
     await updateGeneralSettings({ defaultPermissionMode: mode });
@@ -59,6 +96,29 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <div className="h-1.5 w-1.5 rounded-full bg-foreground/50" />
+            カスタムモデル
+          </CardTitle>
+          <CardDescription>
+            システムプロンプトを設定したカスタムモデルを作成・管理します。
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button variant="outline" className="w-full justify-between" asChild>
+            <Link href="/settings/models">
+              <div className="flex items-center gap-3">
+                <Bot className="h-4 w-4 text-primary" />
+                <span>カスタムモデルを管理</span>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-card/80 hover:bg-card transition-colors duration-300">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <div className="h-1.5 w-1.5 rounded-full bg-foreground/50" />
             一般設定
           </CardTitle>
           <CardDescription>
@@ -68,6 +128,60 @@ export default function SettingsPage() {
         <CardContent className="space-y-6">
           <div className="space-y-4">
             <div>
+              <h3 className="text-sm font-medium mb-3">デフォルトモデル</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                新しいチャットで使用するデフォルトのモデルを設定します。
+                チャット画面で個別に変更することもできます。
+              </p>
+              {isLoading || isLoadingModels ? (
+                <Skeleton className="h-10 w-full" />
+              ) : (
+                <Select
+                  value={settings?.general.defaultModel ?? ''}
+                  onValueChange={handleDefaultModelChange}
+                  disabled={isSaving}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="モデルを選択" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>標準モデル</SelectLabel>
+                      {selectableModels
+                        .filter((m) => m.type === 'standard')
+                        .map((model) => (
+                          <SelectItem key={model.id} value={model.id}>
+                            <div className="flex items-center gap-2">
+                              <ModelIcon model={model} />
+                              <span>{model.displayName}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                    </SelectGroup>
+                    {selectableModels.some((m) => m.type === 'custom') && (
+                      <>
+                        <SelectSeparator />
+                        <SelectGroup>
+                          <SelectLabel>カスタムモデル</SelectLabel>
+                          {selectableModels
+                            .filter((m) => m.type === 'custom')
+                            .map((model) => (
+                              <SelectItem key={model.id} value={model.id}>
+                                <div className="flex items-center gap-2">
+                                  <ModelIcon model={model} />
+                                  <span>{model.displayName}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                        </SelectGroup>
+                      </>
+                    )}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+
+            <div className="border-t pt-4">
               <h3 className="text-sm font-medium mb-3">デフォルト権限モード</h3>
               <p className="text-sm text-muted-foreground mb-4">
                 新しいチャットで使用するデフォルトの権限モードを設定します。

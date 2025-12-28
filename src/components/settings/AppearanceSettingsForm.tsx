@@ -18,12 +18,14 @@ import {
   MessageCircle,
   ImagePlus,
   X,
+  Loader2,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { optimizeImage, isValidImageUrl } from '@/lib/image-utils';
 import type { AppearanceSettings, AvatarIconType, BotIconType } from '@/types';
 
 interface AppearanceSettingsFormProps {
@@ -66,19 +68,6 @@ export function getBotIcon(type: BotIconType) {
   return iconConfig?.icon ?? Bot;
 }
 
-// セキュリティ: 画像URLの検証（data: URLまたは有効なhttps URLのみ許可）
-function isValidImageUrl(url: string): boolean {
-  if (!url) return true; // 空文字は許可
-  // data: URL（ファイルアップロード由来）を許可
-  if (url.startsWith('data:image/')) return true;
-  // https URLのみ許可（http は不許可）
-  try {
-    const parsed = new URL(url);
-    return parsed.protocol === 'https:';
-  } catch {
-    return false;
-  }
-}
 
 // セキュリティ: イニシャルのサニタイズ（英数字のみ許可）
 function sanitizeInitials(input: string): string {
@@ -96,6 +85,8 @@ export function AppearanceSettingsForm({
   disabled,
 }: AppearanceSettingsFormProps) {
   const [localSettings, setLocalSettings] = useState(settings);
+  const [isUploadingUser, setIsUploadingUser] = useState(false);
+  const [isUploadingBot, setIsUploadingBot] = useState(false);
   const userFileInputRef = useRef<HTMLInputElement>(null);
   const botFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -148,42 +139,46 @@ export function AppearanceSettingsForm({
   );
 
   const handleUserImageUpload = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const imageUrl = reader.result as string;
-          if (!isValidImageUrl(imageUrl)) {
-            console.error('Invalid image URL rejected');
-            return;
-          }
-          const newSettings = { ...localSettings, userImageUrl: imageUrl };
-          setLocalSettings(newSettings);
-          onChange(newSettings);
-        };
-        reader.readAsDataURL(file);
+      if (!file) return;
+
+      setIsUploadingUser(true);
+      try {
+        const imageUrl = await optimizeImage(file, 128, 0.85);
+        const newSettings = { ...localSettings, userImageUrl: imageUrl };
+        setLocalSettings(newSettings);
+        onChange(newSettings);
+      } catch (error) {
+        console.error('Failed to optimize image:', error);
+      } finally {
+        setIsUploadingUser(false);
+        if (userFileInputRef.current) {
+          userFileInputRef.current.value = '';
+        }
       }
     },
     [localSettings, onChange]
   );
 
   const handleBotImageUpload = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const imageUrl = reader.result as string;
-          if (!isValidImageUrl(imageUrl)) {
-            console.error('Invalid image URL rejected');
-            return;
-          }
-          const newSettings = { ...localSettings, botImageUrl: imageUrl };
-          setLocalSettings(newSettings);
-          onChange(newSettings);
-        };
-        reader.readAsDataURL(file);
+      if (!file) return;
+
+      setIsUploadingBot(true);
+      try {
+        const imageUrl = await optimizeImage(file, 128, 0.85);
+        const newSettings = { ...localSettings, botImageUrl: imageUrl };
+        setLocalSettings(newSettings);
+        onChange(newSettings);
+      } catch (error) {
+        console.error('Failed to optimize image:', error);
+      } finally {
+        setIsUploadingBot(false);
+        if (botFileInputRef.current) {
+          botFileInputRef.current.value = '';
+        }
       }
     },
     [localSettings, onChange]
@@ -290,7 +285,7 @@ export function AppearanceSettingsForm({
                 type="file"
                 accept="image/*"
                 onChange={handleUserImageUpload}
-                disabled={disabled}
+                disabled={disabled || isUploadingUser}
                 className="hidden"
                 id="user-image-upload"
               />
@@ -299,12 +294,21 @@ export function AppearanceSettingsForm({
                 variant="outline"
                 size="sm"
                 onClick={() => userFileInputRef.current?.click()}
-                disabled={disabled}
+                disabled={disabled || isUploadingUser}
               >
-                <ImagePlus className="h-4 w-4 mr-2" />
-                画像を選択
+                {isUploadingUser ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    処理中...
+                  </>
+                ) : (
+                  <>
+                    <ImagePlus className="h-4 w-4 mr-2" />
+                    画像を選択
+                  </>
+                )}
               </Button>
-              {localSettings.userImageUrl && (
+              {localSettings.userImageUrl && !isUploadingUser && (
                 <Button
                   type="button"
                   variant="ghost"
@@ -325,7 +329,7 @@ export function AppearanceSettingsForm({
                 <span className="text-xs text-muted-foreground">現在の画像</span>
               </div>
             )}
-            <p className="text-xs text-muted-foreground">PNG, JPG, GIF形式に対応</p>
+            <p className="text-xs text-muted-foreground">PNG, JPG, GIF, WebP形式に対応（128pxに最適化）</p>
           </div>
         )}
       </div>
@@ -403,7 +407,7 @@ export function AppearanceSettingsForm({
                 type="file"
                 accept="image/*"
                 onChange={handleBotImageUpload}
-                disabled={disabled}
+                disabled={disabled || isUploadingBot}
                 className="hidden"
                 id="bot-image-upload"
               />
@@ -412,12 +416,21 @@ export function AppearanceSettingsForm({
                 variant="outline"
                 size="sm"
                 onClick={() => botFileInputRef.current?.click()}
-                disabled={disabled}
+                disabled={disabled || isUploadingBot}
               >
-                <ImagePlus className="h-4 w-4 mr-2" />
-                画像を選択
+                {isUploadingBot ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    処理中...
+                  </>
+                ) : (
+                  <>
+                    <ImagePlus className="h-4 w-4 mr-2" />
+                    画像を選択
+                  </>
+                )}
               </Button>
-              {localSettings.botImageUrl && (
+              {localSettings.botImageUrl && !isUploadingBot && (
                 <Button
                   type="button"
                   variant="ghost"
@@ -438,7 +451,7 @@ export function AppearanceSettingsForm({
                 <span className="text-xs text-muted-foreground">現在の画像</span>
               </div>
             )}
-            <p className="text-xs text-muted-foreground">PNG, JPG, GIF形式に対応</p>
+            <p className="text-xs text-muted-foreground">PNG, JPG, GIF, WebP形式に対応（128pxに最適化）</p>
           </div>
         )}
       </div>

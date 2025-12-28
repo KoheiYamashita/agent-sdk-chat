@@ -38,6 +38,7 @@ interface ExpandedMessage {
   cacheReadInputTokens?: number | null;
   cost?: number | null;
   model?: string | null;
+  modelDisplayName?: string | null;
   durationMs?: number | null;
   thinkingContent?: string | null;
   createdAt: string;
@@ -54,6 +55,7 @@ interface DBMessage {
   cacheReadInputTokens: number | null;
   cost: number | null;
   model: string | null;
+  modelDisplayName: string | null;
   durationMs: number | null;
   thinkingContent: string | null;
   createdAt: Date;
@@ -105,6 +107,7 @@ function expandMessage(message: DBMessage): ExpandedMessage[] {
         cacheReadInputTokens: message.cacheReadInputTokens,
         cost: message.cost,
         model: message.model,
+        modelDisplayName: message.modelDisplayName,
         durationMs: message.durationMs,
         thinkingContent: message.thinkingContent,
         createdAt: message.createdAt.toISOString(),
@@ -123,6 +126,7 @@ function expandMessage(message: DBMessage): ExpandedMessage[] {
       cacheReadInputTokens: message.cacheReadInputTokens,
       cost: message.cost,
       model: message.model,
+      modelDisplayName: message.modelDisplayName,
       durationMs: message.durationMs,
       thinkingContent: message.thinkingContent,
       createdAt: message.createdAt.toISOString(),

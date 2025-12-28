@@ -13,6 +13,7 @@ export interface Message {
   cacheReadInputTokens?: number;
   cost?: number;
   model?: string;
+  modelDisplayName?: string;  // Custom model display name (if custom model was used)
   durationMs?: number;
   thinkingContent?: string;
 }
@@ -53,7 +54,7 @@ export type ChatEvent =
   | { type: 'tool_approval_resolved'; requestId: string }
   | { type: 'thinking'; content: string }
   | { type: 'thinking_delta'; delta: string }
-  | { type: 'done'; result: string; usage: MessageUsage; model?: string; thinkingContent?: string }
+  | { type: 'done'; result: string; usage: MessageUsage; model?: string; modelDisplayName?: string; thinkingContent?: string }
   | { type: 'error'; message: string };
 
 /** ツール確認リクエスト */
@@ -79,6 +80,7 @@ export interface ChatRequest {
 
 export interface ChatSettings {
   model?: string;
+  modelDisplayName?: string;  // Custom model display name
   allowedTools?: string[];
   disallowedTools?: string[];
   permissionMode?: PermissionMode;

@@ -25,6 +25,9 @@ interface SendMessageOptions {
   workspacePath?: string;
   workspaceDisplayPath?: string;
   thinkingEnabled?: boolean;
+  model?: string;
+  modelDisplayName?: string;
+  systemPrompt?: string;
 }
 
 interface UseChatReturn {
@@ -178,6 +181,9 @@ export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseCh
           workspacePath?: string;
           workspaceDisplayPath?: string;
           thinkingEnabled?: boolean;
+          model?: string;
+          modelDisplayName?: string;
+          systemPrompt?: string;
         } = {};
         if (options?.permissionMode) {
           settings.permissionMode = options.permissionMode;
@@ -187,6 +193,15 @@ export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseCh
         }
         if (options?.workspaceDisplayPath) {
           settings.workspaceDisplayPath = options.workspaceDisplayPath;
+        }
+        if (options?.model) {
+          settings.model = options.model;
+        }
+        if (options?.modelDisplayName) {
+          settings.modelDisplayName = options.modelDisplayName;
+        }
+        if (options?.systemPrompt) {
+          settings.systemPrompt = options.systemPrompt;
         }
         if (options?.thinkingEnabled !== undefined) {
           settings.thinkingEnabled = options.thinkingEnabled;
@@ -472,6 +487,7 @@ export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseCh
 
                   if (event.result) {
                     const messageModel = event.model;
+                    const messageModelDisplayName = event.modelDisplayName;
                     setMessages((prev) => {
                       // Check if we have an existing assistant message to update
                       const existingIndex = assistantMessageId
@@ -491,6 +507,7 @@ export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseCh
                             role: 'assistant',
                             content: event.result,
                             model: messageModel,
+                            modelDisplayName: messageModelDisplayName,
                             thinkingContent: finalThinkingContent,
                             createdAt: new Date().toISOString(),
                           },
@@ -504,6 +521,7 @@ export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseCh
                           ...updated[existingIndex],
                           content: event.result,
                           model: messageModel,
+                          modelDisplayName: messageModelDisplayName,
                           thinkingContent: finalThinkingContent,
                         };
                         return updated;
@@ -517,6 +535,7 @@ export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseCh
                           role: 'assistant',
                           content: event.result,
                           model: messageModel,
+                          modelDisplayName: messageModelDisplayName,
                           thinkingContent: finalThinkingContent,
                           createdAt: new Date().toISOString(),
                         },

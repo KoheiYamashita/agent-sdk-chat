@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2 } from 'lucide-react';
 import { MessageItem } from './MessageItem';
 import { ToolApprovalCard } from './ToolApprovalCard';
-import type { Message, ToolApprovalRequest, ToolApprovalResponse, AppearanceSettings } from '@/types';
+import type { Message, ToolApprovalRequest, ToolApprovalResponse, AppearanceSettings, CustomModel } from '@/types';
 
 interface MessageListProps {
   messages: Message[];
@@ -18,6 +18,7 @@ interface MessageListProps {
   onToolApprovalRespond?: (response: ToolApprovalResponse) => void;
   appearanceSettings?: AppearanceSettings;
   streamingThinking?: string | null;
+  customModels?: CustomModel[];
 }
 
 export function MessageList({
@@ -30,6 +31,7 @@ export function MessageList({
   onToolApprovalRespond,
   appearanceSettings,
   streamingThinking,
+  customModels,
 }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
@@ -145,6 +147,7 @@ export function MessageList({
               message={message}
               appearanceSettings={appearanceSettings}
               streamingThinking={currentThinking}
+              customModels={customModels}
             />
           );
         })}

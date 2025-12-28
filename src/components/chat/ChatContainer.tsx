@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useChat } from '@/hooks/useChat';
 import { useSettings } from '@/hooks/useSettings';
+import { useAllModels } from '@/hooks/useModels';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { useTerminal } from '@/contexts/TerminalContext';
 import { ChatHeader } from './ChatHeader';
@@ -11,7 +12,7 @@ import { MessageList } from './MessageList';
 import { InputArea } from './InputArea';
 import { WorkspaceSelector } from '@/components/workspace';
 import { TerminalPanel } from '@/components/terminal/TerminalPanel';
-import type { PermissionMode } from '@/types';
+import type { PermissionMode, SelectableModel } from '@/types';
 
 interface ChatContainerProps {
   sessionId?: string;
@@ -24,6 +25,8 @@ export function ChatContainer({ sessionId }: ChatContainerProps) {
   const [workspacePath, setWorkspacePath] = useState<string | null>(null);
   const [workspaceDisplayPath, setWorkspaceDisplayPath] = useState<string | null>(null);
   const [thinkingEnabled, setThinkingEnabled] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<SelectableModel | null>(null);
+  const [modelInitialized, setModelInitialized] = useState(false);
   const prevSessionIdRef = useRef<string | undefined>(undefined);
 
   const {
@@ -43,7 +46,77 @@ export function ChatContainer({ sessionId }: ChatContainerProps) {
   } = useChat({ sessionId, resetKey: chatResetKey });
 
   const { settings } = useSettings();
+  const { selectableModels, customModels, isLoading: isLoadingModels } = useAllModels();
   const defaultPermissionMode: PermissionMode = settings?.general.defaultPermissionMode ?? 'default';
+
+  // Reset model initialization when session changes
+  useEffect(() => {
+    setModelInitialized(false);
+    setSelectedModel(null);
+  }, [sessionId]);
+
+  // Set model when session is loaded
+  useEffect(() => {
+    // Wait for models to load
+    if (selectableModels.length === 0) return;
+    // Already initialized for this session
+    if (modelInitialized) return;
+    // For existing sessions, wait for messages to be loaded
+    // We know messages are loaded when either:
+    // - isLoading is false AND messages exist, OR
+    // - isLoading is false AND this is a new chat (no sessionId)
+    if (sessionId) {
+      // For existing sessions, wait until loading is complete
+      if (isLoading) return;
+      // Also wait until messages are actually populated (not just loading complete)
+      // This handles the race condition between TanStack Query and state update
+      if (messages.length === 0) {
+        // But don't wait forever - if session exists but has no messages yet, proceed
+        // Check if we have a session object (meaning API call completed)
+        if (!session) return;
+      }
+    }
+
+    let modelToUse: SelectableModel | undefined;
+
+    // First, try to use the model from the last assistant message in this session
+    const lastAssistantMessage = [...messages].reverse().find((m) => m.role === 'assistant');
+    if (lastAssistantMessage) {
+      // If custom model was used, find by displayName
+      if (lastAssistantMessage.modelDisplayName) {
+        modelToUse = selectableModels.find(
+          (m) => m.type === 'custom' && m.displayName === lastAssistantMessage.modelDisplayName
+        );
+      }
+      // If not found or standard model, find by base model ID
+      if (!modelToUse && lastAssistantMessage.model) {
+        modelToUse = selectableModels.find(
+          (m) => m.baseModelId === lastAssistantMessage.model
+        );
+      }
+    }
+
+    // Fall back to default model from settings
+    if (!modelToUse) {
+      const defaultModelId = settings?.general.defaultModel;
+      modelToUse = defaultModelId
+        ? selectableModels.find((m) => m.id === defaultModelId)
+        : undefined;
+    }
+
+    // Fall back to the first standard model
+    if (!modelToUse) {
+      modelToUse = selectableModels.find((m) => m.type === 'standard') ?? selectableModels[0];
+    }
+
+    setSelectedModel(modelToUse);
+    setModelInitialized(true);
+  }, [sessionId, modelInitialized, selectableModels, messages, isLoading, session, settings?.general.defaultModel]);
+
+  // Handle model change
+  const handleModelChange = useCallback((model: SelectableModel) => {
+    setSelectedModel(model);
+  }, []);
 
   // Initialize thinking state from settings
   useEffect(() => {
@@ -114,9 +187,9 @@ export function ChatContainer({ sessionId }: ChatContainerProps) {
     router.push(query ? `/files?${query}` : '/files');
   }, [router, session?.settings?.workspaceDisplayPath, workspaceDisplayPath, effectiveSessionId]);
 
-  // Wrap sendMessage to include workspacePath, displayPath, and thinkingEnabled
+  // Wrap sendMessage to include workspacePath, displayPath, thinkingEnabled, and model
   const sendMessage = useCallback(
-    (message: string, options: { permissionMode: PermissionMode }) => {
+    (message: string, options: { permissionMode: PermissionMode; model?: string; modelDisplayName?: string; systemPrompt?: string }) => {
       originalSendMessage(message, {
         ...options,
         workspacePath: workspacePath ?? undefined,
@@ -166,6 +239,7 @@ export function ChatContainer({ sessionId }: ChatContainerProps) {
           onToolApprovalRespond={respondToToolApproval}
           appearanceSettings={settings?.appearance}
           streamingThinking={streamingThinking}
+          customModels={customModels}
         />
       )}
 
@@ -186,6 +260,10 @@ export function ChatContainer({ sessionId }: ChatContainerProps) {
           onFilesClick={handleFilesClick}
           thinkingEnabled={thinkingEnabled}
           onThinkingToggle={handleThinkingToggle}
+          models={selectableModels}
+          selectedModel={selectedModel}
+          onModelChange={handleModelChange}
+          isLoadingModels={isLoadingModels}
         />
       )}
 

@@ -347,6 +347,7 @@ export async function POST(request: Request) {
                 cacheReadInputTokens: usage.cache_read_input_tokens,
                 cost: msg.total_cost_usd,
                 model: currentModel,
+                modelDisplayName: settings?.modelDisplayName || null,
                 durationMs: msg.duration_ms,
                 thinkingContent: thinkingContent || null,
               },
@@ -366,6 +367,7 @@ export async function POST(request: Request) {
               result: resultContent,
               usage,
               model: currentModel,
+              modelDisplayName: settings?.modelDisplayName || undefined,
               thinkingContent: thinkingContent || undefined,
             });
           }

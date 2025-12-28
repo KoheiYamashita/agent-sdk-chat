@@ -5,11 +5,15 @@ import { Send, Square, Terminal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { PermissionModeSelector } from './PermissionModeSelector';
+import { ModelSelector } from './ModelSelector';
 import { cn } from '@/lib/utils';
-import type { PermissionMode } from '@/types';
+import type { PermissionMode, SelectableModel } from '@/types';
 
 interface SendOptions {
   permissionMode: PermissionMode;
+  model?: string;
+  modelDisplayName?: string;
+  systemPrompt?: string;
 }
 
 interface InputAreaProps {
@@ -24,6 +28,11 @@ interface InputAreaProps {
   onFilesClick?: () => void;
   thinkingEnabled?: boolean;
   onThinkingToggle?: () => void;
+  // Model selection
+  models?: SelectableModel[];
+  selectedModel?: SelectableModel | null;
+  onModelChange?: (model: SelectableModel) => void;
+  isLoadingModels?: boolean;
 }
 
 export function InputArea({
@@ -38,6 +47,10 @@ export function InputArea({
   onFilesClick,
   thinkingEnabled = false,
   onThinkingToggle,
+  models = [],
+  selectedModel = null,
+  onModelChange,
+  isLoadingModels = false,
 }: InputAreaProps) {
   const [input, setInput] = useState('');
   const [permissionMode, setPermissionMode] = useState<PermissionMode>(defaultPermissionMode);
@@ -51,9 +64,16 @@ export function InputArea({
   const handleSubmit = useCallback(() => {
     const trimmedInput = input.trim();
     if (!trimmedInput || disabled) return;
-    onSubmit(trimmedInput, { permissionMode });
+    // For custom models, pass the displayName; for standard models, no need to pass
+    const modelDisplayName = selectedModel?.type === 'custom' ? selectedModel.displayName : undefined;
+    onSubmit(trimmedInput, {
+      permissionMode,
+      model: selectedModel?.baseModelId,
+      modelDisplayName,
+      systemPrompt: selectedModel?.systemPrompt ?? undefined,
+    });
     setInput('');
-  }, [input, disabled, onSubmit, permissionMode]);
+  }, [input, disabled, onSubmit, permissionMode, selectedModel]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -71,14 +91,25 @@ export function InputArea({
 
   return (
     <div className="border-t border-border/50 bg-gradient-to-t from-background to-background/80 backdrop-blur-sm">
-      <PermissionModeSelector
-        value={permissionMode}
-        onChange={setPermissionMode}
-        disabled={disabled || isGenerating}
-        onFilesClick={onFilesClick}
-        thinkingEnabled={thinkingEnabled}
-        onThinkingToggle={onThinkingToggle}
-      />
+      <div className="flex items-center gap-2 px-2 sm:px-4 py-2 border-b bg-muted/30">
+        {onModelChange && models.length > 0 && (
+          <ModelSelector
+            models={models}
+            selectedModelId={selectedModel?.id ?? null}
+            onModelChange={onModelChange}
+            disabled={disabled || isGenerating}
+            isLoading={isLoadingModels}
+          />
+        )}
+        <PermissionModeSelector
+          value={permissionMode}
+          onChange={setPermissionMode}
+          disabled={disabled || isGenerating}
+          onFilesClick={onFilesClick}
+          thinkingEnabled={thinkingEnabled}
+          onThinkingToggle={onThinkingToggle}
+        />
+      </div>
       <div className="p-3 sm:p-4">
           <div className="flex gap-2 items-end">
             {/* Terminal toggle button */}

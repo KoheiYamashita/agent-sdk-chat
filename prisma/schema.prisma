@@ -37,6 +37,7 @@ model Message {
   cacheReadInputTokens     Int?
   cost                     Float?
   model                    String?
+  modelDisplayName         String?  // Custom model display name (if custom model was used)
   durationMs               Int?
   thinkingContent          String?
 
@@ -74,4 +75,20 @@ model Settings {
   key       String   @unique
   value     String   // JSON stored as string for SQLite
   updatedAt DateTime @updatedAt
+}
+
+model CustomModel {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  displayName  String
+  baseModel    String   // Standard model ID from SDK (e.g. 'claude-sonnet-4-20250514')
+  systemPrompt String?
+  description  String?
+  icon         String?  // Lucide icon name or emoji
+  iconColor    String?
+  iconImageUrl String?  // Custom image URL for icon
+  isEnabled    Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
