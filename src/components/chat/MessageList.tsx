@@ -17,6 +17,7 @@ interface MessageListProps {
   pendingToolApproval?: ToolApprovalRequest | null;
   onToolApprovalRespond?: (response: ToolApprovalResponse) => void;
   appearanceSettings?: AppearanceSettings;
+  streamingThinking?: string | null;
 }
 
 export function MessageList({
@@ -28,6 +29,7 @@ export function MessageList({
   pendingToolApproval,
   onToolApprovalRespond,
   appearanceSettings,
+  streamingThinking,
 }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
@@ -131,9 +133,21 @@ export function MessageList({
           </div>
         )}
 
-        {messages.map((message) => (
-          <MessageItem key={message.id} message={message} appearanceSettings={appearanceSettings} />
-        ))}
+        {messages.map((message, index) => {
+          // Pass streamingThinking to the last assistant message if actively generating
+          const isLastAssistantMessage =
+            index === messages.length - 1 && message.role === 'assistant';
+          const currentThinking = isLastAssistantMessage ? streamingThinking : undefined;
+
+          return (
+            <MessageItem
+              key={message.id}
+              message={message}
+              appearanceSettings={appearanceSettings}
+              streamingThinking={currentThinking}
+            />
+          );
+        })}
 
         {isLoading && (
           <div className="flex gap-4 p-4">

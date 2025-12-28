@@ -23,6 +23,7 @@ export interface AppearanceSettings {
 export interface GeneralSettings {
   defaultModel: string;
   defaultPermissionMode: PermissionMode;
+  defaultThinkingEnabled: boolean;
   theme: 'light' | 'dark' | 'system';
   language: 'ja' | 'en';
 }

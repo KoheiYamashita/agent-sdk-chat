@@ -10,13 +10,15 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { PermissionMode } from '@/types';
-import { Shield, FileEdit, Zap, ClipboardList, FolderOpen } from 'lucide-react';
+import { Shield, FileEdit, Zap, ClipboardList, FolderOpen, Brain } from 'lucide-react';
 
 interface PermissionModeSelectorProps {
   value: PermissionMode;
   onChange: (mode: PermissionMode) => void;
   disabled?: boolean;
   onFilesClick?: () => void;
+  thinkingEnabled?: boolean;
+  onThinkingToggle?: () => void;
 }
 
 const modes: {
@@ -66,6 +68,8 @@ export function PermissionModeSelector({
   onChange,
   disabled = false,
   onFilesClick,
+  thinkingEnabled = false,
+  onThinkingToggle,
 }: PermissionModeSelectorProps) {
   const currentMode = modes.find((m) => m.value === value) ?? modes[0];
   const isDestructive = currentMode.variant === 'destructive';
@@ -108,6 +112,22 @@ export function PermissionModeSelector({
           })}
         </SelectContent>
       </Select>
+      {onThinkingToggle && (
+        <Button
+          variant={thinkingEnabled ? 'default' : 'ghost'}
+          size="sm"
+          onClick={onThinkingToggle}
+          disabled={disabled}
+          className={cn(
+            'h-8 shrink-0 gap-1.5 text-xs',
+            thinkingEnabled && 'bg-primary/10 text-primary hover:bg-primary/20'
+          )}
+          title={thinkingEnabled ? 'Thinking モード: ON' : 'Thinking モード: OFF'}
+        >
+          <Brain className="h-4 w-4" />
+          <span className="hidden sm:inline">Thinking</span>
+        </Button>
+      )}
       {onFilesClick && (
         <Button
           variant="ghost"

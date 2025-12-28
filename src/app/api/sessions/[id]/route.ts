@@ -54,7 +54,15 @@ export async function GET(_request: Request, { params }: RouteParams) {
         decision: 'allow' | 'always';
         decidedAt: string;
       };
-      metadata?: unknown;
+      // Usage & metadata fields
+      inputTokens?: number | null;
+      outputTokens?: number | null;
+      cacheCreationInputTokens?: number | null;
+      cacheReadInputTokens?: number | null;
+      cost?: number | null;
+      model?: string | null;
+      durationMs?: number | null;
+      thinkingContent?: string | null;
       createdAt: string;
     }
 
@@ -62,7 +70,6 @@ export async function GET(_request: Request, { params }: RouteParams) {
 
     for (const message of session.messages) {
       const toolCalls: ToolCall[] | null = message.toolCalls ? JSON.parse(message.toolCalls) : null;
-      const metadata = message.metadata ? JSON.parse(message.metadata) : null;
 
       if (message.role === 'assistant' && toolCalls && toolCalls.length > 0) {
         // Match real-time display order:
@@ -103,7 +110,14 @@ export async function GET(_request: Request, { params }: RouteParams) {
             id: message.id,
             role: message.role,
             content: message.content,
-            metadata,
+            inputTokens: message.inputTokens,
+            outputTokens: message.outputTokens,
+            cacheCreationInputTokens: message.cacheCreationInputTokens,
+            cacheReadInputTokens: message.cacheReadInputTokens,
+            cost: message.cost,
+            model: message.model,
+            durationMs: message.durationMs,
+            thinkingContent: message.thinkingContent,
             createdAt: message.createdAt.toISOString(),
           });
         }
@@ -114,7 +128,14 @@ export async function GET(_request: Request, { params }: RouteParams) {
           role: message.role,
           content: message.content,
           toolCalls: toolCalls ?? undefined,
-          metadata,
+          inputTokens: message.inputTokens,
+          outputTokens: message.outputTokens,
+          cacheCreationInputTokens: message.cacheCreationInputTokens,
+          cacheReadInputTokens: message.cacheReadInputTokens,
+          cost: message.cost,
+          model: message.model,
+          durationMs: message.durationMs,
+          thinkingContent: message.thinkingContent,
           createdAt: message.createdAt.toISOString(),
         });
       }

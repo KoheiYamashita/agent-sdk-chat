@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import {
   User,
   UserCircle,
@@ -19,8 +20,11 @@ import {
   ShieldCheck,
   ShieldX,
   ShieldAlert,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { ToolCallList } from './ToolCallList';
@@ -29,6 +33,7 @@ import type { Message, AppearanceSettings, AvatarIconType, BotIconType } from '@
 interface MessageItemProps {
   message: Message;
   appearanceSettings?: AppearanceSettings;
+  streamingThinking?: string | null;
 }
 
 // モデルIDから表示名を取得
@@ -83,9 +88,13 @@ function isValidImageUrl(url: string): boolean {
   }
 }
 
-export function MessageItem({ message, appearanceSettings }: MessageItemProps) {
+export function MessageItem({ message, appearanceSettings, streamingThinking }: MessageItemProps) {
+  const [isThinkingOpen, setIsThinkingOpen] = useState(false);
   const isUser = message.role === 'user';
   const isToolApproval = message.role === 'tool_approval';
+
+  // Determine thinking content to display (streaming or saved)
+  const thinkingContent = streamingThinking || message.thinkingContent;
 
   if (isToolApproval && message.toolApproval) {
     return <ToolApprovalMessage message={message} />;
@@ -122,7 +131,7 @@ export function MessageItem({ message, appearanceSettings }: MessageItemProps) {
 
   // 表示名を決定
   // DBにモデル情報がある場合のみモデル名を表示、ない場合は「Claude」
-  const modelId = message.metadata?.model;
+  const modelId = message.model;
   const displayName = isUser
     ? (userName || 'あなた')
     : (modelId ? getModelDisplayName(modelId) : 'Claude');
@@ -152,6 +161,29 @@ export function MessageItem({ message, appearanceSettings }: MessageItemProps) {
           </span>
         </div>
         <div className="space-y-3">
+          {/* Thinking content (collapsible) */}
+          {thinkingContent && !isUser && (
+            <Collapsible open={isThinkingOpen} onOpenChange={setIsThinkingOpen}>
+              <CollapsibleTrigger className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors group">
+                {isThinkingOpen ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+                <Brain className="h-4 w-4 text-purple-500" />
+                <span className="font-medium">
+                  {streamingThinking ? 'Thinking...' : 'Thinking'}
+                </span>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-2">
+                <div className="pl-6 border-l-2 border-purple-200 dark:border-purple-800">
+                  <div className="text-sm text-muted-foreground italic whitespace-pre-wrap">
+                    {thinkingContent}
+                  </div>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          )}
           <MarkdownRenderer content={message.content} />
           {message.toolCalls && message.toolCalls.length > 0 && (
             <ToolCallList toolCalls={message.toolCalls} />

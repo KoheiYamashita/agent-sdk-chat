@@ -23,6 +23,7 @@ export function ChatContainer({ sessionId }: ChatContainerProps) {
   const { isOpen: isTerminalOpen, toggleTerminal, closeTerminal, destroySession } = useTerminal();
   const [workspacePath, setWorkspacePath] = useState<string | null>(null);
   const [workspaceDisplayPath, setWorkspaceDisplayPath] = useState<string | null>(null);
+  const [thinkingEnabled, setThinkingEnabled] = useState(false);
   const prevSessionIdRef = useRef<string | undefined>(undefined);
 
   const {
@@ -34,6 +35,7 @@ export function ChatContainer({ sessionId }: ChatContainerProps) {
     pendingToolApproval,
     hasMoreMessages,
     isLoadingMoreMessages,
+    streamingThinking,
     loadMoreMessages,
     sendMessage: originalSendMessage,
     stopGeneration,
@@ -42,6 +44,18 @@ export function ChatContainer({ sessionId }: ChatContainerProps) {
 
   const { settings } = useSettings();
   const defaultPermissionMode: PermissionMode = settings?.general.defaultPermissionMode ?? 'default';
+
+  // Initialize thinking state from settings
+  useEffect(() => {
+    if (settings?.general.defaultThinkingEnabled !== undefined) {
+      setThinkingEnabled(settings.general.defaultThinkingEnabled);
+    }
+  }, [settings?.general.defaultThinkingEnabled]);
+
+  // Toggle thinking mode
+  const handleThinkingToggle = useCallback(() => {
+    setThinkingEnabled((prev) => !prev);
+  }, []);
 
   // Use session.id if available, otherwise fall back to sessionId prop
   const effectiveSessionId = session?.id ?? sessionId;
@@ -100,16 +114,17 @@ export function ChatContainer({ sessionId }: ChatContainerProps) {
     router.push(query ? `/files?${query}` : '/files');
   }, [router, session?.settings?.workspaceDisplayPath, workspaceDisplayPath, effectiveSessionId]);
 
-  // Wrap sendMessage to include workspacePath and displayPath
+  // Wrap sendMessage to include workspacePath, displayPath, and thinkingEnabled
   const sendMessage = useCallback(
     (message: string, options: { permissionMode: PermissionMode }) => {
       originalSendMessage(message, {
         ...options,
         workspacePath: workspacePath ?? undefined,
         workspaceDisplayPath: workspaceDisplayPath ?? undefined,
+        thinkingEnabled,
       });
     },
-    [originalSendMessage, workspacePath, workspaceDisplayPath]
+    [originalSendMessage, workspacePath, workspaceDisplayPath, thinkingEnabled]
   );
 
   // Show workspace selector for new chats with no messages
@@ -150,6 +165,7 @@ export function ChatContainer({ sessionId }: ChatContainerProps) {
           pendingToolApproval={pendingToolApproval}
           onToolApprovalRespond={respondToToolApproval}
           appearanceSettings={settings?.appearance}
+          streamingThinking={streamingThinking}
         />
       )}
 
@@ -168,6 +184,8 @@ export function ChatContainer({ sessionId }: ChatContainerProps) {
           isTerminalOpen={isTerminalOpen}
           showTerminalButton={!!effectiveSessionId}
           onFilesClick={handleFilesClick}
+          thinkingEnabled={thinkingEnabled}
+          onThinkingToggle={handleThinkingToggle}
         />
       )}
 

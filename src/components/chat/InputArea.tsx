@@ -22,6 +22,8 @@ interface InputAreaProps {
   isTerminalOpen?: boolean;
   showTerminalButton?: boolean;
   onFilesClick?: () => void;
+  thinkingEnabled?: boolean;
+  onThinkingToggle?: () => void;
 }
 
 export function InputArea({
@@ -34,6 +36,8 @@ export function InputArea({
   isTerminalOpen = false,
   showTerminalButton = false,
   onFilesClick,
+  thinkingEnabled = false,
+  onThinkingToggle,
 }: InputAreaProps) {
   const [input, setInput] = useState('');
   const [permissionMode, setPermissionMode] = useState<PermissionMode>(defaultPermissionMode);
@@ -72,6 +76,8 @@ export function InputArea({
         onChange={setPermissionMode}
         disabled={disabled || isGenerating}
         onFilesClick={onFilesClick}
+        thinkingEnabled={thinkingEnabled}
+        onThinkingToggle={onThinkingToggle}
       />
       <div className="p-3 sm:p-4">
           <div className="flex gap-2 items-end">

@@ -40,6 +40,7 @@ const DEFAULT_SETTINGS: SettingsData = {
   general: {
     defaultModel: 'claude-sonnet-4-20250514',
     defaultPermissionMode: 'default',
+    defaultThinkingEnabled: false,
     theme: 'system',
     language: 'ja',
   },

@@ -3,9 +3,18 @@ export interface Message {
   role: 'user' | 'assistant' | 'system' | 'tool_approval';
   content: string;
   toolCalls?: ToolCall[];
-  metadata?: MessageMetadata;
   toolApproval?: ToolApprovalInfo;
   createdAt: string;
+
+  // Usage & metadata fields (migrated from metadata JSON)
+  inputTokens?: number;
+  outputTokens?: number;
+  cacheCreationInputTokens?: number;
+  cacheReadInputTokens?: number;
+  cost?: number;
+  model?: string;
+  durationMs?: number;
+  thinkingContent?: string;
 }
 
 /** ツール承認履歴 */
@@ -26,16 +35,12 @@ export interface ToolCall {
   status: 'pending' | 'running' | 'completed' | 'failed';
 }
 
-export interface MessageMetadata {
-  usage?: {
-    input_tokens: number;
-    output_tokens: number;
-    cache_creation_input_tokens?: number;
-    cache_read_input_tokens?: number;
-  };
-  cost?: number;
-  model?: string;
-  duration_ms?: number;
+/** Usage information for messages */
+export interface MessageUsage {
+  input_tokens: number;
+  output_tokens: number;
+  cache_creation_input_tokens?: number;
+  cache_read_input_tokens?: number;
 }
 
 export type ChatEvent =
@@ -47,7 +52,8 @@ export type ChatEvent =
   | { type: 'tool_approval_request'; request: ToolApprovalRequest }
   | { type: 'tool_approval_resolved'; requestId: string }
   | { type: 'thinking'; content: string }
-  | { type: 'done'; result: string; usage: MessageMetadata['usage']; model?: string }
+  | { type: 'thinking_delta'; delta: string }
+  | { type: 'done'; result: string; usage: MessageUsage; model?: string; thinkingContent?: string }
   | { type: 'error'; message: string };
 
 /** ツール確認リクエスト */
@@ -80,6 +86,7 @@ export interface ChatSettings {
   maxTurns?: number;
   workspacePath?: string;
   workspaceDisplayPath?: string;
+  thinkingEnabled?: boolean;
 }
 
 export type PermissionMode = 'default' | 'acceptEdits' | 'bypassPermissions' | 'plan';

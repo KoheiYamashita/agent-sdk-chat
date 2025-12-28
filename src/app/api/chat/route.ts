@@ -7,7 +7,7 @@ import { approvalManager } from '@/lib/approval-manager';
 import { sessionManager } from '@/lib/claude/session-manager';
 import { generateUUID } from '@/lib/utils/uuid';
 import { getAllToolNames, getDangerousToolNames } from '@/lib/constants/tools';
-import type { ChatRequest, ChatEvent, MessageMetadata, ToolApprovalRequest, SandboxSettings } from '@/types';
+import type { ChatRequest, ChatEvent, MessageUsage, ToolApprovalRequest, SandboxSettings } from '@/types';
 
 interface ContentBlock {
   type: string;
@@ -155,6 +155,12 @@ export async function POST(request: Request) {
         // Get dangerous tool names for UI display
         const dangerousToolNames = getDangerousToolNames();
 
+        // Thinking settings: thinkingEnabled controls maxThinkingTokens
+        // If thinkingEnabled is true, set a reasonable max (10000 tokens)
+        // If false or undefined, disable thinking (0 tokens)
+        const thinkingEnabled = settings?.thinkingEnabled ?? false;
+        const maxThinkingTokens = thinkingEnabled ? 10000 : 0;
+
         const queryOptions = {
           prompt: message,
           options: {
@@ -163,6 +169,9 @@ export async function POST(request: Request) {
             systemPrompt: settings?.systemPrompt,
             maxTurns: settings?.maxTurns,
             includePartialMessages: true,
+
+            // Thinking tokens (0 = disabled)
+            maxThinkingTokens,
 
             // Explicitly ignore CLI settings files (SDK isolation mode)
             settingSources: [] as ('user' | 'project' | 'local')[],
@@ -230,6 +239,7 @@ export async function POST(request: Request) {
         };
 
         let assistantContent = '';
+        let thinkingContent = '';
         let claudeSessionId = session.claudeSessionId;
         let currentModel: string | undefined;
         const toolCalls: Array<{
@@ -249,6 +259,11 @@ export async function POST(request: Request) {
           const events = processSDKMessage(msg);
           for (const event of events) {
             sendEvent(event);
+
+            // Accumulate thinking content for persistence
+            if (event.type === 'thinking_delta') {
+              thinkingContent += event.delta;
+            }
 
             // Accumulate tool calls for persistence
             if (event.type === 'tool_use') {
@@ -312,7 +327,7 @@ export async function POST(request: Request) {
               ? assistantContent  // Tool execution: use accumulated text only
               : (assistantContent || msg.result);  // No tools: allow msg.result fallback
 
-            const usage: MessageMetadata['usage'] = {
+            const usage: MessageUsage = {
               input_tokens: msg.usage.input_tokens,
               output_tokens: msg.usage.output_tokens,
               cache_creation_input_tokens: msg.usage.cache_creation_input_tokens,
@@ -325,12 +340,15 @@ export async function POST(request: Request) {
                 role: 'assistant',
                 content: resultContent,
                 toolCalls: toolCalls.length > 0 ? JSON.stringify(toolCalls) : null,
-                metadata: JSON.stringify({
-                  usage,
-                  cost: msg.total_cost_usd,
-                  duration_ms: msg.duration_ms,
-                  model: currentModel,
-                }),
+                // Usage & metadata in dedicated columns
+                inputTokens: usage.input_tokens,
+                outputTokens: usage.output_tokens,
+                cacheCreationInputTokens: usage.cache_creation_input_tokens,
+                cacheReadInputTokens: usage.cache_read_input_tokens,
+                cost: msg.total_cost_usd,
+                model: currentModel,
+                durationMs: msg.duration_ms,
+                thinkingContent: thinkingContent || null,
               },
             });
 
@@ -348,6 +366,7 @@ export async function POST(request: Request) {
               result: resultContent,
               usage,
               model: currentModel,
+              thinkingContent: thinkingContent || undefined,
             });
           }
         }
@@ -399,6 +418,7 @@ interface StreamEvent {
   delta?: {
     type: string;
     text?: string;
+    thinking?: string;
   };
 }
 
@@ -407,10 +427,14 @@ function processSDKMessage(msg: SDKMessage): ChatEvent[] {
 
   switch (msg.type) {
     case 'stream_event': {
-      // Handle streaming events for real-time text display
+      // Handle streaming events for real-time text and thinking display
       const event = msg.event as StreamEvent;
-      if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta' && event.delta.text) {
-        events.push({ type: 'text_delta', delta: event.delta.text });
+      if (event.type === 'content_block_delta') {
+        if (event.delta?.type === 'text_delta' && event.delta.text) {
+          events.push({ type: 'text_delta', delta: event.delta.text });
+        } else if (event.delta?.type === 'thinking_delta' && event.delta.thinking) {
+          events.push({ type: 'thinking_delta', delta: event.delta.thinking });
+        }
       }
       break;
     }

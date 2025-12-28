@@ -29,7 +29,17 @@ model Message {
   role      String   // 'user' | 'assistant' | 'system'
   content   String
   toolCalls String?  // JSON stored as string for SQLite
-  metadata  String?  // JSON stored as string for SQLite
+
+  // Usage & metadata columns
+  inputTokens              Int?
+  outputTokens             Int?
+  cacheCreationInputTokens Int?
+  cacheReadInputTokens     Int?
+  cost                     Float?
+  model                    String?
+  durationMs               Int?
+  thinkingContent          String?
+
   createdAt DateTime @default(now())
 
   @@index([sessionId])

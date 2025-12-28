@@ -31,22 +31,38 @@ interface ExpandedMessage {
     decision: 'allow' | 'always';
     decidedAt: string;
   };
-  metadata?: unknown;
+  // Usage & metadata fields
+  inputTokens?: number | null;
+  outputTokens?: number | null;
+  cacheCreationInputTokens?: number | null;
+  cacheReadInputTokens?: number | null;
+  cost?: number | null;
+  model?: string | null;
+  durationMs?: number | null;
+  thinkingContent?: string | null;
   createdAt: string;
 }
 
-function expandMessage(message: {
+interface DBMessage {
   id: string;
   role: string;
   content: string;
   toolCalls: string | null;
-  metadata: string | null;
+  inputTokens: number | null;
+  outputTokens: number | null;
+  cacheCreationInputTokens: number | null;
+  cacheReadInputTokens: number | null;
+  cost: number | null;
+  model: string | null;
+  durationMs: number | null;
+  thinkingContent: string | null;
   createdAt: Date;
-}): ExpandedMessage[] {
+}
+
+function expandMessage(message: DBMessage): ExpandedMessage[] {
   const toolCalls: ToolCall[] | null = message.toolCalls
     ? JSON.parse(message.toolCalls)
     : null;
-  const metadata = message.metadata ? JSON.parse(message.metadata) : null;
   const expandedMessages: ExpandedMessage[] = [];
 
   if (message.role === 'assistant' && toolCalls && toolCalls.length > 0) {
@@ -83,7 +99,14 @@ function expandMessage(message: {
         id: message.id,
         role: message.role,
         content: message.content,
-        metadata,
+        inputTokens: message.inputTokens,
+        outputTokens: message.outputTokens,
+        cacheCreationInputTokens: message.cacheCreationInputTokens,
+        cacheReadInputTokens: message.cacheReadInputTokens,
+        cost: message.cost,
+        model: message.model,
+        durationMs: message.durationMs,
+        thinkingContent: message.thinkingContent,
         createdAt: message.createdAt.toISOString(),
       });
     }
@@ -94,7 +117,14 @@ function expandMessage(message: {
       role: message.role,
       content: message.content,
       toolCalls: toolCalls ?? undefined,
-      metadata,
+      inputTokens: message.inputTokens,
+      outputTokens: message.outputTokens,
+      cacheCreationInputTokens: message.cacheCreationInputTokens,
+      cacheReadInputTokens: message.cacheReadInputTokens,
+      cost: message.cost,
+      model: message.model,
+      durationMs: message.durationMs,
+      thinkingContent: message.thinkingContent,
       createdAt: message.createdAt.toISOString(),
     });
   }

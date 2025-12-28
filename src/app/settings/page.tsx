@@ -7,6 +7,9 @@ import { SandboxSettingsForm } from '@/components/settings/SandboxSettingsForm';
 import { AppearanceSettingsForm } from '@/components/settings/AppearanceSettingsForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Brain } from 'lucide-react';
 import type { PermissionMode, SandboxSettings, AppearanceSettings } from '@/types';
 
 export default function SettingsPage() {
@@ -14,6 +17,10 @@ export default function SettingsPage() {
 
   const handlePermissionModeChange = async (mode: PermissionMode) => {
     await updateGeneralSettings({ defaultPermissionMode: mode });
+  };
+
+  const handleThinkingEnabledChange = async (enabled: boolean) => {
+    await updateGeneralSettings({ defaultThinkingEnabled: enabled });
   };
 
   const handleDefaultToolsChange = async (allowedTools: string[]) => {
@@ -84,6 +91,33 @@ export default function SettingsPage() {
                   onChange={handlePermissionModeChange}
                   disabled={isSaving}
                 />
+              )}
+            </div>
+
+            <div className="border-t pt-4">
+              <h3 className="text-sm font-medium mb-3">拡張思考（Thinking）</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Claude の拡張思考機能を有効にすると、より深い推論が可能になります。
+                トークン使用量が増加する場合があります。
+              </p>
+              {isLoading ? (
+                <div className="flex items-center space-x-3">
+                  <Skeleton className="h-4 w-4" />
+                  <Skeleton className="h-4 w-48" />
+                </div>
+              ) : (
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    id="thinking-enabled"
+                    checked={settings?.general.defaultThinkingEnabled ?? false}
+                    onCheckedChange={(checked) => handleThinkingEnabledChange(checked === true)}
+                    disabled={isSaving}
+                  />
+                  <Label htmlFor="thinking-enabled" className="flex items-center gap-2 cursor-pointer">
+                    <Brain className="h-4 w-4 text-purple-500" />
+                    <span>デフォルトでThinkingを有効にする</span>
+                  </Label>
+                </div>
               )}
             </div>
           </div>
