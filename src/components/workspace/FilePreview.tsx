@@ -58,10 +58,10 @@ function isImageFile(name: string): boolean {
 function isNonPreviewableBinary(name: string): boolean {
   const ext = name.split('.').pop()?.toLowerCase() || '';
   const nonPreviewableExts = [
-    'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx',
+    'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx',
     'zip', 'tar', 'gz', 'rar', '7z',
     'exe', 'dll', 'so', 'dylib',
-    'mp3', 'mp4', 'wav', 'avi', 'mov', 'mkv',
+    'mkv', 'avi',
     'ttf', 'otf', 'woff', 'woff2', 'eot',
   ];
   return nonPreviewableExts.includes(ext);
@@ -104,6 +104,29 @@ function isCsvFile(name: string): boolean {
   return ext === 'csv';
 }
 
+// Check if file is a video
+function isVideoFile(name: string): boolean {
+  const ext = name.split('.').pop()?.toLowerCase() || '';
+  return ['mp4', 'webm', 'ogg', 'mov'].includes(ext);
+}
+
+// Check if file is audio
+function isAudioFile(name: string): boolean {
+  const ext = name.split('.').pop()?.toLowerCase() || '';
+  return ['mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a'].includes(ext);
+}
+
+// Check if file is PDF
+function isPdfFile(name: string): boolean {
+  const ext = name.split('.').pop()?.toLowerCase() || '';
+  return ext === 'pdf';
+}
+
+// Check if file is a media file (streamed via /api/workspace/file/stream)
+function isMediaFile(name: string): boolean {
+  return isImageFile(name) || isVideoFile(name) || isAudioFile(name) || isPdfFile(name);
+}
+
 export function FilePreview({
   item,
   onClose,
@@ -120,11 +143,26 @@ export function FilePreview({
 
   const isDirty = content !== originalContent;
   const isImage = item ? isImageFile(item.name) : false;
+  const isVideo = item ? isVideoFile(item.name) : false;
+  const isAudio = item ? isAudioFile(item.name) : false;
+  const isPdf = item ? isPdfFile(item.name) : false;
+  const isMedia = item ? isMediaFile(item.name) : false;
   const isPreviewable = item ? isPreviewableFile(item.name) : false;
+
+  // Generate streaming URL for media files
+  const streamUrl = item
+    ? `/api/workspace/file/stream?path=${encodeURIComponent(item.path)}${workspacePath ? `&workspacePath=${encodeURIComponent(workspacePath)}` : ''}`
+    : '';
 
   // Load file content
   const loadFile = useCallback(async () => {
     if (!item || item.isDirectory) return;
+
+    // Media files are streamed directly, no need to load content
+    if (isMediaFile(item.name)) {
+      setIsLoading(false);
+      return;
+    }
 
     if (isNonPreviewableBinary(item.name)) {
       setError('このファイル形式は表示できません');
@@ -154,7 +192,7 @@ export function FilePreview({
 
   // Save file content
   const handleSave = useCallback(async () => {
-    if (!item || !isDirty || isImage) return;
+    if (!item || !isDirty || isMedia) return;
 
     setIsSaving(true);
     try {
@@ -286,16 +324,65 @@ export function FilePreview({
             <p className="text-sm text-destructive">{error}</p>
           </div>
         </div>
-      ) : isImage && fileInfo?.encoding === 'base64' ? (
-        <ScrollArea className="flex-1">
-          <div className="flex items-center justify-center p-4">
+      ) : isMedia ? (
+        // メディアファイル（画像・動画・音声・PDF）のプレビュー
+        isPdf ? (
+          // PDFは全画面表示
+          <div className="flex-1 flex flex-col p-2">
+            <object
+              data={streamUrl}
+              type="application/pdf"
+              className="w-full flex-1 rounded border"
+            >
+              <div className="flex items-center justify-center h-full">
+                <p className="text-muted-foreground">
+                  PDFを表示できません。
+                  <a
+                    href={streamUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary underline ml-1"
+                  >
+                    ダウンロード
+                  </a>
+                </p>
+              </div>
+            </object>
+          </div>
+        ) : isVideo ? (
+          // 動画は領域内に収まるように表示
+          <div className="flex-1 flex items-center justify-center p-4 bg-black/5 overflow-hidden">
+            <video
+              src={streamUrl}
+              controls
+              className="max-w-full max-h-full object-contain rounded"
+              style={{ maxHeight: 'calc(100% - 2rem)' }}
+            >
+              お使いのブラウザは動画再生に対応していません
+            </video>
+          </div>
+        ) : isImage ? (
+          // 画像は領域内に収まるように表示
+          <div className="flex-1 flex items-center justify-center p-4 overflow-hidden">
             <img
-              src={`data:${fileInfo.mimeType};base64,${content}`}
+              src={streamUrl}
               alt={item.name}
-              className="max-w-full max-h-[500px] object-contain rounded"
+              className="max-w-full max-h-full object-contain rounded"
+              style={{ maxHeight: 'calc(100% - 2rem)' }}
             />
           </div>
-        </ScrollArea>
+        ) : (
+          // 音声
+          <div className="flex-1 flex items-center justify-center p-4">
+            <audio
+              src={streamUrl}
+              controls
+              className="w-full max-w-md"
+            >
+              お使いのブラウザは音声再生に対応していません
+            </audio>
+          </div>
+        )
       ) : isPreviewable ? (
         // プレビュー可能なファイルの表示
         <div className={cn('flex-1 flex min-h-0', viewMode === 'split' && 'gap-0')}>
@@ -319,26 +406,31 @@ export function FilePreview({
 
           {/* プレビュー (preview または split モード) */}
           {(viewMode === 'preview' || viewMode === 'split') && (
-            <ScrollArea className="flex-1">
-              <div className="p-4">
-                {isMarkdownFile(item.name) ? (
-                  <MarkdownRenderer content={content} />
-                ) : isMermaidFile(item.name) ? (
-                  <MermaidRenderer content={content} />
-                ) : isHtmlFile(item.name) ? (
-                  <iframe
-                    srcDoc={content}
-                    sandbox="allow-scripts"
-                    className="w-full min-h-[400px] border rounded bg-white"
-                    title={`${item.name} preview`}
-                  />
-                ) : isJsonFile(item.name) ? (
-                  <JsonPreview content={content} />
-                ) : isCsvFile(item.name) ? (
-                  <CsvPreview content={content} />
-                ) : null}
+            isHtmlFile(item.name) ? (
+              // HTMLは全画面表示
+              <div className="flex-1 flex flex-col p-2">
+                <iframe
+                  srcDoc={content}
+                  sandbox="allow-scripts"
+                  className="w-full flex-1 border rounded bg-white"
+                  title={`${item.name} preview`}
+                />
               </div>
-            </ScrollArea>
+            ) : (
+              <ScrollArea className="flex-1">
+                <div className="p-4">
+                  {isMarkdownFile(item.name) ? (
+                    <MarkdownRenderer content={content} />
+                  ) : isMermaidFile(item.name) ? (
+                    <MermaidRenderer content={content} />
+                  ) : isJsonFile(item.name) ? (
+                    <JsonPreview content={content} />
+                  ) : isCsvFile(item.name) ? (
+                    <CsvPreview content={content} />
+                  ) : null}
+                </div>
+              </ScrollArea>
+            )
           )}
         </div>
       ) : (
