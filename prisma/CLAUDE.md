@@ -5,6 +5,7 @@ Prisma ORMの設定とデータベーススキーマを管理するディレク�
 ## ファイル構成
 
 - `schema.prisma` - データベーススキーマ定義
+- `prisma.config.ts` - Prisma設定ファイル
 - `migrations/` - マイグレーションファイル
 - `dev.db` - 開発用SQLiteデータベース
 
@@ -20,7 +21,14 @@ Prisma ORMの設定とデータベーススキーマを管理するディレク�
 セッション内のメッセージを管理します。
 - `role`: user / assistant / system
 - `toolCalls`: ツール呼び出し情報（JSON）
-- `metadata`: メタデータ（JSON）
+- `inputTokens`: 入力トークン数
+- `outputTokens`: 出力トークン数
+- `cacheCreationInputTokens`: キャッシュ作成入力トークン数
+- `cacheReadInputTokens`: キャッシュ読み取り入力トークン数
+- `cost`: コスト
+- `model`: 使用モデル名
+- `durationMs`: 処理時間（ミリ秒）
+- `thinkingContent`: Claude拡張思考（Thinking）の内容
 
 ### MCPServer
 MCP (Model Context Protocol) サーバー設定を管理します。
@@ -35,7 +43,8 @@ MCP (Model Context Protocol) サーバー設定を管理します。
 ## コマンド
 
 ```bash
-npm run db:migrate   # マイグレーション実行
+npm run db:migrate   # マイグレーション実行（開発環境）
+npm run db:deploy    # マイグレーション適用（本番環境）
 npm run db:generate  # Prismaクライアント生成
 npm run db:studio    # Prisma Studio起動
 npm run db:push      # スキーマをDBにプッシュ

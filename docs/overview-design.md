@@ -147,7 +147,8 @@ src/
 │   │   ├── label.tsx
 │   │   ├── select.tsx
 │   │   ├── checkbox.tsx
-│   │   └── separator.tsx
+│   │   ├── separator.tsx
+│   │   └── collapsible.tsx
 │   ├── chat/                     # チャット関連コンポーネント
 │   │   ├── ChatContainer.tsx     # チャットメインコンテナ
 │   │   ├── ChatHeader.tsx        # チャットヘッダー
@@ -228,10 +229,11 @@ src/
 │ claudeSessionId     │     │ role                │
 │ createdAt           │     │ content             │
 │ updatedAt           │     │ toolCalls           │
-│ settings            │     │ metadata            │
-│ allowedTools        │     │ createdAt           │
-│ isArchived          │     │                     │
-└─────────────────────┘     └─────────────────────┘
+│ settings            │     │ inputTokens         │
+│ allowedTools        │     │ outputTokens        │
+│ isArchived          │     │ thinkingContent     │
+└─────────────────────┘     │ createdAt           │
+                            └─────────────────────┘
 
 ┌─────────────────────┐     ┌─────────────────────┐
 │    MCPServer        │     │      Agent          │
@@ -280,7 +282,17 @@ model Message {
   role      String   // 'user' | 'assistant' | 'system'
   content   String
   toolCalls String?  // JSON stored as string for SQLite
-  metadata  String?  // JSON stored as string for SQLite
+
+  // Usage & metadata columns
+  inputTokens              Int?
+  outputTokens             Int?
+  cacheCreationInputTokens Int?
+  cacheReadInputTokens     Int?
+  cost                     Float?
+  model                    String?
+  durationMs               Int?
+  thinkingContent          String?
+
   createdAt DateTime @default(now())
 
   @@index([sessionId])
@@ -442,6 +454,8 @@ CMD ["node", "server.js"]
 | 生成中断機能 | `src/hooks/useChat.ts`, `src/lib/claude/session-manager.ts` | SDK interrupt()使用 |
 | Markdownレンダリング | `src/components/chat/MarkdownRenderer.tsx` | react-markdown, rehype-highlight使用 |
 | ストリーミングテキスト表示 | `src/components/chat/MessageItem.tsx` | リアルタイム文字表示 |
+| 拡張思考（Thinking）表示 | `src/components/chat/MessageItem.tsx`, `src/components/ui/collapsible.tsx` | thinking_deltaストリーミング、折りたたみ表示 |
+| Thinkingトグル | `src/components/chat/PermissionModeSelector.tsx`, `src/app/settings/page.tsx` | 入力欄・設定画面でThinking有効化切替 |
 
 #### セッション管理
 | 機能 | ファイル | 備考 |
@@ -590,11 +604,6 @@ CMD ["node", "server.js"]
 | Subagent設定UI | 中 | カスタムエージェント定義（APIは実装済み） |
 | Skills設定UI | 中 | スラッシュコマンド設定 |
 | 一般設定UI | 中 | 言語、デフォルトモデル（外観設定は実装済み） |
-
-#### チャット拡張
-| 機能 | 優先度 | 備考 |
-|------|--------|------|
-| シンキング表示 | 中 | Claude思考過程の表示 |
 
 #### セッション拡張
 | 機能 | 優先度 | 備考 |

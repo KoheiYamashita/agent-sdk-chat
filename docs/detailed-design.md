@@ -197,7 +197,14 @@ interface SessionDetailResponse {
     role: 'user' | 'assistant' | 'system';
     content: string;
     toolCalls: ToolCall[] | null;
-    metadata: MessageMetadata | null;
+    inputTokens: number | null;
+    outputTokens: number | null;
+    cacheCreationInputTokens: number | null;
+    cacheReadInputTokens: number | null;
+    cost: number | null;
+    model: string | null;
+    durationMs: number | null;
+    thinkingContent: string | null;
     createdAt: string;
   }[];
 }
@@ -1010,12 +1017,25 @@ export interface SettingsData {
   general: GeneralSettings;
   permissions: PermissionSettings;
   sandbox: SandboxSettings;
+  appearance: AppearanceSettings;
 }
 
 export interface GeneralSettings {
   defaultModel: string;
+  defaultPermissionMode: PermissionMode;
+  defaultThinkingEnabled: boolean;
   theme: 'light' | 'dark' | 'system';
   language: 'ja' | 'en';
+}
+
+export interface AppearanceSettings {
+  userIcon: AvatarIconType;
+  userInitials: string;
+  userImageUrl: string;
+  userName: string;
+  botIcon: BotIconType;
+  botInitials: string;
+  botImageUrl: string;
 }
 
 export interface PermissionSettings {
@@ -1345,7 +1365,7 @@ __tests__/
 | ToolApprovalMessage | ✅ 実装済 | `src/components/chat/MessageItem.tsx` | 承認履歴表示（MessageItem内） |
 | ToolCallList | ✅ 実装済 | `src/components/chat/ToolCallList.tsx` | ツール実行ステータス表示 |
 | MarkdownRenderer | ✅ 実装済 | `src/components/chat/MarkdownRenderer.tsx` | react-markdown, rehype-highlight使用 |
-| ThinkingIndicator | ❌ 未実装 | - | 思考過程表示 |
+| ThinkingIndicator | ✅ 実装済 | `src/components/chat/MessageItem.tsx`, `src/components/ui/collapsible.tsx` | 思考過程表示（折りたたみ対応） |
 
 #### サイドバー関連
 | コンポーネント | 状況 | ファイル | 備考 |
@@ -1448,19 +1468,15 @@ __tests__/
    - MCP、エージェントの設定がUIから行えない（APIは実装済み）
    - Skills設定UIが未実装
 
-2. **思考過程（Thinking）表示未対応**
-   - Claudeの思考過程を表示する機能が未実装
-   - thinkingイベントのUI処理が必要
-
-3. **エラーハンドリング不十分**
+2. **エラーハンドリング不十分**
    - エラー時のユーザーフィードバックが限定的
    - グローバルエラーバウンダリ未実装
    - Toast通知コンポーネントが未実装
 
-4. **入力バリデーション未対応**
+3. **入力バリデーション未対応**
    - API入力のZodスキーマによるバリデーションが未実装
 
-5. **セッション検索未対応**
+4. **セッション検索未対応**
    - タイトル・内容によるセッション検索機能が未実装
 
 #### 実装済み機能（参考）
@@ -1472,6 +1488,7 @@ __tests__/
 - ✅ **MCP/エージェントAPI**: GET/POST/PATCH/DELETE完全実装
 - ✅ **ワークスペース選択機能**: セッションごとにワークスペース設定可能
 - ✅ **使用量表示機能**: Claude Code使用量（5時間/7日間）表示
+- ✅ **拡張思考（Thinking）表示**: thinking_deltaストリーミング対応、折りたたみ表示（`collapsible.tsx`）
 - ✅ **外観設定機能**: ユーザー/Claudeアイコンのカスタマイズ
 - ✅ **ユーザー名・モデル名表示**: メッセージにユーザー名・モデル名を表示
 
