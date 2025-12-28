@@ -216,7 +216,7 @@ export function FilePreview({
     } finally {
       setIsSaving(false);
     }
-  }, [item, content, isDirty, isImage, fileInfo?.encoding, workspacePath]);
+  }, [item, content, isDirty, isMedia, fileInfo?.encoding, workspacePath]);
 
   // Load file when item changes
   useEffect(() => {
