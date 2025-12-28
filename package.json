@@ -46,6 +46,7 @@
     "dompurify": "^3.3.1",
     "isomorphic-dompurify": "^2.34.0",
     "lucide-react": "^0.562.0",
+    "mermaid": "^11.12.2",
     "mime-types": "^3.0.2",
     "next": "16.1.1",
     "prisma": "^7.2.0",

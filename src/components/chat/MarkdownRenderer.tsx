@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import { Check, Copy, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { MermaidRenderer } from '@/components/workspace/MermaidRenderer';
 
 interface MarkdownRendererProps {
   content: string;
@@ -74,6 +75,17 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
           pre: ({ children }) => <>{children}</>,
           code: ({ className, children, ...props }) => {
             const isInline = !className;
+
+            // Mermaidコードブロックの場合
+            if (className?.includes('language-mermaid')) {
+              const code = String(children).replace(/\n$/, '');
+              return (
+                <div className="my-4 p-4 bg-muted/30 rounded-lg overflow-auto">
+                  <MermaidRenderer content={code} />
+                </div>
+              );
+            }
+
             return isInline ? (
               <code
                 className="rounded bg-muted/70 px-1.5 py-0.5 text-sm font-mono text-foreground/90"

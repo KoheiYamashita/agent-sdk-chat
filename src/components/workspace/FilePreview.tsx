@@ -1,12 +1,19 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Save, X, Loader2, FileText, AlertTriangle } from 'lucide-react';
+import { Save, X, Loader2, FileText, AlertTriangle, Edit3, Eye, Columns } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { MarkdownRenderer } from '@/components/chat/MarkdownRenderer';
+import { MermaidRenderer } from '@/components/workspace/MermaidRenderer';
+import { JsonPreview } from '@/components/workspace/JsonPreview';
+import { CsvPreview } from '@/components/workspace/CsvPreview';
 import type { DirectoryItem, FileReadResponse } from '@/types/workspace';
+
+type ViewMode = 'edit' | 'preview' | 'split';
 
 interface FilePreviewProps {
   item: DirectoryItem | null;
@@ -60,6 +67,43 @@ function isNonPreviewableBinary(name: string): boolean {
   return nonPreviewableExts.includes(ext);
 }
 
+// Check if file supports preview mode
+function isPreviewableFile(name: string): boolean {
+  const ext = name.split('.').pop()?.toLowerCase() || '';
+  const previewableExts = ['md', 'markdown', 'mmd', 'mermaid', 'html', 'htm', 'json', 'csv'];
+  return previewableExts.includes(ext);
+}
+
+// Check if file is markdown
+function isMarkdownFile(name: string): boolean {
+  const ext = name.split('.').pop()?.toLowerCase() || '';
+  return ['md', 'markdown'].includes(ext);
+}
+
+// Check if file is mermaid
+function isMermaidFile(name: string): boolean {
+  const ext = name.split('.').pop()?.toLowerCase() || '';
+  return ['mmd', 'mermaid'].includes(ext);
+}
+
+// Check if file is HTML
+function isHtmlFile(name: string): boolean {
+  const ext = name.split('.').pop()?.toLowerCase() || '';
+  return ['html', 'htm'].includes(ext);
+}
+
+// Check if file is JSON
+function isJsonFile(name: string): boolean {
+  const ext = name.split('.').pop()?.toLowerCase() || '';
+  return ext === 'json';
+}
+
+// Check if file is CSV
+function isCsvFile(name: string): boolean {
+  const ext = name.split('.').pop()?.toLowerCase() || '';
+  return ext === 'csv';
+}
+
 export function FilePreview({
   item,
   onClose,
@@ -72,9 +116,11 @@ export function FilePreview({
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fileInfo, setFileInfo] = useState<FileReadResponse | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('edit');
 
   const isDirty = content !== originalContent;
   const isImage = item ? isImageFile(item.name) : false;
+  const isPreviewable = item ? isPreviewableFile(item.name) : false;
 
   // Load file content
   const loadFile = useCallback(async () => {
@@ -183,7 +229,26 @@ export function FilePreview({
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
+          {/* プレビュー可能なファイルのみ表示モード切り替えを表示 */}
+          {isPreviewable && (
+            <ToggleGroup
+              type="single"
+              value={viewMode}
+              onValueChange={(value) => value && setViewMode(value as ViewMode)}
+              size="sm"
+            >
+              <ToggleGroupItem value="edit" aria-label="編集モード" title="編集">
+                <Edit3 className="h-3.5 w-3.5" />
+              </ToggleGroupItem>
+              <ToggleGroupItem value="preview" aria-label="プレビュー" title="プレビュー">
+                <Eye className="h-3.5 w-3.5" />
+              </ToggleGroupItem>
+              <ToggleGroupItem value="split" aria-label="分割表示" title="分割表示">
+                <Columns className="h-3.5 w-3.5" />
+              </ToggleGroupItem>
+            </ToggleGroup>
+          )}
           <Button
             variant="ghost"
             size="sm"
@@ -231,7 +296,53 @@ export function FilePreview({
             />
           </div>
         </ScrollArea>
+      ) : isPreviewable ? (
+        // プレビュー可能なファイルの表示
+        <div className={cn('flex-1 flex min-h-0', viewMode === 'split' && 'gap-0')}>
+          {/* エディター (edit または split モード) */}
+          {(viewMode === 'edit' || viewMode === 'split') && (
+            <ScrollArea className={cn('flex-1', viewMode === 'split' && 'border-r')}>
+              <Textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                className={cn(
+                  'w-full h-full min-h-[300px] resize-none border-0 rounded-none',
+                  'font-mono text-sm leading-relaxed',
+                  'focus-visible:ring-0 focus-visible:ring-offset-0'
+                )}
+                placeholder="ファイルの内容がここに表示されます"
+                spellCheck={false}
+                data-language={getLanguage(item.name)}
+              />
+            </ScrollArea>
+          )}
+
+          {/* プレビュー (preview または split モード) */}
+          {(viewMode === 'preview' || viewMode === 'split') && (
+            <ScrollArea className="flex-1">
+              <div className="p-4">
+                {isMarkdownFile(item.name) ? (
+                  <MarkdownRenderer content={content} />
+                ) : isMermaidFile(item.name) ? (
+                  <MermaidRenderer content={content} />
+                ) : isHtmlFile(item.name) ? (
+                  <iframe
+                    srcDoc={content}
+                    sandbox="allow-scripts"
+                    className="w-full min-h-[400px] border rounded bg-white"
+                    title={`${item.name} preview`}
+                  />
+                ) : isJsonFile(item.name) ? (
+                  <JsonPreview content={content} />
+                ) : isCsvFile(item.name) ? (
+                  <CsvPreview content={content} />
+                ) : null}
+              </div>
+            </ScrollArea>
+          )}
+        </div>
       ) : (
+        // 通常のテキストファイル
         <ScrollArea className="flex-1">
           <Textarea
             value={content}

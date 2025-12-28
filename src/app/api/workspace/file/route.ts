@@ -41,6 +41,17 @@ async function resolveAndValidatePath(relativePath: string, workspacePathParam?:
   return { basePath, targetPath };
 }
 
+// Helper to check if file extension is text-based
+function isTextExtension(filePath: string): boolean {
+  const ext = filePath.split('.').pop()?.toLowerCase() || '';
+  const textExtensions = [
+    'mmd', 'mermaid',  // Mermaid diagrams
+    'csv',             // CSV files
+    'env', 'gitignore', 'dockerignore', 'editorconfig',  // Config files without extension patterns
+  ];
+  return textExtensions.includes(ext);
+}
+
 // Helper to check if MIME type is text-based
 function isTextMimeType(mimeType: string): boolean {
   if (mimeType.startsWith('text/')) return true;
@@ -103,7 +114,7 @@ export async function GET(request: Request) {
     }
 
     const mimeType = mime.lookup(targetPath) || 'application/octet-stream';
-    const isText = isTextMimeType(mimeType);
+    const isText = isTextMimeType(mimeType) || isTextExtension(targetPath);
 
     // Read file content with appropriate encoding
     let content: string;
