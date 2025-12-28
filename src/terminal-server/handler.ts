@@ -1,6 +1,7 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { spawn } from 'node-pty';
 import path from 'path';
+import fs from 'fs/promises';
 import { sessionStore } from './session-store';
 
 const WORKSPACE_BASE = process.env.WORKSPACE_BASE_PATH || './workspace';
@@ -75,7 +76,7 @@ export function setupTerminalHandler(wss: WebSocketServer): void {
   });
 }
 
-function handleCreate(ws: WebSocket, message: { chatSessionId?: string; workspacePath?: string }) {
+async function handleCreate(ws: WebSocket, message: { chatSessionId?: string; workspacePath?: string }) {
   const { chatSessionId, workspacePath } = message;
 
   if (!chatSessionId || !workspacePath) {
@@ -111,6 +112,15 @@ function handleCreate(ws: WebSocket, message: { chatSessionId?: string; workspac
   const resolvedPath = path.resolve(WORKSPACE_BASE, workspacePath);
   const resolvedBase = path.resolve(WORKSPACE_BASE);
   const workspaceParent = path.dirname(resolvedBase);
+
+  // Ensure workspace directory exists (auto-create if deleted)
+  try {
+    await fs.mkdir(resolvedPath, { recursive: true });
+  } catch (err) {
+    console.error('Failed to create workspace directory:', err);
+    ws.send(JSON.stringify({ type: 'error', error: 'Failed to create workspace directory' }));
+    return;
+  }
 
   // Create new PTY with OS-specific shell configuration
   const isWindows = process.platform === 'win32';

@@ -7,14 +7,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { PermissionMode } from '@/types';
-import { Shield, FileEdit, Zap, ClipboardList } from 'lucide-react';
+import { Shield, FileEdit, Zap, ClipboardList, FolderOpen } from 'lucide-react';
 
 interface PermissionModeSelectorProps {
   value: PermissionMode;
   onChange: (mode: PermissionMode) => void;
   disabled?: boolean;
+  onFilesClick?: () => void;
 }
 
 const modes: {
@@ -63,6 +65,7 @@ export function PermissionModeSelector({
   value,
   onChange,
   disabled = false,
+  onFilesClick,
 }: PermissionModeSelectorProps) {
   const currentMode = modes.find((m) => m.value === value) ?? modes[0];
   const isDestructive = currentMode.variant === 'destructive';
@@ -106,9 +109,21 @@ export function PermissionModeSelector({
           })}
         </SelectContent>
       </Select>
-      <span className="text-xs text-muted-foreground hidden sm:inline">
+      <span className="text-xs text-muted-foreground hidden sm:inline flex-1">
         {currentMode.description}
       </span>
+      {onFilesClick && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onFilesClick}
+          disabled={disabled}
+          className="h-8 w-8 shrink-0"
+          title="ファイルを開く"
+        >
+          <FolderOpen className="h-4 w-4" />
+        </Button>
+      )}
     </div>
   );
 }

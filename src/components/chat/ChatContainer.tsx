@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useChat } from '@/hooks/useChat';
 import { useSettings } from '@/hooks/useSettings';
 import { useSidebar } from '@/contexts/SidebarContext';
@@ -17,6 +18,7 @@ interface ChatContainerProps {
 }
 
 export function ChatContainer({ sessionId }: ChatContainerProps) {
+  const router = useRouter();
   const { open: openSidebar, chatResetKey } = useSidebar();
   const { isOpen: isTerminalOpen, toggleTerminal, closeTerminal, destroySession } = useTerminal();
   const [workspacePath, setWorkspacePath] = useState<string | null>(null);
@@ -78,6 +80,20 @@ export function ChatContainer({ sessionId }: ChatContainerProps) {
     setWorkspacePath(path);
     setWorkspaceDisplayPath(displayPath);
   }, []);
+
+  // Handle file browser open - navigate to /files page
+  // Use workspaceDisplayPath (e.g., "workspace/テスト") instead of workspacePath (e.g., "テスト")
+  // because the file browser API expects a path relative to cwd, not relative to the workspace base
+  const handleFilesClick = useCallback(() => {
+    const displayPath = session?.settings?.workspaceDisplayPath ?? workspaceDisplayPath;
+    if (displayPath) {
+      // Ensure path starts with "./" for consistency
+      const wsPath = displayPath.startsWith('./') ? displayPath : `./${displayPath}`;
+      router.push(`/files?workspace=${encodeURIComponent(wsPath)}`);
+    } else {
+      router.push('/files');
+    }
+  }, [router, session?.settings?.workspaceDisplayPath, workspaceDisplayPath]);
 
   // Wrap sendMessage to include workspacePath and displayPath
   const sendMessage = useCallback(
@@ -146,6 +162,7 @@ export function ChatContainer({ sessionId }: ChatContainerProps) {
           onTerminalToggle={toggleTerminal}
           isTerminalOpen={isTerminalOpen}
           showTerminalButton={!!effectiveSessionId}
+          onFilesClick={handleFilesClick}
         />
       )}
 

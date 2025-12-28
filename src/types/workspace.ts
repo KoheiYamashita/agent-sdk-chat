@@ -51,3 +51,54 @@ export interface GitCloneErrorResponse {
 }
 
 export type GitCloneResult = GitCloneResponse | GitCloneErrorResponse;
+
+// File Operations Types
+export interface FileReadResponse {
+  content: string;
+  path: string;
+  size: number;
+  mimeType: string;
+}
+
+export interface FileSaveRequest {
+  path: string;
+  content: string;
+}
+
+export interface FileSaveResponse {
+  success: boolean;
+  path: string;
+}
+
+export interface FileCreateRequest {
+  parentPath: string;
+  name: string;
+  isDirectory: boolean;
+}
+
+export interface FileCreateResponse {
+  success: boolean;
+  path: string;
+  relativePath: string;
+  isDirectory: boolean;
+}
+
+export interface DeleteRequest {
+  path: string;
+}
+
+export interface DeleteResponse {
+  success: boolean;
+  path: string;
+}
+
+export interface RenameRequest {
+  oldPath: string;
+  newName: string;
+}
+
+export interface RenameResponse {
+  success: boolean;
+  oldPath: string;
+  newPath: string;
+}

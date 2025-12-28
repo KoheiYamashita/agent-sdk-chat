@@ -38,12 +38,17 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const relativePath = searchParams.get('path') || '';
+    const includeFiles = searchParams.get('includeFiles') === 'true';
+    const workspacePathParam = searchParams.get('workspacePath');
 
     // Get sandbox settings for base workspace path
     const sandboxSettings = await getSandboxSettings();
-    const basePath = sandboxSettings.workspacePath.startsWith('/')
-      ? sandboxSettings.workspacePath
-      : path.resolve(process.cwd(), sandboxSettings.workspacePath);
+
+    // Use workspacePath param if provided, otherwise fall back to sandbox settings
+    const workspaceSource = workspacePathParam || sandboxSettings.workspacePath;
+    const basePath = workspaceSource.startsWith('/')
+      ? workspaceSource
+      : path.resolve(process.cwd(), workspaceSource);
 
     // Resolve the target directory
     const targetPath = relativePath
@@ -58,59 +63,58 @@ export async function GET(request: Request) {
       );
     }
 
-    // Ensure base directory exists
-    await fs.mkdir(basePath, { recursive: true });
-
-    // Check if target exists
-    try {
-      await fs.access(targetPath);
-    } catch {
-      return NextResponse.json(
-        { error: 'Directory not found' },
-        { status: 404 }
-      );
-    }
+    // Ensure target directory exists (auto-create if deleted)
+    await fs.mkdir(targetPath, { recursive: true });
 
     // Read directory contents
     const entries = await fs.readdir(targetPath, { withFileTypes: true });
 
     // Filter and map to DirectoryItem
-    const items: DirectoryItem[] = [];
+    const directories: DirectoryItem[] = [];
+    const files: DirectoryItem[] = [];
 
     for (const entry of entries) {
       // Skip hidden files/directories
       if (entry.name.startsWith('.')) continue;
 
-      if (entry.isDirectory()) {
-        const itemPath = path.join(targetPath, entry.name);
-        const relPath = path.relative(basePath, itemPath);
+      const itemPath = path.join(targetPath, entry.name);
+      const relPath = path.relative(basePath, itemPath);
 
-        // Check if directory has subdirectories
+      if (entry.isDirectory()) {
+        // Check if directory has children (files or subdirectories)
         let hasChildren = false;
         try {
           const subEntries = await fs.readdir(itemPath, { withFileTypes: true });
-          hasChildren = subEntries.some(
-            (e) => e.isDirectory() && !e.name.startsWith('.')
-          );
+          hasChildren = includeFiles
+            ? subEntries.some((e) => !e.name.startsWith('.'))
+            : subEntries.some((e) => e.isDirectory() && !e.name.startsWith('.'));
         } catch {
           // If we can't read, assume no children
         }
 
-        items.push({
+        directories.push({
           name: entry.name,
           path: relPath,
           isDirectory: true,
           hasChildren,
         });
+      } else if (includeFiles && entry.isFile()) {
+        files.push({
+          name: entry.name,
+          path: relPath,
+          isDirectory: false,
+        });
       }
     }
 
-    // Sort alphabetically
-    items.sort((a, b) => a.name.localeCompare(b.name));
+    // Sort alphabetically: directories first, then files
+    directories.sort((a, b) => a.name.localeCompare(b.name));
+    files.sort((a, b) => a.name.localeCompare(b.name));
+    const items = [...directories, ...files];
 
     const response: DirectoryListResponse = {
       items,
-      basePath: sandboxSettings.workspacePath,
+      basePath: workspaceSource,
       currentPath: relativePath || '.',
     };
 
