@@ -292,6 +292,7 @@ export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseCh
                   const currentContent = assistantContent;
                   const currentId = assistantMessageId;
                   const modelForMessage = currentModel;
+                  const modelDisplayNameForMessage = options?.modelDisplayName;
 
                   setMessages((prev) => {
                     const existingIndex = prev.findIndex(
@@ -313,6 +314,7 @@ export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseCh
                         role: 'assistant',
                         content: currentContent,
                         model: modelForMessage,
+                        modelDisplayName: modelDisplayNameForMessage,
                         createdAt: new Date().toISOString(),
                       },
                     ];
@@ -350,6 +352,7 @@ export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseCh
                           role: 'assistant',
                           content: assistantContent,
                           model: currentModel,
+                          modelDisplayName: options?.modelDisplayName,
                           createdAt: new Date().toISOString(),
                         },
                       ];
@@ -377,6 +380,7 @@ export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseCh
                         role: 'assistant',
                         content: assistantContent,
                         model: currentModel,
+                        modelDisplayName: options?.modelDisplayName,
                         createdAt: new Date().toISOString(),
                       },
                     ];
@@ -418,6 +422,7 @@ export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseCh
                         content: assistantContent,
                         toolCalls: [newToolCall],
                         model: currentModel,
+                        modelDisplayName: options?.modelDisplayName,
                         createdAt: new Date().toISOString(),
                       },
                     ];
