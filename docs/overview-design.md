@@ -520,7 +520,7 @@ CMD ["node", "server.js"]
 |------|---------|------|
 | ファイルブラウザページ | `src/app/files/page.tsx` | ファイル一覧・プレビュー・編集 |
 | ファイルブラウザツリー | `src/components/workspace/FileBrowserTree.tsx` | ファイル・フォルダ一覧表示 |
-| ファイルブラウザ項目 | `src/components/workspace/FileBrowserItem.tsx` | 展開・アクション対応 |
+| ファイルブラウザ項目 | `src/components/workspace/FileBrowserItem.tsx` | 展開・アクション対応・パスコピー |
 | ファイルプレビュー | `src/components/workspace/FilePreview.tsx` | テキスト編集・画像プレビュー |
 | ファイル読み書きAPI | `src/app/api/workspace/file/route.ts` | バイナリ/テキスト対応 |
 | ファイル作成API | `src/app/api/workspace/file/create/route.ts` | ファイル・フォルダ作成 |
@@ -595,7 +595,6 @@ CMD ["node", "server.js"]
 | 機能 | 優先度 | 備考 |
 |------|--------|------|
 | シンキング表示 | 中 | Claude思考過程の表示 |
-| ファイルアップロード | 中 | 画像・ファイル添付 |
 
 #### セッション拡張
 | 機能 | 優先度 | 備考 |

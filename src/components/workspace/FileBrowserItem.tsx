@@ -10,6 +10,7 @@ import {
   Pencil,
   Trash2,
   Download,
+  Copy,
   Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -156,6 +157,21 @@ export function FileBrowserItem({
     onDownload(item);
   }, [item, onDownload]);
 
+  const handleCopyPath = useCallback(async () => {
+    // セキュアコンテキスト（HTTPS/localhost）ではClipboard APIを使用
+    if (window.isSecureContext && navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(item.path);
+        return;
+      } catch {
+        // フォールバックへ
+      }
+    }
+
+    // 非セキュアコンテキスト（HTTP）ではプロンプトで表示
+    window.prompt('パスをコピーしてください:', item.path);
+  }, [item.path]);
+
   const paddingLeft = 8 + depth * 16;
 
   return (
@@ -232,6 +248,10 @@ export function FileBrowserItem({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleCopyPath}>
+                <Copy className="h-4 w-4 mr-2" />
+                パスをコピー
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => {
                 setIsRenaming(true);
                 setNewName(item.name);

@@ -42,7 +42,7 @@ UIコンポーネントを格納するディレクトリです。
 - `WorkspaceBadge.tsx` - ワークスペースバッジ
 - `GitCloneForm.tsx` - Gitクローンフォーム
 - `FileBrowserTree.tsx` - ファイルブラウザツリー
-- `FileBrowserItem.tsx` - ファイルブラウザ項目（展開、アクション）
+- `FileBrowserItem.tsx` - ファイルブラウザ項目（展開、アクション、パスコピー）
 - `FilePreview.tsx` - ファイルプレビュー・編集（画像プレビュー対応）
 
 ### ui/
