@@ -6,6 +6,7 @@ Claude Agent SDKとの連携モジュールです。
 
 - `client.ts` - Claude Agent SDKクライアントの初期化
 - `session-manager.ts` - セッション管理（claudeSessionIdの取得・更新）
+- `title-generator.ts` - セッションタイトル自動生成（Claude Haikuを使用）
 - `types.ts` - SDK関連の型定義
 
 ## 使用方法

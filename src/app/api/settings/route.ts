@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { DEFAULT_TITLE_GENERATION } from '@/lib/constants/title-generation';
 import type { SettingsData, AppearanceSettings } from '@/types';
 
 // セキュリティ: 画像URLの検証（data: URLまたは有効なhttps URLのみ許可）
@@ -67,6 +68,7 @@ const DEFAULT_SETTINGS: SettingsData = {
     favicon: 'robot',
     customFaviconUrl: '',
   },
+  titleGeneration: DEFAULT_TITLE_GENERATION,
 };
 
 export async function GET() {
@@ -89,6 +91,9 @@ export async function GET() {
         DEFAULT_SETTINGS.permissions,
       sandbox: (settingsMap.sandbox as SettingsData['sandbox']) ?? DEFAULT_SETTINGS.sandbox,
       appearance: sanitizedAppearance,
+      titleGeneration:
+        (settingsMap.titleGeneration as SettingsData['titleGeneration']) ??
+        DEFAULT_SETTINGS.titleGeneration,
     };
 
     return NextResponse.json(result);
@@ -111,7 +116,7 @@ export async function PUT(request: Request) {
     }
 
     // Upsert each settings category
-    const categories = ['general', 'permissions', 'sandbox', 'appearance'] as const;
+    const categories = ['general', 'permissions', 'sandbox', 'appearance', 'titleGeneration'] as const;
 
     for (const category of categories) {
       if (body[category]) {

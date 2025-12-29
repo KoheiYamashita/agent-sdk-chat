@@ -574,6 +574,17 @@ export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseCh
                   }
                   break;
 
+                case 'title_updated':
+                  // Update session title in real-time (use functional update to avoid stale closure)
+                  setSession((prev) =>
+                    prev && prev.id === event.sessionId
+                      ? { ...prev, title: event.title }
+                      : prev
+                  );
+                  // Invalidate sessions query to update sidebar
+                  queryClient.invalidateQueries({ queryKey: ['sessions'] });
+                  break;
+
                 case 'error':
                   setError(event.message);
                   break;

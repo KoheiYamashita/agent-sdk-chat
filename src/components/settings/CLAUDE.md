@@ -16,6 +16,7 @@
 | `SkillCard.tsx` | スキルカード（一覧表示用） |
 | `SkillForm.tsx` | スキル作成・編集フォーム |
 | `SkillSettingsEditor.tsx` | スキル設定エディター（モデル・セッション単位の有効/無効設定） |
+| `TitleGenerationSettingsForm.tsx` | タイトル自動生成設定フォーム（有効/無効、モデル選択、プロンプト編集） |
 
 ## 注意事項
 

@@ -55,6 +55,7 @@ export type ChatEvent =
   | { type: 'thinking'; content: string }
   | { type: 'thinking_delta'; delta: string }
   | { type: 'done'; result: string; usage: MessageUsage; model?: string; modelDisplayName?: string; thinkingContent?: string }
+  | { type: 'title_updated'; sessionId: string; title: string }
   | { type: 'error'; message: string };
 
 /** ツール確認リクエスト */

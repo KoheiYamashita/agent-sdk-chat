@@ -5,6 +5,13 @@ export interface SettingsData {
   permissions: PermissionSettings;
   sandbox: SandboxSettings;
   appearance: AppearanceSettings;
+  titleGeneration?: TitleGenerationSettings;
+}
+
+export interface TitleGenerationSettings {
+  enabled: boolean;           // Enable/disable auto title generation
+  model: string;              // Model ID to use (empty = use first Haiku model)
+  prompt: string;             // Prompt template with <chat_history> placeholder
 }
 
 export type AvatarIconType = 'user' | 'user-circle' | 'user-round' | 'smile' | 'star' | 'heart' | 'circle-user' | 'initials' | 'image';

@@ -77,3 +77,4 @@ ehthumbs.db
 
 # Workspace (sandbox directory for Claude Code)
 /workspace/
+dev.db.backup

@@ -8,6 +8,7 @@ import { PermissionModeRadioGroup } from '@/components/settings/PermissionModeRa
 import { DefaultToolsCheckboxGroup } from '@/components/settings/DefaultToolsCheckboxGroup';
 import { SandboxSettingsForm } from '@/components/settings/SandboxSettingsForm';
 import { AppearanceSettingsForm } from '@/components/settings/AppearanceSettingsForm';
+import { TitleGenerationSettingsForm } from '@/components/settings/TitleGenerationSettingsForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -26,7 +27,7 @@ import {
 } from '@/components/ui/select';
 import { isValidImageUrl } from '@/lib/image-utils';
 import { Brain, Bot, ChevronRight, Clock, Wand2 } from 'lucide-react';
-import type { PermissionMode, SandboxSettings, AppearanceSettings, SelectableModel } from '@/types';
+import type { PermissionMode, SandboxSettings, AppearanceSettings, TitleGenerationSettings, SelectableModel } from '@/types';
 
 // Render model icon (image or Bot icon)
 function ModelIcon({ model }: { model: SelectableModel }) {
@@ -46,8 +47,8 @@ function ModelIcon({ model }: { model: SelectableModel }) {
 }
 
 export default function SettingsPage() {
-  const { settings, isLoading, error, isSaving, updateGeneralSettings, updateAppearanceSettings, saveSettings } = useSettings();
-  const { selectableModels, isLoading: isLoadingModels } = useAllModels();
+  const { settings, isLoading, error, isSaving, updateGeneralSettings, updateAppearanceSettings, updateTitleGenerationSettings, saveSettings } = useSettings();
+  const { selectableModels, standardModels, isLoading: isLoadingModels } = useAllModels();
 
   const handleDefaultModelChange = async (modelId: string) => {
     await updateGeneralSettings({ defaultModel: modelId });
@@ -81,6 +82,10 @@ export default function SettingsPage() {
 
   const handleAppearanceSettingsChange = async (appearance: AppearanceSettings) => {
     await updateAppearanceSettings(appearance);
+  };
+
+  const handleTitleGenerationSettingsChange = async (titleGeneration: TitleGenerationSettings) => {
+    await updateTitleGenerationSettings(titleGeneration);
   };
 
   if (error) {
@@ -140,6 +145,40 @@ export default function SettingsPage() {
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </Link>
           </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-card/80 hover:bg-card transition-colors duration-300">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <div className="h-1.5 w-1.5 rounded-full bg-foreground/50" />
+            タイトル自動生成
+          </CardTitle>
+          <CardDescription>
+            新規チャット開始時に、会話内容からタイトルを自動生成します。
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading || isLoadingModels ? (
+            <div className="space-y-4">
+              <div className="flex items-start space-x-3">
+                <Skeleton className="h-4 w-4 mt-1" />
+                <div className="flex-1">
+                  <Skeleton className="h-4 w-32 mb-2" />
+                  <Skeleton className="h-3 w-full" />
+                </div>
+              </div>
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-48 w-full" />
+            </div>
+          ) : (
+            <TitleGenerationSettingsForm
+              settings={settings?.titleGeneration ?? { enabled: true, model: '', prompt: '' }}
+              models={standardModels}
+              onChange={handleTitleGenerationSettingsChange}
+              disabled={isSaving}
+            />
+          )}
         </CardContent>
       </Card>
 
