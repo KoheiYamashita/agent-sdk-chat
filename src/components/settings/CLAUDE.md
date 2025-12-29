@@ -13,8 +13,12 @@
 | `DefaultToolsCheckboxGroup.tsx` | デフォルト許可ツールのチェックボックス群 |
 | `PermissionModeRadioGroup.tsx` | 権限モード選択（normal/auto）のラジオボタン |
 | `SandboxSettingsForm.tsx` | サンドボックス設定フォーム |
+| `SkillCard.tsx` | スキルカード（一覧表示用） |
+| `SkillForm.tsx` | スキル作成・編集フォーム |
+| `SkillSettingsEditor.tsx` | スキル設定エディター（モデル・セッション単位の有効/無効設定） |
 
 ## 注意事項
 
 - 設定変更は`useSettings`フック経由でAPIに保存されます
 - カスタムモデルは`/api/models/custom`で管理されます
+- スキルは`/api/skills`で管理されます

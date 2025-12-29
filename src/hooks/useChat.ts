@@ -12,6 +12,7 @@ import type {
   ToolApprovalRequest,
   ToolApprovalResponse,
   ToolCall,
+  SkillSettings,
 } from '@/types';
 import { generateUUID } from '@/lib/utils/uuid';
 
@@ -28,6 +29,7 @@ interface SendMessageOptions {
   model?: string;
   modelDisplayName?: string;
   systemPrompt?: string;
+  skillSettings?: SkillSettings;
 }
 
 interface UseChatReturn {
@@ -257,6 +259,7 @@ export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseCh
           model?: string;
           modelDisplayName?: string;
           systemPrompt?: string;
+          skillSettings?: SkillSettings;
         } = {};
         if (options?.permissionMode) {
           settings.permissionMode = options.permissionMode;
@@ -278,6 +281,9 @@ export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseCh
         }
         if (options?.thinkingEnabled !== undefined) {
           settings.thinkingEnabled = options.thinkingEnabled;
+        }
+        if (options?.skillSettings && Object.keys(options.skillSettings).length > 0) {
+          settings.skillSettings = options.skillSettings;
         }
 
         const response = await fetch('/api/chat', {

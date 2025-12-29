@@ -27,6 +27,7 @@ export async function GET(request: Request, { params }: { params: Params }) {
       icon: dbModel.icon,
       iconColor: dbModel.iconColor,
       iconImageUrl: dbModel.iconImageUrl,
+      skillSettings: dbModel.skillSettings ? JSON.parse(dbModel.skillSettings) : null,
       isEnabled: dbModel.isEnabled,
       sortOrder: dbModel.sortOrder,
       createdAt: dbModel.createdAt.toISOString(),
@@ -92,6 +93,7 @@ export async function PUT(request: Request, { params }: { params: Params }) {
       icon?: string | null;
       iconColor?: string | null;
       iconImageUrl?: string | null;
+      skillSettings?: string | null;
       isEnabled?: boolean;
       sortOrder?: number;
     } = {};
@@ -106,6 +108,11 @@ export async function PUT(request: Request, { params }: { params: Params }) {
     if (body.icon !== undefined) updateData.icon = body.icon;
     if (body.iconColor !== undefined) updateData.iconColor = body.iconColor;
     if (body.iconImageUrl !== undefined) updateData.iconImageUrl = body.iconImageUrl;
+    if (body.skillSettings !== undefined) {
+      updateData.skillSettings = body.skillSettings
+        ? JSON.stringify(body.skillSettings)
+        : null;
+    }
     if (body.isEnabled !== undefined) updateData.isEnabled = body.isEnabled;
     if (body.sortOrder !== undefined) updateData.sortOrder = body.sortOrder;
 
@@ -124,6 +131,7 @@ export async function PUT(request: Request, { params }: { params: Params }) {
       icon: updated.icon,
       iconColor: updated.iconColor,
       iconImageUrl: updated.iconImageUrl,
+      skillSettings: updated.skillSettings ? JSON.parse(updated.skillSettings) : null,
       isEnabled: updated.isEnabled,
       sortOrder: updated.sortOrder,
       createdAt: updated.createdAt.toISOString(),

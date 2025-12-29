@@ -18,6 +18,7 @@
 | `PermissionModeSelector.tsx` | 権限モード選択（normal/auto） |
 | `ToolApprovalCard.tsx` | ツール実行承認カード（承認/拒否ボタン） |
 | `ToolCallList.tsx` | ツール呼び出し一覧表示 |
+| `SkillsDropdown.tsx` | スキル選択ドロップダウン（セッション単位で有効/無効切替） |
 | `index.ts` | エクスポート集約 |
 
 ## コンポーネント階層
@@ -36,5 +37,6 @@ ChatContainer
 ├── ToolApprovalCard（承認待ちツールがある場合）
 └── InputArea
     ├── ModelSelector
-    └── PermissionModeSelector
+    ├── PermissionModeSelector
+    └── SkillsDropdown
 ```

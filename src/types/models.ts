@@ -2,6 +2,8 @@
  * Model-related type definitions
  */
 
+import type { SkillSettings } from './skills';
+
 // Standard model from SDK (matches SDK's ModelInfo type)
 export interface StandardModel {
   id: string; // SDK ModelInfo.value - the actual model ID used in API calls
@@ -20,6 +22,7 @@ export interface CustomModel {
   icon?: string | null; // Lucide icon name or emoji
   iconColor?: string | null;
   iconImageUrl?: string | null; // Custom image URL for icon
+  skillSettings?: SkillSettings | null; // Skill override settings
   isEnabled: boolean;
   sortOrder: number;
   createdAt: string;
@@ -37,6 +40,7 @@ export interface SelectableModel {
   iconImageUrl?: string | null; // Custom image URL for icon
   baseModelId: string; // The actual model ID to use in API calls
   systemPrompt?: string | null;
+  skillSettings?: SkillSettings | null; // Custom model skill settings (only for custom type)
 }
 
 // API Request types
@@ -49,6 +53,7 @@ export interface CustomModelCreateRequest {
   icon?: string;
   iconColor?: string;
   iconImageUrl?: string;
+  skillSettings?: SkillSettings;
 }
 
 export interface CustomModelUpdateRequest {
@@ -60,6 +65,7 @@ export interface CustomModelUpdateRequest {
   icon?: string | null;
   iconColor?: string | null;
   iconImageUrl?: string | null;
+  skillSettings?: SkillSettings | null;
   isEnabled?: boolean;
   sortOrder?: number;
 }

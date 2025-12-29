@@ -7,7 +7,8 @@ import { approvalManager } from '@/lib/approval-manager';
 import { sessionManager } from '@/lib/claude/session-manager';
 import { generateUUID } from '@/lib/utils/uuid';
 import { getAllToolNames, getDangerousToolNames } from '@/lib/constants/tools';
-import type { ChatRequest, ChatEvent, MessageUsage, ToolApprovalRequest, SandboxSettings } from '@/types';
+import { resolveSkillEnabled } from '@/types/skills';
+import type { ChatRequest, ChatEvent, MessageUsage, ToolApprovalRequest, SandboxSettings, Skill, SkillSettings } from '@/types';
 
 interface ContentBlock {
   type: string;
@@ -80,6 +81,50 @@ async function getApprovalTimeoutMs(): Promise<number> {
     return minutes * 60 * 1000; // 0分の場合は0msを返す（無制限）
   } catch {
     return DEFAULT_APPROVAL_TIMEOUT_MINUTES * 60 * 1000;
+  }
+}
+
+// Helper to write enabled skills to workspace
+async function writeSkillsToWorkspace(
+  workspacePath: string,
+  skills: Skill[],
+  customModelSkillSettings: SkillSettings | null,
+  sessionSkillSettings: SkillSettings | null
+): Promise<void> {
+  const skillsDir = path.join(workspacePath, '.claude', 'skills');
+
+  // Get list of skill names that should be enabled
+  const enabledSkillNames = new Set<string>();
+  for (const skill of skills) {
+    const resolved = resolveSkillEnabled(skill, customModelSkillSettings, sessionSkillSettings);
+    if (resolved.isEnabled) {
+      enabledSkillNames.add(skill.name);
+    }
+  }
+
+  // Ensure .claude/skills directory exists
+  await fs.mkdir(skillsDir, { recursive: true });
+
+  // Write enabled skills
+  for (const skill of skills) {
+    if (enabledSkillNames.has(skill.name)) {
+      const skillDir = path.join(skillsDir, skill.name);
+      await fs.mkdir(skillDir, { recursive: true });
+      await fs.writeFile(path.join(skillDir, 'SKILL.md'), skill.content, 'utf-8');
+    }
+  }
+
+  // Remove disabled skills that might exist from previous runs
+  try {
+    const existingDirs = await fs.readdir(skillsDir, { withFileTypes: true });
+    for (const dirent of existingDirs) {
+      if (dirent.isDirectory() && !enabledSkillNames.has(dirent.name)) {
+        // This skill directory should not exist, remove it
+        await fs.rm(path.join(skillsDir, dirent.name), { recursive: true, force: true });
+      }
+    }
+  } catch {
+    // If reading directory fails (e.g., doesn't exist), that's fine
   }
 }
 
@@ -167,10 +212,57 @@ export async function POST(request: Request) {
           await fs.mkdir(workspacePath, { recursive: true });
         }
 
-        // Build the list of auto-allowed tools (global + session)
+        // Fetch and write enabled skills to workspace
+        const allSkills = await prisma.skill.findMany({
+          orderBy: { sortOrder: 'asc' },
+        });
+
+        // Get custom model skill settings if using a custom model
+        let customModelSkillSettings: SkillSettings | null = null;
+        if (settings?.modelDisplayName) {
+          const customModel = await prisma.customModel.findFirst({
+            where: { displayName: settings.modelDisplayName },
+          });
+          if (customModel?.skillSettings) {
+            try {
+              customModelSkillSettings = JSON.parse(customModel.skillSettings) as SkillSettings;
+            } catch {
+              // Invalid JSON, ignore
+            }
+          }
+        }
+
+        // Get session skill settings from request
+        const sessionSkillSettings: SkillSettings | null = settings?.skillSettings ?? null;
+
+        // Write skills to workspace (only if sandbox is enabled and we have skills)
+        const hasSkills = allSkills.length > 0;
+        if (sandboxSettings.enabled && hasSkills) {
+          const dbSkills: Skill[] = allSkills.map((s) => ({
+            id: s.id,
+            name: s.name,
+            displayName: s.displayName,
+            description: s.description,
+            content: s.content,
+            isEnabled: s.isEnabled,
+            sortOrder: s.sortOrder,
+            createdAt: s.createdAt.toISOString(),
+            updatedAt: s.updatedAt.toISOString(),
+          }));
+          await writeSkillsToWorkspace(workspacePath, dbSkills, customModelSkillSettings, sessionSkillSettings);
+          console.log('[Skills] Wrote skills to:', path.join(workspacePath, '.claude', 'skills'));
+          console.log('[Skills] Enabled skills:', dbSkills.filter(s => {
+            const resolved = resolveSkillEnabled(s, customModelSkillSettings, sessionSkillSettings);
+            return resolved.isEnabled;
+          }).map(s => s.name));
+        }
+        console.log('[Chat] CWD for SDK:', workspacePath);
+
+        // Build the list of auto-allowed tools (global + session + Skill)
         const autoAllowedTools = [
           ...Array.from(globalAllowedTools),
           ...Array.from(alwaysAllowedTools),
+          'Skill', // Always allow Skill tool for project skills
         ];
 
         // Get dangerous tool names for UI display
@@ -194,8 +286,8 @@ export async function POST(request: Request) {
             // Thinking tokens (0 = disabled)
             maxThinkingTokens,
 
-            // Explicitly ignore CLI settings files (SDK isolation mode)
-            settingSources: [] as ('user' | 'project' | 'local')[],
+            // Load project settings for skills, but ignore user/local settings (SDK isolation mode)
+            settingSources: ['project'] as ('user' | 'project' | 'local')[],
 
             // Explicitly specify available tools (overrides SDK defaults)
             tools: getAllToolNames(),

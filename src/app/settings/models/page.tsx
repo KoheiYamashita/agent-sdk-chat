@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useCustomModels, useSupportedModels } from '@/hooks/useModels';
+import { useSkills } from '@/hooks/useSkills';
 import { CustomModelForm } from '@/components/settings/CustomModelForm';
 import { CustomModelCard } from '@/components/settings/CustomModelCard';
 import {
@@ -37,7 +38,12 @@ export default function ModelsSettingsPage() {
     isDeleting,
   } = useCustomModels();
 
-  const isLoading = isLoadingSupportedModels || isLoadingCustomModels;
+  const {
+    skills,
+    isLoading: isLoadingSkills,
+  } = useSkills();
+
+  const isLoading = isLoadingSupportedModels || isLoadingCustomModels || isLoadingSkills;
   const isMutating = isCreatingModel || isUpdating || isDeleting;
 
   const handleCreate = async (data: CustomModelCreateRequest) => {
@@ -101,6 +107,7 @@ export default function ModelsSettingsPage() {
               <CardContent>
                 <CustomModelForm
                   supportedModels={supportedModels}
+                  skills={skills}
                   onSubmit={handleCreate}
                   onCancel={() => setIsCreating(false)}
                   disabled={isMutating}
@@ -120,6 +127,7 @@ export default function ModelsSettingsPage() {
                 <CustomModelForm
                   model={editingModel}
                   supportedModels={supportedModels}
+                  skills={skills}
                   onSubmit={handleUpdate}
                   onCancel={() => setEditingModel(null)}
                   disabled={isMutating}

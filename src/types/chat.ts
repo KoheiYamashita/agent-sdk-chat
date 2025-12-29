@@ -89,6 +89,7 @@ export interface ChatSettings {
   workspacePath?: string;
   workspaceDisplayPath?: string;
   thinkingEnabled?: boolean;
+  skillSettings?: Record<string, 'enabled' | 'disabled' | 'default'>;  // Session-level skill overrides
 }
 
 export type PermissionMode = 'default' | 'acceptEdits' | 'bypassPermissions' | 'plan';

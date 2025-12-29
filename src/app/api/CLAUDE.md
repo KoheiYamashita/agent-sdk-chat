@@ -28,6 +28,8 @@ Next.js App RouterのAPIルートを格納しています。
 | `search/messages/` | `GET /api/search/messages` | メッセージ検索（セッション内） |
 | `tags/` | `GET/POST /api/tags` | タグ一覧取得・作成 |
 | `tags/[id]/` | `PATCH/DELETE /api/tags/[id]` | タグ更新（名前変更）・削除 |
+| `skills/` | `GET/POST /api/skills` | スキル一覧取得・作成 |
+| `skills/[id]/` | `GET/PUT/DELETE /api/skills/[id]` | スキル詳細・更新・削除 |
 
 ## ワークスペースAPI詳細
 

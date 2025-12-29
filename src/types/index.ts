@@ -3,6 +3,7 @@ export * from './models';
 export * from './search';
 export * from './session';
 export * from './settings';
+export * from './skills';
 export * from './tag';
 export * from './terminal';
 export * from './usage';

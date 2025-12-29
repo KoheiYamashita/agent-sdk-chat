@@ -23,6 +23,7 @@ export async function GET() {
       icon: model.icon,
       iconColor: model.iconColor,
       iconImageUrl: model.iconImageUrl,
+      skillSettings: model.skillSettings ? JSON.parse(model.skillSettings) : null,
       isEnabled: model.isEnabled,
       sortOrder: model.sortOrder,
       createdAt: model.createdAt.toISOString(),
@@ -88,6 +89,7 @@ export async function POST(request: Request) {
         icon: body.icon || null,
         iconColor: body.iconColor || null,
         iconImageUrl: body.iconImageUrl || null,
+        skillSettings: body.skillSettings ? JSON.stringify(body.skillSettings) : null,
         sortOrder: nextSortOrder,
       },
     });
@@ -102,6 +104,7 @@ export async function POST(request: Request) {
       icon: created.icon,
       iconColor: created.iconColor,
       iconImageUrl: created.iconImageUrl,
+      skillSettings: created.skillSettings ? JSON.parse(created.skillSettings) : null,
       isEnabled: created.isEnabled,
       sortOrder: created.sortOrder,
       createdAt: created.createdAt.toISOString(),

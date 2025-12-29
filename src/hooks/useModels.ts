@@ -120,6 +120,7 @@ function toSelectableModel(
       iconImageUrl: custom.iconImageUrl,
       baseModelId: custom.baseModel,
       systemPrompt: custom.systemPrompt,
+      skillSettings: custom.skillSettings,
     };
   }
 }

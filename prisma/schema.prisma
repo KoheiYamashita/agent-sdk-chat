@@ -18,6 +18,7 @@ model Session {
   updatedAt       DateTime  @updatedAt
   settings        String?   // JSON stored as string for SQLite
   allowedTools    String?   // JSON array of always-allowed tool names
+  skillSettings   String?   // JSON: { "skillId": "enabled" | "disabled" | "default" }
   isArchived      Boolean   @default(false)
   tagId           String?
   tag             Tag?      @relation(fields: [tagId], references: [id])
@@ -90,17 +91,30 @@ model Settings {
 }
 
 model CustomModel {
-  id           String   @id @default(cuid())
-  name         String   @unique
-  displayName  String
-  baseModel    String   // Standard model ID from SDK (e.g. 'claude-sonnet-4-20250514')
-  systemPrompt String?
-  description  String?
-  icon         String?  // Lucide icon name or emoji
-  iconColor    String?
-  iconImageUrl String?  // Custom image URL for icon
-  isEnabled    Boolean  @default(true)
-  sortOrder    Int      @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id            String   @id @default(cuid())
+  name          String   @unique
+  displayName   String
+  baseModel     String   // Standard model ID from SDK (e.g. 'claude-sonnet-4-20250514')
+  systemPrompt  String?
+  description   String?
+  icon          String?  // Lucide icon name or emoji
+  iconColor     String?
+  iconImageUrl  String?  // Custom image URL for icon
+  skillSettings String?  // JSON: { "skillId": "enabled" | "disabled" | "default" }
+  isEnabled     Boolean  @default(true)
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Skill {
+  id          String   @id @default(cuid())
+  name        String   @unique  // URL-safe identifier (e.g. 'code-review')
+  displayName String
+  description String?
+  content     String   // SKILL.md content (YAML frontmatter + markdown)
+  isEnabled   Boolean  @default(true)   // Global default enabled state (for file output)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

@@ -56,6 +56,12 @@ TypeScript型定義を格納するディレクトリです。
 - `SearchMessageResult`: メッセージ検索結果型
 - `MessageSearchResponse`: メッセージ検索レスポンス型
 
+### skills.ts
+スキル関連の型定義
+- `Skill`: スキル型
+- `SkillSettings`: スキル設定型（`Record<string, SkillOverrideState>`）
+- `SkillOverrideState`: スキル上書き状態（`'enabled' | 'disabled' | 'default'`）
+
 ### index.ts
 型のエクスポート集約
 

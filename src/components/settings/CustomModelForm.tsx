@@ -13,15 +13,19 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { IconPicker } from './IconPicker';
+import { SkillSettingsEditor } from './SkillSettingsEditor';
 import type {
   CustomModel,
   CustomModelCreateRequest,
   StandardModel,
+  Skill,
+  SkillSettings,
 } from '@/types';
 
 interface CustomModelFormProps {
   model?: CustomModel;
   supportedModels: StandardModel[];
+  skills?: Skill[];
   onSubmit: (data: CustomModelCreateRequest) => Promise<void>;
   onCancel: () => void;
   disabled?: boolean;
@@ -30,6 +34,7 @@ interface CustomModelFormProps {
 export function CustomModelForm({
   model,
   supportedModels,
+  skills = [],
   onSubmit,
   onCancel,
   disabled = false,
@@ -42,6 +47,9 @@ export function CustomModelForm({
   const [icon, setIcon] = useState(model?.icon ?? '');
   const [iconColor, setIconColor] = useState(model?.iconColor ?? '');
   const [iconImageUrl, setIconImageUrl] = useState(model?.iconImageUrl ?? '');
+  const [skillSettings, setSkillSettings] = useState<SkillSettings>(
+    model?.skillSettings ?? {}
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Auto-generate name from displayName
@@ -79,6 +87,7 @@ export function CustomModelForm({
         icon: icon || undefined,
         iconColor: iconColor || undefined,
         iconImageUrl: iconImageUrl || undefined,
+        skillSettings: Object.keys(skillSettings).length > 0 ? skillSettings : undefined,
       });
     } finally {
       setIsSubmitting(false);
@@ -175,6 +184,21 @@ export function CustomModelForm({
           disabled={isLoading}
         />
       </div>
+
+      {skills.length > 0 && (
+        <div className="space-y-2">
+          <Label>Skills設定</Label>
+          <p className="text-xs text-muted-foreground mb-2">
+            このモデルでのSkillsの有効/無効を設定します。デフォルトはグローバル設定に従います。
+          </p>
+          <SkillSettingsEditor
+            skills={skills}
+            settings={skillSettings}
+            onChange={setSkillSettings}
+            disabled={isLoading}
+          />
+        </div>
+      )}
 
       <div className="flex justify-end gap-2 pt-4">
         <Button

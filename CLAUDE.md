@@ -65,14 +65,16 @@ npm run db:studio        # Prisma Studio起動
 - **チャット**: `POST /api/chat`（SSE）, `/api/chat/approve`, `/api/chat/abort`
 - **セッション**: `/api/sessions/[id]`でCRUD, `/api/sessions/[id]/messages`でメッセージ取得
 - **モデル**: `/api/models`（標準）, `/api/models/custom`（カスタムモデル）
+- **スキル**: `/api/skills`でCRUD（Claude Agent SDKスキル管理）
 - **ワークスペース**: `/api/workspace/*`（一覧、クローン、ファイル操作）
 - **ターミナル**: WebSocket `ws://localhost:3000/api/terminal`
 
 ### データベースモデル（Prisma）
 
-- **Session**: `claudeSessionId`, `settings`（JSON）, `allowedTools`（JSON）
+- **Session**: `claudeSessionId`, `settings`（JSON）, `allowedTools`（JSON）, `skillSettings`（JSON）
 - **Message**: `role`, `content`, `toolCalls`（JSON）, トークン使用量, `thinkingContent`
-- **CustomModel**: `baseModel`, `systemPrompt`, アイコンカスタマイズ
+- **CustomModel**: `baseModel`, `systemPrompt`, アイコンカスタマイズ, `skillSettings`（JSON）
+- **Skill**: スキル定義（`name`, `content`（SKILL.md）, `isEnabled`）
 - **MCPServer**: MCPサーバー設定（stdio/sse/httpタイプ）
 - **Settings**: アプリ設定のKey-Valueストア
 

@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { isValidImageUrl } from '@/lib/image-utils';
-import { Brain, Bot, ChevronRight, Clock } from 'lucide-react';
+import { Brain, Bot, ChevronRight, Clock, Wand2 } from 'lucide-react';
 import type { PermissionMode, SandboxSettings, AppearanceSettings, SelectableModel } from '@/types';
 
 // Render model icon (image or Bot icon)
@@ -113,6 +113,29 @@ export default function SettingsPage() {
               <div className="flex items-center gap-3">
                 <Bot className="h-4 w-4 text-primary" />
                 <span>カスタムモデルを管理</span>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-card/80 hover:bg-card transition-colors duration-300">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <div className="h-1.5 w-1.5 rounded-full bg-foreground/50" />
+            Skills
+          </CardTitle>
+          <CardDescription>
+            Claude Agent SDKのSkillsを管理します。Skillsは再利用可能な指示をClaudeに提供します。
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button variant="outline" className="w-full justify-between" asChild>
+            <Link href="/settings/skills">
+              <div className="flex items-center gap-3">
+                <Wand2 className="h-4 w-4 text-primary" />
+                <span>Skillsを管理</span>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </Link>

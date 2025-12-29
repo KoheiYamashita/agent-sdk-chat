@@ -54,6 +54,14 @@
 - `isSearching`: 検索中フラグ
 - `clearSearch()`: 検索クリア
 
+### useSkills.ts
+スキル管理フック（TanStack Query使用）
+- `skills`: スキル一覧
+- `createSkill()`: 新規スキル作成
+- `updateSkill()`: スキル更新
+- `deleteSkill()`: スキル削除
+- `resolveSkillEnabled()`: スキル有効状態の解決（グローバル→モデル→セッション）
+
 ## 注意事項
 
 - TanStack Queryを使用してサーバー状態を管理しています

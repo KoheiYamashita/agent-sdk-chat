@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useChat } from '@/hooks/useChat';
 import { useSettings } from '@/hooks/useSettings';
 import { useAllModels } from '@/hooks/useModels';
+import { useSkills } from '@/hooks/useSkills';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { useTerminal } from '@/contexts/TerminalContext';
 import { ChatHeader } from './ChatHeader';
@@ -14,7 +15,7 @@ import { InputArea } from './InputArea';
 import { WorkspaceSelector } from '@/components/workspace';
 import { TerminalPanel } from '@/components/terminal/TerminalPanel';
 import { MessageSearchProvider, useMessageSearch } from '@/contexts/MessageSearchContext';
-import type { PermissionMode, SelectableModel } from '@/types';
+import type { PermissionMode, SelectableModel, SkillSettings } from '@/types';
 
 interface ChatContainerProps {
   sessionId?: string;
@@ -59,6 +60,7 @@ function ChatContainerInner({ sessionId }: ChatContainerProps) {
   const [thinkingEnabled, setThinkingEnabled] = useState(false);
   const [selectedModel, setSelectedModel] = useState<SelectableModel | null>(null);
   const [modelInitialized, setModelInitialized] = useState(false);
+  const [skillSettings, setSkillSettings] = useState<SkillSettings>({});
   const prevSessionIdRef = useRef<string | undefined>(undefined);
 
   const {
@@ -79,7 +81,13 @@ function ChatContainerInner({ sessionId }: ChatContainerProps) {
 
   const { settings } = useSettings();
   const { selectableModels, customModels, isLoading: isLoadingModels } = useAllModels();
+  const { skills } = useSkills();
   const defaultPermissionMode: PermissionMode = settings?.general.defaultPermissionMode ?? 'default';
+
+  // Get custom model skill settings from selected model
+  const customModelSkillSettings = selectedModel?.type === 'custom' && selectedModel.skillSettings
+    ? selectedModel.skillSettings
+    : null;
 
   // Reset model initialization when session changes
   useEffect(() => {
@@ -219,18 +227,24 @@ function ChatContainerInner({ sessionId }: ChatContainerProps) {
     router.push(query ? `/files?${query}` : '/files');
   }, [router, session?.settings?.workspaceDisplayPath, workspaceDisplayPath, effectiveSessionId]);
 
-  // Wrap sendMessage to include workspacePath, displayPath, thinkingEnabled, and model
+  // Wrap sendMessage to include workspacePath, displayPath, thinkingEnabled, model, and skillSettings
   const sendMessage = useCallback(
-    (message: string, options: { permissionMode: PermissionMode; model?: string; modelDisplayName?: string; systemPrompt?: string }) => {
+    (message: string, options: { permissionMode: PermissionMode; model?: string; modelDisplayName?: string; systemPrompt?: string; skillSettings?: SkillSettings }) => {
       originalSendMessage(message, {
         ...options,
         workspacePath: workspacePath ?? undefined,
         workspaceDisplayPath: workspaceDisplayPath ?? undefined,
         thinkingEnabled,
+        skillSettings: options.skillSettings,
       });
     },
     [originalSendMessage, workspacePath, workspaceDisplayPath, thinkingEnabled]
   );
+
+  // Handle skill settings change
+  const handleSkillSettingsChange = useCallback((settings: SkillSettings) => {
+    setSkillSettings(settings);
+  }, []);
 
   // Show workspace selector for new chats with no messages
   const isNewChat = !sessionId && messages.length === 0 && !isLoading;
@@ -308,6 +322,10 @@ function ChatContainerInner({ sessionId }: ChatContainerProps) {
             selectedModel={selectedModel}
             onModelChange={handleModelChange}
             isLoadingModels={isLoadingModels}
+            skills={skills}
+            skillSettings={skillSettings}
+            customModelSkillSettings={customModelSkillSettings}
+            onSkillSettingsChange={handleSkillSettingsChange}
           />
         )}
 

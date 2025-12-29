@@ -6,14 +6,16 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { PermissionModeSelector } from './PermissionModeSelector';
 import { ModelSelector } from './ModelSelector';
+import { SkillsDropdown } from './SkillsDropdown';
 import { cn } from '@/lib/utils';
-import type { PermissionMode, SelectableModel } from '@/types';
+import type { PermissionMode, SelectableModel, Skill, SkillSettings } from '@/types';
 
 interface SendOptions {
   permissionMode: PermissionMode;
   model?: string;
   modelDisplayName?: string;
   systemPrompt?: string;
+  skillSettings?: SkillSettings;
 }
 
 interface InputAreaProps {
@@ -33,6 +35,11 @@ interface InputAreaProps {
   selectedModel?: SelectableModel | null;
   onModelChange?: (model: SelectableModel) => void;
   isLoadingModels?: boolean;
+  // Skills
+  skills?: Skill[];
+  skillSettings?: SkillSettings;
+  customModelSkillSettings?: SkillSettings | null;
+  onSkillSettingsChange?: (settings: SkillSettings) => void;
 }
 
 export function InputArea({
@@ -51,6 +58,10 @@ export function InputArea({
   selectedModel = null,
   onModelChange,
   isLoadingModels = false,
+  skills = [],
+  skillSettings = {},
+  customModelSkillSettings,
+  onSkillSettingsChange,
 }: InputAreaProps) {
   const [input, setInput] = useState('');
   const [permissionMode, setPermissionMode] = useState<PermissionMode>(defaultPermissionMode);
@@ -64,16 +75,28 @@ export function InputArea({
   const handleSubmit = useCallback(() => {
     const trimmedInput = input.trim();
     if (!trimmedInput || disabled) return;
+
+    // チェックされたスキルを取得してメッセージ先頭に追加
+    const selectedSkillCommands = skills
+      .filter(s => skillSettings[s.id] === 'enabled')
+      .map(s => s.name)
+      .join(' ');
+
+    const finalMessage = selectedSkillCommands
+      ? `${selectedSkillCommands} ${trimmedInput}`
+      : trimmedInput;
+
     // For custom models, pass the displayName; for standard models, no need to pass
     const modelDisplayName = selectedModel?.type === 'custom' ? selectedModel.displayName : undefined;
-    onSubmit(trimmedInput, {
+    onSubmit(finalMessage, {
       permissionMode,
       model: selectedModel?.baseModelId,
       modelDisplayName,
       systemPrompt: selectedModel?.systemPrompt ?? undefined,
+      skillSettings: Object.keys(skillSettings).length > 0 ? skillSettings : undefined,
     });
     setInput('');
-  }, [input, disabled, onSubmit, permissionMode, selectedModel]);
+  }, [input, disabled, onSubmit, permissionMode, selectedModel, skills, skillSettings]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -91,7 +114,7 @@ export function InputArea({
 
   return (
     <div className="border-t border-border/50 bg-gradient-to-t from-background to-background/80 backdrop-blur-sm">
-      <div className="flex items-center gap-2 px-2 sm:px-4 py-2 border-b bg-muted/30">
+      <div className="flex flex-wrap items-center gap-2 px-2 sm:px-4 py-2 border-b bg-muted/30">
         {onModelChange && models.length > 0 && (
           <ModelSelector
             models={models}
@@ -109,6 +132,15 @@ export function InputArea({
           thinkingEnabled={thinkingEnabled}
           onThinkingToggle={onThinkingToggle}
         />
+        {onSkillSettingsChange && skills.length > 0 && (
+          <SkillsDropdown
+            skills={skills}
+            skillSettings={skillSettings}
+            customModelSkillSettings={customModelSkillSettings}
+            onSkillSettingsChange={onSkillSettingsChange}
+            disabled={disabled || isGenerating}
+          />
+        )}
       </div>
       <div className="p-3 sm:p-4">
           <div className="flex gap-2 items-end">

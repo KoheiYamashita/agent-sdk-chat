@@ -16,6 +16,7 @@ Prisma ORMの設定とデータベーススキーマを管理するディレク�
 - `claudeSessionId`: Claude SDKのセッションID
 - `settings`: セッション固有の設定（JSON）
 - `allowedTools`: 常に許可されるツールリスト（JSON）
+- `skillSettings`: スキル有効/無効設定（JSON）
 - `tagId`: タグへの外部キー（オプション）
 
 ### Tag
@@ -45,6 +46,18 @@ MCP (Model Context Protocol) サーバー設定を管理します。
 
 ### Settings
 アプリケーション設定を管理します。
+
+### Skill
+Claude Agent SDKのスキルを管理します。
+- `name`: スキル識別名（URL-safe、一意）
+- `displayName`: 表示名
+- `description`: 説明
+- `content`: SKILL.md内容（YAML frontmatter + markdown）
+- `isEnabled`: グローバルデフォルト有効状態
+- `sortOrder`: 表示順序
+
+### CustomModel（スキル関連フィールド）
+- `skillSettings`: モデル固有のスキル有効/無効設定（JSON）
 
 ## コマンド
 

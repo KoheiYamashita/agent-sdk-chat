@@ -135,6 +135,13 @@ export const BUILTIN_TOOLS: ToolDefinition[] = [
     category: 'other',
     isDangerous: false,
   },
+  {
+    name: 'Skill',
+    displayName: 'Skill',
+    description: 'プロジェクトスキルを実行',
+    category: 'other',
+    isDangerous: false,
+  },
 ];
 
 /**

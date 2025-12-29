@@ -30,6 +30,7 @@ export async function GET() {
       iconImageUrl: model.iconImageUrl,
       isEnabled: model.isEnabled,
       sortOrder: model.sortOrder,
+      skillSettings: model.skillSettings ? JSON.parse(model.skillSettings) : null,
       createdAt: model.createdAt.toISOString(),
       updatedAt: model.updatedAt.toISOString(),
     }));
