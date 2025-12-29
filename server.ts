@@ -7,6 +7,11 @@ import { setupTerminalHandler, destroyAllSessions } from './src/terminal-server/
 
 const dev = process.env.NODE_ENV !== 'production';
 const port = parseInt(process.env.PORT || '3000', 10);
+// --host <hostname> でバインドアドレスを指定（デフォルトは localhost）
+const hostIndex = process.argv.indexOf('--host');
+const hostname = hostIndex !== -1 && process.argv[hostIndex + 1]
+  ? process.argv[hostIndex + 1]
+  : 'localhost';
 
 const app = next({ dev });
 const handle = app.getRequestHandler();
@@ -38,8 +43,8 @@ app.prepare().then(() => {
   process.on('SIGTERM', shutdown);
   process.on('SIGINT', shutdown);
 
-  server.listen(port, () => {
-    console.log(`> Server running on http://localhost:${port}`);
-    console.log(`> WebSocket terminal available at ws://localhost:${port}/api/terminal`);
+  server.listen(port, hostname, () => {
+    console.log(`> Server running on http://${hostname}:${port}`);
+    console.log(`> WebSocket terminal available at ws://${hostname}:${port}/api/terminal`);
   });
 });

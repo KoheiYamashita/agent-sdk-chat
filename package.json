@@ -6,7 +6,7 @@
     "dev": "tsx watch server.ts",
     "build": "prisma generate && next build",
     "start": "NODE_ENV=production tsx server.ts",
-    "start:bg": "npm run build && (nohup npm run start > server.log 2>&1 & echo $! > server.pid)",
+    "start:bg": "f() { npm run build && (NODE_ENV=production nohup tsx server.ts \"$@\" > server.log 2>&1 & echo $! > server.pid); }; f",
     "stop": "[ -f server.pid ] && kill $(cat server.pid) 2>/dev/null; rm -f server.pid",
     "status": "[ -f server.pid ] && ps -p $(cat server.pid) > /dev/null 2>&1 && echo 'Server is running (PID: '$(cat server.pid)')' || echo 'Server is not running'",
     "logs": "tail -f server.log",
