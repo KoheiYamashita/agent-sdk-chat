@@ -242,7 +242,13 @@ function ChatContainerInner({ sessionId }: ChatContainerProps) {
   const hasMessages = messages.length > 0;
 
   return (
-    <MessageSearchProvider messages={messages}>
+    <MessageSearchProvider
+      sessionId={effectiveSessionId ?? null}
+      messages={messages}
+      loadMoreMessages={loadMoreMessages}
+      hasMoreMessages={hasMoreMessages}
+      isLoadingMoreMessages={isLoadingMoreMessages}
+    >
       <div className="flex flex-col h-full overflow-hidden">
         <ChatHeaderWithSearch
           session={session}

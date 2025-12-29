@@ -108,7 +108,7 @@ export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseCh
   });
 
   // Fetch initial messages (last N messages)
-  const { isLoading: isLoadingMessages } = useQuery({
+  const { isLoading: isLoadingMessages, refetch: refetchMessages } = useQuery({
     queryKey: ['messages', sessionId],
     queryFn: async (): Promise<MessageListResponse> => {
       const response = await fetchMessages(sessionId!);
@@ -122,6 +122,13 @@ export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseCh
   useEffect(() => {
     if (sessionData) {
       setSession(sessionData.session);
+      // Restore runtime state from server memory
+      if (sessionData.session.isProcessing) {
+        setIsGenerating(true);
+      }
+      if (sessionData.session.pendingToolApproval) {
+        setPendingToolApproval(sessionData.session.pendingToolApproval);
+      }
     } else if (!sessionId) {
       setSession(null);
       setMessages([]);
@@ -159,6 +166,72 @@ export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseCh
       setIsLoadingMoreMessages(false);
     }
   }, [sessionId, nextCursor, isLoadingMoreMessages]);
+
+  // Poll for processing state when reconnected (no active SSE stream)
+  useEffect(() => {
+    // Only poll when:
+    // - isGenerating is true (UI shows processing)
+    // - No active SSE stream (abortControllerRef.current is null)
+    // - Session exists
+    if (!isGenerating || abortControllerRef.current || !session?.id) {
+      return;
+    }
+
+    const POLL_INTERVAL_MS = 2000;
+    const MAX_CONSECUTIVE_ERRORS = 10;
+    const POLL_TIMEOUT_MS = 60 * 60 * 1000; // 60 minutes (fixed)
+
+    let errorCount = 0;
+    const startTime = Date.now();
+
+    const pollInterval = setInterval(async () => {
+      // Check for timeout (60 minutes)
+      if (Date.now() - startTime > POLL_TIMEOUT_MS) {
+        console.warn('[useChat] Polling timeout after 60 minutes, stopping');
+        setIsGenerating(false);
+        setError('Processing timed out. Please refresh the page.');
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/sessions/${session.id}`);
+        if (res.ok) {
+          errorCount = 0; // Reset error count on success
+          const data = (await res.json()) as { session: { isProcessing?: boolean; pendingToolApproval?: ToolApprovalRequest | null } };
+          if (!data.session.isProcessing) {
+            // Processing completed, update UI
+            setIsGenerating(false);
+            // Also update pending approval if it was resolved
+            if (!data.session.pendingToolApproval) {
+              setPendingToolApproval(null);
+            }
+            // Refresh messages via React Query refetch - use result directly
+            const result = await refetchMessages();
+            if (result.data) {
+              setMessages(result.data.messages);
+              setHasMoreMessages(result.data.hasMore);
+              setNextCursor(result.data.nextCursor);
+            }
+          }
+        } else {
+          errorCount++;
+          console.error(`[useChat] Poll failed with status ${res.status}, error count: ${errorCount}`);
+        }
+      } catch (err) {
+        errorCount++;
+        console.error(`[useChat] Failed to poll session state (${errorCount}/${MAX_CONSECUTIVE_ERRORS}):`, err);
+      }
+
+      // Stop polling after max consecutive errors
+      if (errorCount >= MAX_CONSECUTIVE_ERRORS) {
+        console.error('[useChat] Max consecutive errors reached, stopping polling');
+        setIsGenerating(false);
+        setError('Connection lost. Please refresh the page.');
+      }
+    }, POLL_INTERVAL_MS);
+
+    return () => clearInterval(pollInterval);
+  }, [isGenerating, session?.id, refetchMessages]);
 
   const sendMessage = useCallback(
     async (content: string, options?: SendMessageOptions) => {
@@ -637,6 +710,9 @@ export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseCh
 
   const respondToToolApproval = useCallback(
     async (response: ToolApprovalResponse) => {
+      // Check if this is a reconnected state (no active SSE stream)
+      const isReconnected = !abortControllerRef.current;
+
       try {
         // Update the message with the decision
         setMessages((prev) =>
@@ -665,6 +741,12 @@ export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseCh
           throw new Error(
             errorData.error || 'Failed to respond to tool approval'
           );
+        }
+
+        // Clear pending approval only when reconnected (no SSE stream)
+        // Normal case: SSE event tool_approval_resolved will clear it
+        if (isReconnected) {
+          setPendingToolApproval(null);
         }
       } catch (err) {
         console.error('Failed to respond to tool approval:', err);

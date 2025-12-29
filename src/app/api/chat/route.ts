@@ -240,6 +240,7 @@ export async function POST(request: Request) {
               const response = await approvalManager.waitForApproval(
                 requestId,
                 session.id,
+                approvalRequest,
                 approvalTimeoutMs
               );
 

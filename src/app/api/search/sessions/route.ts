@@ -75,6 +75,7 @@ export async function GET(request: NextRequest) {
     const sessions: SearchSessionResult[] = allSessions.map((session) => ({
       id: session.id,
       title: session.title,
+      createdAt: session.createdAt.toISOString(),
       updatedAt: session.updatedAt.toISOString(),
       messageCount: session._count.messages,
       isArchived: session.isArchived,

@@ -1,4 +1,4 @@
-import type { ChatSettings } from './chat';
+import type { ChatSettings, ToolApprovalRequest } from './chat';
 
 export interface Session {
   id: string;
@@ -8,6 +8,9 @@ export interface Session {
   updatedAt: string;
   settings: ChatSettings | null;
   isArchived: boolean;
+  // Runtime state (from memory, not persisted)
+  isProcessing?: boolean;
+  pendingToolApproval?: ToolApprovalRequest | null;
 }
 
 export interface SessionSummary {

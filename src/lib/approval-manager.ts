@@ -1,33 +1,46 @@
-import type { ToolApprovalResponse } from '@/types';
+import type { ToolApprovalRequest, ToolApprovalResponse } from '@/types';
 import { sessionManager } from '@/lib/claude/session-manager';
 
 type ApprovalResolver = (response: ToolApprovalResponse) => void;
+
+interface PendingApproval {
+  resolver: ApprovalResolver;
+  sessionId: string;
+  request: ToolApprovalRequest;
+  timeoutId?: ReturnType<typeof setTimeout>;
+}
 
 /**
  * ツール実行承認の待機と解決を管理するシングルトン
  * サーバーサイドでSSE接続を跨いで承認リクエストを管理する
  */
 class ApprovalManager {
-  private pendingApprovals = new Map<string, ApprovalResolver>();
+  private pendingApprovals = new Map<string, PendingApproval>();
 
   /**
    * クライアントからの承認応答を待機
    * @param requestId 一意のリクエストID
    * @param sessionId セッションID（タイムアウト時のinterrupt用）
+   * @param request ツール承認リクエスト情報
    * @param timeoutMs タイムアウト時間（デフォルト1時間、0で無制限）
    * @returns 承認応答
    */
   waitForApproval(
     requestId: string,
     sessionId: string,
+    request: ToolApprovalRequest,
     timeoutMs = 60 * 60 * 1000
   ): Promise<ToolApprovalResponse> {
     return new Promise((resolve) => {
-      this.pendingApprovals.set(requestId, resolve);
+      const pending: PendingApproval = {
+        resolver: resolve,
+        sessionId,
+        request,
+      };
 
       // タイムアウト処理（0の場合は無制限）
       if (timeoutMs > 0) {
-        setTimeout(async () => {
+        pending.timeoutId = setTimeout(async () => {
           if (this.pendingApprovals.has(requestId)) {
             this.pendingApprovals.delete(requestId);
             // 停止ボタンと同じ動作: interruptQueryを呼ぶ
@@ -37,6 +50,8 @@ class ApprovalManager {
           }
         }, timeoutMs);
       }
+
+      this.pendingApprovals.set(requestId, pending);
     });
   }
 
@@ -47,13 +62,16 @@ class ApprovalManager {
    */
   interruptAllForSession(sessionId: string): string[] {
     const interruptedIds: string[] = [];
-    // Note: 現在の実装ではsessionIdとrequestIdの対応を保持していないため、
-    // 全ての待機中リクエストを中断する（単一セッション想定）
-    for (const [requestId, resolver] of this.pendingApprovals.entries()) {
-      resolver({ requestId, decision: 'interrupt' });
-      interruptedIds.push(requestId);
+    for (const [requestId, pending] of this.pendingApprovals.entries()) {
+      if (pending.sessionId === sessionId) {
+        if (pending.timeoutId) {
+          clearTimeout(pending.timeoutId);
+        }
+        pending.resolver({ requestId, decision: 'interrupt' });
+        interruptedIds.push(requestId);
+        this.pendingApprovals.delete(requestId);
+      }
     }
-    this.pendingApprovals.clear();
     return interruptedIds;
   }
 
@@ -64,9 +82,12 @@ class ApprovalManager {
    * @returns 解決に成功したかどうか
    */
   resolveApproval(requestId: string, response: ToolApprovalResponse): boolean {
-    const resolver = this.pendingApprovals.get(requestId);
-    if (resolver) {
-      resolver(response);
+    const pending = this.pendingApprovals.get(requestId);
+    if (pending) {
+      if (pending.timeoutId) {
+        clearTimeout(pending.timeoutId);
+      }
+      pending.resolver(response);
       this.pendingApprovals.delete(requestId);
       return true;
     }
@@ -85,6 +106,20 @@ class ApprovalManager {
    */
   isPending(requestId: string): boolean {
     return this.pendingApprovals.has(requestId);
+  }
+
+  /**
+   * セッションの待機中承認リクエストを取得
+   * @param sessionId セッションID
+   * @returns 待機中の承認リクエスト、なければnull
+   */
+  getPendingForSession(sessionId: string): ToolApprovalRequest | null {
+    for (const pending of this.pendingApprovals.values()) {
+      if (pending.sessionId === sessionId) {
+        return pending.request;
+      }
+    }
+    return null;
   }
 }
 

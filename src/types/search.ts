@@ -2,6 +2,7 @@
 export interface SearchSessionResult {
   id: string;
   title: string;
+  createdAt: string;
   updatedAt: string;
   messageCount: number;
   isArchived: boolean;

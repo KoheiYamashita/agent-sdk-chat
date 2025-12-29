@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { sessionManager } from '@/lib/claude/session-manager';
+import { approvalManager } from '@/lib/approval-manager';
 
 interface RouteParams {
   params: Promise<{
@@ -141,6 +143,10 @@ export async function GET(_request: Request, { params }: RouteParams) {
       }
     }
 
+    // Get runtime state from memory
+    const isProcessing = sessionManager.hasActiveQuery(session.id);
+    const pendingToolApproval = approvalManager.getPendingForSession(session.id);
+
     return NextResponse.json({
       session: {
         id: session.id,
@@ -150,6 +156,8 @@ export async function GET(_request: Request, { params }: RouteParams) {
         updatedAt: session.updatedAt.toISOString(),
         settings: session.settings ? JSON.parse(session.settings) : null,
         isArchived: session.isArchived,
+        isProcessing,
+        pendingToolApproval,
       },
       messages: expandedMessages,
     });

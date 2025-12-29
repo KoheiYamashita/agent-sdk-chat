@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import type { Message } from '@/types';
+import type { SearchMessageResult } from '@/types/search';
 
 export interface SearchMatch {
   messageId: string;
@@ -21,20 +22,47 @@ interface MessageSearchContextValue {
   goToNext: () => void;
   goToPrev: () => void;
   currentMatch: SearchMatch | null;
+  isSearching: boolean;
+  totalServerMatches: number;
 }
 
 const MessageSearchContext = createContext<MessageSearchContextValue | null>(null);
 
 interface MessageSearchProviderProps {
   children: React.ReactNode;
+  sessionId: string | null;
   messages: Message[];
+  loadMoreMessages: () => Promise<void>;
+  hasMoreMessages: boolean;
+  isLoadingMoreMessages: boolean;
 }
 
-export function MessageSearchProvider({ children, messages }: MessageSearchProviderProps) {
+async function searchMessagesApi(sessionId: string, query: string): Promise<SearchMessageResult[]> {
+  const params = new URLSearchParams({ q: query, sessionId });
+  const response = await fetch(`/api/search/messages?${params}`);
+  if (!response.ok) {
+    throw new Error('Failed to search messages');
+  }
+  const data = await response.json();
+  return data.messages;
+}
+
+export function MessageSearchProvider({
+  children,
+  sessionId,
+  messages,
+  loadMoreMessages,
+  hasMoreMessages,
+  isLoadingMoreMessages,
+}: MessageSearchProviderProps) {
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
-  const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
+  const [currentMatchIndex, setCurrentMatchIndex] = useState(-1); // -1 means not set yet
+  const [isSearching, setIsSearching] = useState(false);
+  const [serverMatchIds, setServerMatchIds] = useState<string[]>([]); // 古い順のID配列
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const isLoadingRef = useRef(false);
 
   // Cmd/Ctrl + F でメッセージ検索を開く
   useEffect(() => {
@@ -52,7 +80,54 @@ export function MessageSearchProvider({ children, messages }: MessageSearchProvi
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [messages.length]);
 
-  // 検索マッチを計算（content + model/modelDisplayName）
+  // サーバーサイド検索を実行（デバウンス付き）
+  useEffect(() => {
+    if (!query.trim() || !sessionId) {
+      setServerMatchIds([]);
+      setCurrentMatchIndex(-1);
+      return;
+    }
+
+    // 前のリクエストをキャンセル
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
+    const timer = setTimeout(async () => {
+      if (abortController.signal.aborted) return;
+
+      setIsSearching(true);
+      try {
+        const results = await searchMessagesApi(sessionId, query.trim());
+        if (!abortController.signal.aborted) {
+          // 古い順でIDを保存
+          setServerMatchIds(results.map((r) => r.id));
+          // 最新のマッチ（末尾）から開始
+          setCurrentMatchIndex(results.length > 0 ? results.length - 1 : -1);
+        }
+      } catch (err) {
+        if (!abortController.signal.aborted) {
+          console.error('Failed to search messages:', err);
+          setServerMatchIds([]);
+          setCurrentMatchIndex(-1);
+        }
+      } finally {
+        if (!abortController.signal.aborted) {
+          setIsSearching(false);
+        }
+      }
+    }, 300);
+
+    return () => {
+      clearTimeout(timer);
+      abortController.abort();
+    };
+  }, [query, sessionId]);
+
+  // ロード済みメッセージからマッチを計算（ハイライト用）
   const matches = useMemo(() => {
     if (!query.trim()) return [];
 
@@ -81,7 +156,6 @@ export function MessageSearchProvider({ children, messages }: MessageSearchProvi
       // モデル名のマッチを検索（displayName優先、なければmodel）
       const modelName = (message.modelDisplayName || message.model || '').toLowerCase();
       if (modelName && modelName.includes(searchTerm)) {
-        // モデル名は通常1つのマッチのみ
         result.push({
           messageId: message.id,
           index: globalIndex++,
@@ -94,19 +168,30 @@ export function MessageSearchProvider({ children, messages }: MessageSearchProvi
     return result;
   }, [messages, query]);
 
-  // マッチ数が変わったらインデックスを調整
-  const adjustedMatchIndex = useMemo(() => {
-    if (matches.length === 0) return 0;
-    if (currentMatchIndex >= matches.length) return matches.length - 1;
-    return currentMatchIndex;
-  }, [matches.length, currentMatchIndex]);
+  // 現在のマッチ対象のメッセージIDを取得
+  const currentTargetMessageId = serverMatchIds[currentMatchIndex] ?? null;
+
+  // ロード済みメッセージIDのセット
+  const loadedMessageIds = useMemo(() => new Set(messages.map((m) => m.id)), [messages]);
+
+  // 現在のマッチがロードされているかチェック
+  const isCurrentMatchLoaded = currentTargetMessageId
+    ? loadedMessageIds.has(currentTargetMessageId)
+    : true;
+
+  // 未ロードのメッセージをロードする
+  useEffect(() => {
+    if (!isCurrentMatchLoaded && hasMoreMessages && !isLoadingMoreMessages && !isLoadingRef.current) {
+      isLoadingRef.current = true;
+      loadMoreMessages().finally(() => {
+        isLoadingRef.current = false;
+      });
+    }
+  }, [isCurrentMatchLoaded, hasMoreMessages, isLoadingMoreMessages, loadMoreMessages]);
 
   // 現在のマッチ位置にスクロール
   useEffect(() => {
-    if (!isOpen || matches.length === 0) return;
-
-    const match = matches[adjustedMatchIndex];
-    if (!match) return;
+    if (!isOpen || !currentTargetMessageId || !isCurrentMatchLoaded) return;
 
     // 少し遅延してDOMの更新を待つ
     if (scrollTimeoutRef.current) {
@@ -115,7 +200,7 @@ export function MessageSearchProvider({ children, messages }: MessageSearchProvi
 
     scrollTimeoutRef.current = setTimeout(() => {
       const element = document.querySelector(
-        `[data-message-id="${match.messageId}"]`
+        `[data-message-id="${currentTargetMessageId}"]`
       );
       if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -127,7 +212,7 @@ export function MessageSearchProvider({ children, messages }: MessageSearchProvi
         clearTimeout(scrollTimeoutRef.current);
       }
     };
-  }, [isOpen, matches, adjustedMatchIndex]);
+  }, [isOpen, currentTargetMessageId, isCurrentMatchLoaded]);
 
   const open = useCallback(() => {
     setIsOpen(true);
@@ -136,20 +221,40 @@ export function MessageSearchProvider({ children, messages }: MessageSearchProvi
   const close = useCallback(() => {
     setIsOpen(false);
     setQuery('');
-    setCurrentMatchIndex(0);
+    setServerMatchIds([]);
+    setCurrentMatchIndex(-1);
   }, []);
 
+  // 前へ（より新しいメッセージへ）
   const goToNext = useCallback(() => {
-    if (matches.length === 0) return;
-    setCurrentMatchIndex((prev) => (prev + 1) % matches.length);
-  }, [matches.length]);
+    if (serverMatchIds.length === 0) return;
+    setCurrentMatchIndex((prev) => {
+      if (prev >= serverMatchIds.length - 1) {
+        // 末尾にいる場合は先頭（一番古い）へ
+        return 0;
+      }
+      return prev + 1;
+    });
+  }, [serverMatchIds.length]);
 
+  // 次へ（より古いメッセージへ）
   const goToPrev = useCallback(() => {
-    if (matches.length === 0) return;
-    setCurrentMatchIndex((prev) => (prev - 1 + matches.length) % matches.length);
-  }, [matches.length]);
+    if (serverMatchIds.length === 0) return;
+    setCurrentMatchIndex((prev) => {
+      if (prev <= 0) {
+        // 先頭にいる場合は末尾（一番新しい）へ
+        return serverMatchIds.length - 1;
+      }
+      return prev - 1;
+    });
+  }, [serverMatchIds.length]);
 
-  const currentMatch = matches[adjustedMatchIndex] ?? null;
+  // ロード済みマッチから現在のマッチを取得
+  const currentMatch = useMemo(() => {
+    if (!currentTargetMessageId) return null;
+    // ロード済みメッセージ内で、現在のターゲットメッセージに対応するマッチを探す
+    return matches.find((m) => m.messageId === currentTargetMessageId) ?? null;
+  }, [matches, currentTargetMessageId]);
 
   const value = useMemo(
     () => ({
@@ -159,12 +264,14 @@ export function MessageSearchProvider({ children, messages }: MessageSearchProvi
       open,
       close,
       matches,
-      currentMatchIndex: adjustedMatchIndex,
+      currentMatchIndex: currentMatchIndex >= 0 ? currentMatchIndex : 0,
       goToNext,
       goToPrev,
       currentMatch,
+      isSearching,
+      totalServerMatches: serverMatchIds.length,
     }),
-    [query, isOpen, open, close, matches, adjustedMatchIndex, goToNext, goToPrev, currentMatch]
+    [query, isOpen, open, close, matches, currentMatchIndex, goToNext, goToPrev, currentMatch, isSearching, serverMatchIds.length]
   );
 
   return (

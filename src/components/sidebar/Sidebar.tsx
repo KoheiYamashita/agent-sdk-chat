@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { useCallback, useRef, useState, useMemo } from 'react';
+import { useCallback, useRef, useState, useMemo, useEffect } from 'react';
 import { Plus, Settings, BarChart3, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -19,6 +19,7 @@ import { useSessions } from '@/hooks/useSessions';
 import { useSessionSearch } from '@/hooks/useSessionSearch';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { cn } from '@/lib/utils';
+import type { SessionSummary } from '@/types';
 
 interface SidebarContentProps {
   onNavigate?: () => void;
@@ -31,14 +32,42 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
   const { sessions, isLoading, hasMore, isLoadingMore, loadMore, deleteSession, toggleArchive } = useSessions();
   const { query, setQuery, results, isSearching, clearSearch } = useSessionSearch();
 
-  // 検索結果でセッションをフィルタリング
-  const filteredSessions = useMemo(() => {
+  // 検索結果をキャッシュ（検索クリア後も現在のセッションを表示するため）
+  const [searchResultsCache, setSearchResultsCache] = useState<Map<string, SessionSummary>>(new Map());
+
+  // 現在のセッションID
+  const currentSessionId = pathname.startsWith('/chat/')
+    ? pathname.replace('/chat/', '')
+    : null;
+
+  // 検索結果が変わるたびにキャッシュに追加
+  useEffect(() => {
+    if (results) {
+      setSearchResultsCache((prev) => {
+        const next = new Map(prev);
+        results.forEach((r) => next.set(r.id, r));
+        return next;
+      });
+    }
+  }, [results]);
+
+  // 検索結果がある場合は検索結果を直接表示、なければ通常のセッション一覧
+  // 現在開いているセッションがsessionsにない場合はキャッシュから追加
+  const displaySessions = useMemo(() => {
     if (!query.trim() || results === null) {
+      // 検索モードではない
+      // 現在のセッションがsessionsに含まれていなければキャッシュから追加
+      if (currentSessionId && !sessions.some((s) => s.id === currentSessionId)) {
+        const cachedSession = searchResultsCache.get(currentSessionId);
+        if (cachedSession) {
+          return [cachedSession, ...sessions];
+        }
+      }
       return sessions;
     }
-    const matchedIds = new Set(results.map((r) => r.id));
-    return sessions.filter((s) => matchedIds.has(s.id));
-  }, [sessions, query, results]);
+    // 検索結果を直接表示（ロード済みかどうかに関わらず）
+    return results;
+  }, [sessions, query, results, currentSessionId, searchResultsCache]);
 
   const handleNewChat = () => {
     if (pathname === '/chat') {
@@ -79,7 +108,7 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
 
       <ScrollArea className="flex-1 overflow-hidden w-full">
         <SessionList
-          sessions={filteredSessions}
+          sessions={displaySessions}
           isLoading={isLoading}
           hasMore={hasMore && !query.trim()}
           isLoadingMore={isLoadingMore}

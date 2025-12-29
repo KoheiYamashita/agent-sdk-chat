@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { Search, X, ChevronUp, ChevronDown } from 'lucide-react';
+import { Search, X, ChevronUp, ChevronDown, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useMessageSearch } from '@/contexts/MessageSearchContext';
@@ -13,10 +13,11 @@ export function MessageSearch() {
     setQuery,
     isOpen,
     close,
-    matches,
     currentMatchIndex,
     goToNext,
     goToPrev,
+    isSearching,
+    totalServerMatches,
   } = useMessageSearch();
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -69,9 +70,15 @@ export function MessageSearch() {
       {query && (
         <span className={cn(
           'text-sm shrink-0 tabular-nums',
-          matches.length === 0 ? 'text-destructive' : 'text-muted-foreground'
+          !isSearching && totalServerMatches === 0 ? 'text-destructive' : 'text-muted-foreground'
         )}>
-          {matches.length === 0 ? '0件' : `${currentMatchIndex + 1}/${matches.length}`}
+          {isSearching ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : totalServerMatches === 0 ? (
+            '0件'
+          ) : (
+            `${currentMatchIndex + 1}/${totalServerMatches}`
+          )}
         </span>
       )}
       <div className="flex items-center gap-0.5">
@@ -80,7 +87,8 @@ export function MessageSearch() {
           size="icon"
           className="h-7 w-7"
           onClick={goToPrev}
-          disabled={matches.length === 0}
+          disabled={totalServerMatches === 0 || isSearching}
+          title="前のマッチへ（古い方向）"
         >
           <ChevronUp className="h-4 w-4" />
         </Button>
@@ -89,7 +97,8 @@ export function MessageSearch() {
           size="icon"
           className="h-7 w-7"
           onClick={goToNext}
-          disabled={matches.length === 0}
+          disabled={totalServerMatches === 0 || isSearching}
+          title="次のマッチへ（新しい方向）"
         >
           <ChevronDown className="h-4 w-4" />
         </Button>
