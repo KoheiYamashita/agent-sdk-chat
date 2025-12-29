@@ -19,6 +19,8 @@ import {
   ImagePlus,
   X,
   Loader2,
+  Code,
+  Terminal,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
@@ -26,7 +28,8 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { optimizeImage, isValidImageUrl } from '@/lib/image-utils';
-import type { AppearanceSettings, AvatarIconType, BotIconType } from '@/types';
+import { FAVICON_SVGS, svgToDataUrl } from '@/components/DynamicFavicon';
+import type { AppearanceSettings, AvatarIconType, BotIconType, FaviconType } from '@/types';
 
 interface AppearanceSettingsFormProps {
   settings: AppearanceSettings;
@@ -58,6 +61,18 @@ const botIcons: { type: BotIconType; icon: React.ComponentType<{ className?: str
   { type: 'image', icon: ImagePlus, label: '画像' },
 ];
 
+const faviconOptions: { type: FaviconType; icon: React.ComponentType<{ className?: string }>; label: string }[] = [
+  { type: 'robot', icon: Bot, label: 'ロボット' },
+  { type: 'bot', icon: Bot, label: 'ボット' },
+  { type: 'brain', icon: Brain, label: '脳' },
+  { type: 'sparkles', icon: Sparkles, label: 'キラキラ' },
+  { type: 'cpu', icon: Cpu, label: 'CPU' },
+  { type: 'zap', icon: Zap, label: '稲妻' },
+  { type: 'code', icon: Code, label: 'コード' },
+  { type: 'terminal', icon: Terminal, label: 'ターミナル' },
+  { type: 'custom', icon: ImagePlus, label: 'カスタム' },
+];
+
 export function getUserIcon(type: AvatarIconType) {
   const iconConfig = userIcons.find((i) => i.type === type);
   return iconConfig?.icon ?? User;
@@ -87,8 +102,10 @@ export function AppearanceSettingsForm({
   const [localSettings, setLocalSettings] = useState(settings);
   const [isUploadingUser, setIsUploadingUser] = useState(false);
   const [isUploadingBot, setIsUploadingBot] = useState(false);
+  const [isUploadingFavicon, setIsUploadingFavicon] = useState(false);
   const userFileInputRef = useRef<HTMLInputElement>(null);
   const botFileInputRef = useRef<HTMLInputElement>(null);
+  const faviconFileInputRef = useRef<HTMLInputElement>(null);
 
   const handleUserIconChange = useCallback(
     (type: AvatarIconType) => {
@@ -199,6 +216,47 @@ export function AppearanceSettingsForm({
     onChange(newSettings);
     if (botFileInputRef.current) {
       botFileInputRef.current.value = '';
+    }
+  }, [localSettings, onChange]);
+
+  const handleFaviconChange = useCallback(
+    (type: FaviconType) => {
+      const newSettings = { ...localSettings, favicon: type };
+      setLocalSettings(newSettings);
+      onChange(newSettings);
+    },
+    [localSettings, onChange]
+  );
+
+  const handleFaviconImageUpload = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      setIsUploadingFavicon(true);
+      try {
+        const imageUrl = await optimizeImage(file, 64, 0.9);
+        const newSettings = { ...localSettings, customFaviconUrl: imageUrl };
+        setLocalSettings(newSettings);
+        onChange(newSettings);
+      } catch (error) {
+        console.error('Failed to optimize favicon image:', error);
+      } finally {
+        setIsUploadingFavicon(false);
+        if (faviconFileInputRef.current) {
+          faviconFileInputRef.current.value = '';
+        }
+      }
+    },
+    [localSettings, onChange]
+  );
+
+  const handleClearFaviconImage = useCallback(() => {
+    const newSettings = { ...localSettings, customFaviconUrl: '' };
+    setLocalSettings(newSettings);
+    onChange(newSettings);
+    if (faviconFileInputRef.current) {
+      faviconFileInputRef.current.value = '';
     }
   }, [localSettings, onChange]);
 
@@ -452,6 +510,109 @@ export function AppearanceSettingsForm({
               </div>
             )}
             <p className="text-xs text-muted-foreground">PNG, JPG, GIF, WebP形式に対応（128pxに最適化）</p>
+          </div>
+        )}
+      </div>
+
+      {/* Favicon Selection */}
+      <div className="space-y-3">
+        <Label className="text-sm font-medium">ファビコン</Label>
+        <p className="text-xs text-muted-foreground">ブラウザのタブに表示されるアイコンを設定します</p>
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+          {faviconOptions.map(({ type, icon: Icon, label }) => (
+            <button
+              key={type}
+              type="button"
+              disabled={disabled}
+              onClick={() => handleFaviconChange(type)}
+              className={cn(
+                'flex flex-col items-center gap-1.5 p-2.5 rounded-lg border transition-all',
+                'hover:bg-accent/50 hover:border-foreground/20',
+                (localSettings.favicon || 'robot') === type
+                  ? 'bg-accent border-foreground/30 ring-1 ring-foreground/20'
+                  : 'border-border/50 bg-background/50',
+                disabled && 'opacity-50 cursor-not-allowed'
+              )}
+              title={label}
+            >
+              <div className="h-7 w-7 flex items-center justify-center">
+                {type === 'custom' && localSettings.customFaviconUrl ? (
+                  <img
+                    src={localSettings.customFaviconUrl}
+                    alt="Custom favicon"
+                    className="h-6 w-6 object-contain"
+                  />
+                ) : type !== 'custom' && FAVICON_SVGS[type] ? (
+                  <img
+                    src={svgToDataUrl(FAVICON_SVGS[type])}
+                    alt={label}
+                    className="h-6 w-6 object-contain"
+                  />
+                ) : (
+                  <Icon className="h-5 w-5 text-muted-foreground" />
+                )}
+              </div>
+              <span className="text-[10px] text-muted-foreground truncate w-full text-center">
+                {label}
+              </span>
+            </button>
+          ))}
+        </div>
+        {(localSettings.favicon || 'robot') === 'custom' && (
+          <div className="mt-2 space-y-2">
+            <div className="flex items-center gap-2">
+              <input
+                ref={faviconFileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFaviconImageUpload}
+                disabled={disabled || isUploadingFavicon}
+                className="hidden"
+                id="favicon-image-upload"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => faviconFileInputRef.current?.click()}
+                disabled={disabled || isUploadingFavicon}
+              >
+                {isUploadingFavicon ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    処理中...
+                  </>
+                ) : (
+                  <>
+                    <ImagePlus className="h-4 w-4 mr-2" />
+                    画像を選択
+                  </>
+                )}
+              </Button>
+              {localSettings.customFaviconUrl && !isUploadingFavicon && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleClearFaviconImage}
+                  disabled={disabled}
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  削除
+                </Button>
+              )}
+            </div>
+            {localSettings.customFaviconUrl && (
+              <div className="flex items-center gap-2">
+                <img
+                  src={localSettings.customFaviconUrl}
+                  alt="Custom favicon preview"
+                  className="h-8 w-8 object-contain border rounded"
+                />
+                <span className="text-xs text-muted-foreground">現在の画像</span>
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground">PNG, JPG, GIF, WebP形式に対応（64pxに最適化）</p>
           </div>
         )}
       </div>

@@ -391,7 +391,7 @@ export default function SettingsPage() {
             </div>
           ) : (
             <AppearanceSettingsForm
-              settings={settings?.appearance ?? { userIcon: 'user', userInitials: '', userImageUrl: '', userName: '', botIcon: 'bot', botInitials: '', botImageUrl: '' }}
+              settings={settings?.appearance ?? { userIcon: 'user', userInitials: '', userImageUrl: '', userName: '', botIcon: 'bot', botInitials: '', botImageUrl: '', favicon: 'robot', customFaviconUrl: '' }}
               onChange={handleAppearanceSettingsChange}
               disabled={isSaving}
             />

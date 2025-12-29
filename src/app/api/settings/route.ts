@@ -33,6 +33,8 @@ function sanitizeAppearanceSettings(settings: AppearanceSettings): AppearanceSet
     userImageUrl: isValidImageUrl(settings.userImageUrl || '') ? settings.userImageUrl : '',
     botImageUrl: isValidImageUrl(settings.botImageUrl || '') ? settings.botImageUrl : '',
     userName: sanitizeName(settings.userName || ''),
+    favicon: settings.favicon || 'robot',
+    customFaviconUrl: isValidImageUrl(settings.customFaviconUrl || '') ? settings.customFaviconUrl : '',
   };
 }
 
@@ -62,6 +64,8 @@ const DEFAULT_SETTINGS: SettingsData = {
     botIcon: 'bot',
     botInitials: '',
     botImageUrl: '',
+    favicon: 'robot',
+    customFaviconUrl: '',
   },
 };
 

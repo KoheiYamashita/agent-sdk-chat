@@ -9,6 +9,7 @@ export interface SettingsData {
 
 export type AvatarIconType = 'user' | 'user-circle' | 'user-round' | 'smile' | 'star' | 'heart' | 'circle-user' | 'initials' | 'image';
 export type BotIconType = 'bot' | 'brain' | 'sparkles' | 'cpu' | 'zap' | 'wand' | 'message-circle' | 'initials' | 'image';
+export type FaviconType = 'robot' | 'bot' | 'brain' | 'sparkles' | 'cpu' | 'zap' | 'code' | 'terminal' | 'custom';
 
 export interface AppearanceSettings {
   userIcon: AvatarIconType;
@@ -18,6 +19,8 @@ export interface AppearanceSettings {
   botIcon: BotIconType;
   botInitials: string;
   botImageUrl: string;
+  favicon: FaviconType;
+  customFaviconUrl: string;
 }
 
 export interface GeneralSettings {
