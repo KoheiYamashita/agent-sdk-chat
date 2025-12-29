@@ -27,6 +27,9 @@ export async function GET(request: NextRequest) {
         _count: {
           select: { messages: true },
         },
+        tag: {
+          select: { id: true, name: true },
+        },
       },
     });
 
@@ -42,6 +45,8 @@ export async function GET(request: NextRequest) {
       updatedAt: session.updatedAt.toISOString(),
       messageCount: session._count.messages,
       isArchived: session.isArchived,
+      tagId: session.tag?.id ?? null,
+      tagName: session.tag?.name ?? null,
     }));
 
     return NextResponse.json({

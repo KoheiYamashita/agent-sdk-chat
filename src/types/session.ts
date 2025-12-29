@@ -20,6 +20,8 @@ export interface SessionSummary {
   updatedAt: string;
   messageCount: number;
   isArchived: boolean;
+  tagId: string | null;
+  tagName: string | null;
 }
 
 export interface SessionListResponse {

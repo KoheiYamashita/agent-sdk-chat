@@ -16,6 +16,12 @@ Prisma ORMの設定とデータベーススキーマを管理するディレク�
 - `claudeSessionId`: Claude SDKのセッションID
 - `settings`: セッション固有の設定（JSON）
 - `allowedTools`: 常に許可されるツールリスト（JSON）
+- `tagId`: タグへの外部キー（オプション）
+
+### Tag
+セッションを分類するタグを管理します。
+- `name`: タグ名（一意）
+- `sessions`: このタグに属するセッション一覧
 
 ### Message
 セッション内のメッセージを管理します。

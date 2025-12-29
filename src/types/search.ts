@@ -6,6 +6,8 @@ export interface SearchSessionResult {
   updatedAt: string;
   messageCount: number;
   isArchived: boolean;
+  tagId: string | null;
+  tagName: string | null;
 }
 
 // セッション検索レスポンス

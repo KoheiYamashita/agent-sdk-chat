@@ -29,7 +29,7 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { resetChat } = useSidebar();
-  const { sessions, isLoading, hasMore, isLoadingMore, loadMore, deleteSession, toggleArchive } = useSessions();
+  const { sessions, isLoading, hasMore, isLoadingMore, loadMore, deleteSession, toggleArchive, setSessionTag } = useSessions();
   const { query, setQuery, results, isSearching, clearSearch } = useSessionSearch();
 
   // 検索結果をキャッシュ（検索クリア後も現在のセッションを表示するため）
@@ -115,6 +115,7 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
           onLoadMore={loadMore}
           onDelete={deleteSession}
           onToggleArchive={toggleArchive}
+          onSetTag={setSessionTag}
           onSessionClick={handleSessionClick}
           searchQuery={query}
           searchResultCount={results?.length}

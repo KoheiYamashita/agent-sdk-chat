@@ -174,16 +174,22 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   try {
     const { id } = await params;
     const body = await request.json();
-    const { title, isArchived, settings } = body;
+    const { title, isArchived, settings, tagId } = body;
 
     const updateData: Record<string, unknown> = {};
     if (title !== undefined) updateData.title = title;
     if (isArchived !== undefined) updateData.isArchived = isArchived;
     if (settings !== undefined) updateData.settings = JSON.stringify(settings);
+    if (tagId !== undefined) updateData.tagId = tagId; // null to remove tag
 
     const session = await prisma.session.update({
       where: { id },
       data: updateData,
+      include: {
+        tag: {
+          select: { id: true, name: true },
+        },
+      },
     });
 
     return NextResponse.json({
@@ -195,6 +201,8 @@ export async function PATCH(request: Request, { params }: RouteParams) {
         updatedAt: session.updatedAt.toISOString(),
         settings: session.settings ? JSON.parse(session.settings) : null,
         isArchived: session.isArchived,
+        tagId: session.tag?.id ?? null,
+        tagName: session.tag?.name ?? null,
       },
     });
   } catch (error) {

@@ -26,6 +26,8 @@ Next.js App RouterのAPIルートを格納しています。
 | `workspace/` | 複数 | ワークスペース・ファイル操作 |
 | `search/sessions/` | `GET /api/search/sessions` | セッション検索（タイトル・メッセージ内容・モデル名） |
 | `search/messages/` | `GET /api/search/messages` | メッセージ検索（セッション内） |
+| `tags/` | `GET/POST /api/tags` | タグ一覧取得・作成 |
+| `tags/[id]/` | `PATCH/DELETE /api/tags/[id]` | タグ更新（名前変更）・削除 |
 
 ## ワークスペースAPI詳細
 

@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Trash2, MoreHorizontal, Archive, ArchiveRestore } from 'lucide-react';
+import { Trash2, MoreHorizontal, Archive, ArchiveRestore, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -27,10 +27,11 @@ interface SessionItemProps {
   session: SessionSummary;
   onDelete: (id: string) => void;
   onToggleArchive: (id: string, isArchived: boolean) => void;
+  onSetTag: (id: string, currentTagId: string | null) => void;
   onClick?: () => void;
 }
 
-export function SessionItem({ session, onDelete, onToggleArchive, onClick }: SessionItemProps) {
+export function SessionItem({ session, onDelete, onToggleArchive, onSetTag, onClick }: SessionItemProps) {
   const router = useRouter();
   const pathname = usePathname();
   const isActive = pathname === `/chat/${session.id}`;
@@ -58,6 +59,13 @@ export function SessionItem({ session, onDelete, onToggleArchive, onClick }: Ses
     e.stopPropagation();
     setDropdownOpen(false);
     onToggleArchive(session.id, session.isArchived);
+  };
+
+  const handleSetTag = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDropdownOpen(false);
+    onSetTag(session.id, session.tagId);
   };
 
   const handleSessionClick = useCallback(() => {
@@ -104,6 +112,10 @@ export function SessionItem({ session, onDelete, onToggleArchive, onClick }: Ses
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={handleSetTag}>
+              <Tag className="h-4 w-4 mr-2" />
+              タグ設定
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={handleToggleArchive}>
               {session.isArchived ? (
                 <>

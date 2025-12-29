@@ -48,6 +48,18 @@ async function toggleArchiveApi(id: string, isArchived: boolean): Promise<{ sess
   return response.json();
 }
 
+async function setSessionTagApi(id: string, tagId: string | null): Promise<{ session: Session & { tagId: string | null; tagName: string | null } }> {
+  const response = await fetch(`/api/sessions/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tagId }),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to set session tag');
+  }
+  return response.json();
+}
+
 export function useSessions() {
   const queryClient = useQueryClient();
 
@@ -134,6 +146,32 @@ export function useSessions() {
     },
   });
 
+  const setTagMutation = useMutation({
+    mutationFn: ({ id, tagId }: { id: string; tagId: string | null }) =>
+      setSessionTagApi(id, tagId),
+    onSuccess: (data, { id }) => {
+      queryClient.setQueryData<{ pages: SessionListResponse[]; pageParams: (string | undefined)[] }>(
+        SESSIONS_QUERY_KEY,
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              sessions: page.sessions.map((s) =>
+                s.id === id
+                  ? { ...s, tagId: data.session.tagId, tagName: data.session.tagName }
+                  : s
+              ),
+            })),
+          };
+        }
+      );
+      // Invalidate tags to update session counts
+      queryClient.invalidateQueries({ queryKey: ['tags'] });
+    },
+  });
+
   const createSession = async (): Promise<Session | null> => {
     try {
       const result = await createMutation.mutateAsync();
@@ -149,6 +187,10 @@ export function useSessions() {
 
   const toggleArchive = async (id: string, currentIsArchived: boolean): Promise<void> => {
     await toggleArchiveMutation.mutateAsync({ id, isArchived: !currentIsArchived });
+  };
+
+  const setSessionTag = async (id: string, tagId: string | null): Promise<void> => {
+    await setTagMutation.mutateAsync({ id, tagId });
   };
 
   const loadMore = () => {
@@ -168,6 +210,7 @@ export function useSessions() {
     createSession,
     deleteSession,
     toggleArchive,
+    setSessionTag,
   };
 }
 
@@ -179,5 +222,7 @@ function toSummary(session: Session): SessionSummary {
     updatedAt: session.updatedAt,
     messageCount: 0,
     isArchived: session.isArchived,
+    tagId: null,
+    tagName: null,
   };
 }

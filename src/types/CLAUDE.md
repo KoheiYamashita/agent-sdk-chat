@@ -13,7 +13,16 @@ TypeScript型定義を格納するディレクトリです。
 ### session.ts
 セッション関連の型定義
 - `Session`: セッション型（`isProcessing`, `pendingToolApproval`はランタイム状態）
+- `SessionSummary`: セッション一覧用の型（`tagId`, `tagName`含む）
 - `SessionSettings`: セッション設定型
+
+### tag.ts
+タグ関連の型定義
+- `Tag`: タグ型
+- `TagWithSessionCount`: セッション数付きタグ型
+- `TagsResponse`: タグ一覧レスポンス型
+- `TagCreateRequest`: タグ作成リクエスト型
+- `TagUpdateRequest`: タグ更新リクエスト型
 
 ### settings.ts
 設定関連の型定義
@@ -42,7 +51,7 @@ TypeScript型定義を格納するディレクトリです。
 
 ### search.ts
 検索関連の型定義
-- `SearchSessionResult`: セッション検索結果型
+- `SearchSessionResult`: セッション検索結果型（`tagId`, `tagName`含む）
 - `SessionSearchResponse`: セッション検索レスポンス型
 - `SearchMessageResult`: メッセージ検索結果型
 - `MessageSearchResponse`: メッセージ検索レスポンス型

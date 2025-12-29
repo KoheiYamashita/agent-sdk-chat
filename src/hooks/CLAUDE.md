@@ -25,6 +25,17 @@
 - `createSession()`: 新規セッション作成
 - `updateSession()`: セッション更新
 - `deleteSession()`: セッション削除
+- `toggleArchive()`: アーカイブ切り替え
+- `setSessionTag()`: セッションにタグを設定
+
+### useTags.ts
+タグ管理フック（TanStack Query使用）
+- `tags`: タグ一覧（セッション数含む）
+- `createTag()`: 新規タグ作成
+- `updateTag()`: タグ更新（名前変更）
+- `deleteTag()`: タグ削除
+- `isLoading`, `isCreating`, `isUpdating`, `isDeleting`: 各操作のローディング状態
+- `createError`, `updateError`, `deleteError`: 各操作のエラー状態
 
 ### useSettings.ts
 設定管理フック
