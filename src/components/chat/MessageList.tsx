@@ -115,7 +115,7 @@ export function MessageList({
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center text-muted-foreground">
-          <p className="text-lg font-medium">Claude Code Web UI</p>
+          <p className="text-lg font-medium">Agent SDK Chat</p>
           <p className="text-sm mt-1">メッセージを入力して会話を始めましょう</p>
         </div>
       </div>

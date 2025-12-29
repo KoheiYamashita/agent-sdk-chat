@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## プロジェクト概要
 
-Claude Code Web UIは、Claude Code CLIの機能をブラウザベースで提供するNext.js 15アプリケーションです。ChatGPTライクなインターフェースでClaudeと対話でき、ファイル管理、ターミナルアクセス、カスタムモデル、ツール実行承認ワークフローなどの機能を備えています。
+Agent SDK Chatは、Claude Agent SDKを使用したブラウザベースのチャットアプリケーションです。Next.js 15で構築され、ChatGPTライクなインターフェースでClaudeと対話でき、ファイル管理、ターミナルアクセス、カスタムモデル、ツール実行承認ワークフローなどの機能を備えています。
 
 ## よく使うコマンド
 

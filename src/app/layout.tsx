@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Claude Code Web UI',
-  description: 'Claude Code CLI の Web インターフェース',
+  title: 'Agent SDK Chat',
+  description: 'Claude Agent SDK を使用したチャットアプリケーション',
   icons: {
     icon: '/favicon.svg',
   },

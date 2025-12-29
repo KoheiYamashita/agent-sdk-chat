@@ -197,7 +197,7 @@ export function InputArea({
             </div>
           </div>
           <p className="text-xs text-muted-foreground/70 mt-3 text-center hidden sm:block">
-            Claude Code Web UI - Claude Agent SDK を使用
+            Agent SDK Chat - Claude Agent SDK を使用
           </p>
       </div>
     </div>
