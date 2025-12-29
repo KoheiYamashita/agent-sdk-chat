@@ -9,16 +9,48 @@ import { useSidebar } from '@/contexts/SidebarContext';
 import { useTerminal } from '@/contexts/TerminalContext';
 import { ChatHeader } from './ChatHeader';
 import { MessageList } from './MessageList';
+import { MessageSearch } from './MessageSearch';
 import { InputArea } from './InputArea';
 import { WorkspaceSelector } from '@/components/workspace';
 import { TerminalPanel } from '@/components/terminal/TerminalPanel';
+import { MessageSearchProvider, useMessageSearch } from '@/contexts/MessageSearchContext';
 import type { PermissionMode, SelectableModel } from '@/types';
 
 interface ChatContainerProps {
   sessionId?: string;
 }
 
+// ChatHeaderのラッパー（useMessageSearchを使う）
+function ChatHeaderWithSearch({
+  session,
+  workspacePath,
+  onMenuClick,
+  showSearchButton,
+}: {
+  session: import('@/types').Session | null;
+  workspacePath?: string | null;
+  onMenuClick?: () => void;
+  showSearchButton: boolean;
+}) {
+  const { open } = useMessageSearch();
+  return (
+    <ChatHeader
+      session={session}
+      workspacePath={workspacePath}
+      onMenuClick={onMenuClick}
+      onSearchClick={open}
+      showSearchButton={showSearchButton}
+    />
+  );
+}
+
 export function ChatContainer({ sessionId }: ChatContainerProps) {
+  return (
+    <ChatContainerInner sessionId={sessionId} />
+  );
+}
+
+function ChatContainerInner({ sessionId }: ChatContainerProps) {
   const router = useRouter();
   const { open: openSidebar, chatResetKey } = useSidebar();
   const { isOpen: isTerminalOpen, toggleTerminal, closeTerminal, destroySession } = useTerminal();
@@ -207,75 +239,82 @@ export function ChatContainer({ sessionId }: ChatContainerProps) {
   // Get display path from session settings or local state
   const displayPath = session?.settings?.workspaceDisplayPath ?? workspaceDisplayPath;
 
+  const hasMessages = messages.length > 0;
+
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      <ChatHeader
-        session={session}
-        workspacePath={messages.length > 0 ? displayPath : undefined}
-        onMenuClick={openSidebar}
-      />
+    <MessageSearchProvider messages={messages}>
+      <div className="flex flex-col h-full overflow-hidden">
+        <ChatHeaderWithSearch
+          session={session}
+          workspacePath={hasMessages ? displayPath : undefined}
+          onMenuClick={openSidebar}
+          showSearchButton={hasMessages}
+        />
 
-      {error && (
-        <div className="bg-destructive/10 border-destructive/20 border-b px-4 py-2 text-sm text-destructive">
-          エラー: {error}
-        </div>
-      )}
+        <MessageSearch />
 
-      {isNewChat ? (
-        <div className="flex-1 overflow-auto">
-          <WorkspaceSelector
-            selectedPath={workspacePath}
-            onSelect={handleWorkspaceSelect}
+        {error && (
+          <div className="bg-destructive/10 border-destructive/20 border-b px-4 py-2 text-sm text-destructive">
+            エラー: {error}
+          </div>
+        )}
+
+        {isNewChat ? (
+          <div className="flex-1 overflow-auto">
+            <WorkspaceSelector
+              selectedPath={workspacePath}
+              onSelect={handleWorkspaceSelect}
+            />
+          </div>
+        ) : (
+          <MessageList
+            messages={messages}
+            isLoading={isLoading}
+            hasMore={hasMoreMessages}
+            isLoadingMore={isLoadingMoreMessages}
+            onLoadMore={loadMoreMessages}
+            pendingToolApproval={pendingToolApproval}
+            onToolApprovalRespond={respondToToolApproval}
+            appearanceSettings={settings?.appearance}
+            streamingThinking={streamingThinking}
+            customModels={customModels}
           />
-        </div>
-      ) : (
-        <MessageList
-          messages={messages}
-          isLoading={isLoading}
-          hasMore={hasMoreMessages}
-          isLoadingMore={isLoadingMoreMessages}
-          onLoadMore={loadMoreMessages}
-          pendingToolApproval={pendingToolApproval}
-          onToolApprovalRespond={respondToToolApproval}
-          appearanceSettings={settings?.appearance}
-          streamingThinking={streamingThinking}
-          customModels={customModels}
-        />
-      )}
+        )}
 
-      {session?.isArchived ? (
-        <div className="border-t bg-muted/50 p-4 text-center text-sm text-muted-foreground">
-          このチャットはアーカイブされています（閲覧専用）
-        </div>
-      ) : (
-        <InputArea
-          onSubmit={sendMessage}
-          onStop={stopGeneration}
-          disabled={isLoading || !!pendingToolApproval}
-          isGenerating={isGenerating}
-          defaultPermissionMode={defaultPermissionMode}
-          onTerminalToggle={toggleTerminal}
-          isTerminalOpen={isTerminalOpen}
-          showTerminalButton={!!effectiveSessionId}
-          onFilesClick={handleFilesClick}
-          thinkingEnabled={thinkingEnabled}
-          onThinkingToggle={handleThinkingToggle}
-          models={selectableModels}
-          selectedModel={selectedModel}
-          onModelChange={handleModelChange}
-          isLoadingModels={isLoadingModels}
-        />
-      )}
+        {session?.isArchived ? (
+          <div className="border-t bg-muted/50 p-4 text-center text-sm text-muted-foreground">
+            このチャットはアーカイブされています（閲覧専用）
+          </div>
+        ) : (
+          <InputArea
+            onSubmit={sendMessage}
+            onStop={stopGeneration}
+            disabled={isLoading || !!pendingToolApproval}
+            isGenerating={isGenerating}
+            defaultPermissionMode={defaultPermissionMode}
+            onTerminalToggle={toggleTerminal}
+            isTerminalOpen={isTerminalOpen}
+            showTerminalButton={!!effectiveSessionId}
+            onFilesClick={handleFilesClick}
+            thinkingEnabled={thinkingEnabled}
+            onThinkingToggle={handleThinkingToggle}
+            models={selectableModels}
+            selectedModel={selectedModel}
+            onModelChange={handleModelChange}
+            isLoadingModels={isLoadingModels}
+          />
+        )}
 
-      {/* Terminal Panel */}
-      {effectiveSessionId && effectiveWorkspacePath && (
-        <TerminalPanel
-          chatSessionId={effectiveSessionId}
-          workspacePath={effectiveWorkspacePath}
-          isOpen={isTerminalOpen}
-          onClose={closeTerminal}
-        />
-      )}
-    </div>
+        {/* Terminal Panel */}
+        {effectiveSessionId && effectiveWorkspacePath && (
+          <TerminalPanel
+            chatSessionId={effectiveSessionId}
+            workspacePath={effectiveWorkspacePath}
+            isOpen={isTerminalOpen}
+            onClose={closeTerminal}
+          />
+        )}
+      </div>
+    </MessageSearchProvider>
   );
 }

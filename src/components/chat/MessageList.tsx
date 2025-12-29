@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2 } from 'lucide-react';
 import { MessageItem } from './MessageItem';
 import { ToolApprovalCard } from './ToolApprovalCard';
+import { useMessageSearch } from '@/contexts/MessageSearchContext';
 import type { Message, ToolApprovalRequest, ToolApprovalResponse, AppearanceSettings, CustomModel } from '@/types';
 
 interface MessageListProps {
@@ -39,6 +40,9 @@ export function MessageList({
   const [prevMessagesLength, setPrevMessagesLength] = useState(0);
   const [prevScrollHeight, setPrevScrollHeight] = useState(0);
   const isInitialLoad = useRef(true);
+
+  // 検索コンテキスト
+  const { query: searchQuery, currentMatch } = useMessageSearch();
 
   // Scroll to bottom on new messages (only if user is near bottom)
   useEffect(() => {
@@ -148,6 +152,8 @@ export function MessageList({
               appearanceSettings={appearanceSettings}
               streamingThinking={currentThinking}
               customModels={customModels}
+              searchQuery={searchQuery}
+              currentMatch={currentMatch}
             />
           );
         })}

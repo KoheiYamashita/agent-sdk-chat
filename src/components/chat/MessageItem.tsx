@@ -34,13 +34,17 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { cn } from '@/lib/utils';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { ToolCallList } from './ToolCallList';
+import { HighlightedText } from './HighlightedText';
 import type { Message, AppearanceSettings, AvatarIconType, BotIconType, CustomModel } from '@/types';
+import type { SearchMatch } from '@/contexts/MessageSearchContext';
 
 interface MessageItemProps {
   message: Message;
   appearanceSettings?: AppearanceSettings;
   streamingThinking?: string | null;
   customModels?: CustomModel[];
+  searchQuery?: string;
+  currentMatch?: SearchMatch | null;
 }
 
 // モデルIDから表示名を取得
@@ -118,7 +122,14 @@ function isValidImageUrl(url: string): boolean {
   }
 }
 
-export function MessageItem({ message, appearanceSettings, streamingThinking, customModels }: MessageItemProps) {
+export function MessageItem({
+  message,
+  appearanceSettings,
+  streamingThinking,
+  customModels,
+  searchQuery,
+  currentMatch,
+}: MessageItemProps) {
   const [isThinkingOpen, setIsThinkingOpen] = useState(false);
   const [customModelImageError, setCustomModelImageError] = useState(false);
   const isUser = message.role === 'user';
@@ -181,11 +192,23 @@ export function MessageItem({ message, appearanceSettings, streamingThinking, cu
     ? (userName || 'あなた')
     : (modelId ? getModelDisplayName(modelId, message.modelDisplayName ?? undefined) : 'Claude');
 
+  // 現在のマッチがこのメッセージかどうか
+  const isCurrentMatchMessage = currentMatch?.messageId === message.id;
+  // このメッセージに検索マッチがあるかどうか
+  const hasSearchMatch = searchQuery && (
+    message.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (message.model || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (message.modelDisplayName || '').toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div
+      data-message-id={message.id}
       className={cn(
         'flex gap-3 sm:gap-4 px-3 sm:px-6 py-4 sm:py-5 transition-colors',
-        isUser ? 'bg-muted/30' : 'bg-transparent'
+        isUser ? 'bg-muted/30' : 'bg-transparent',
+        isCurrentMatchMessage && 'ring-2 ring-orange-400 ring-inset',
+        hasSearchMatch && !isCurrentMatchMessage && 'bg-yellow-50 dark:bg-yellow-900/20'
       )}
     >
       <Avatar className="h-8 w-8 sm:h-9 sm:w-9 shrink-0 ring-2 ring-background shadow-sm mt-0.5">
@@ -209,7 +232,17 @@ export function MessageItem({ message, appearanceSettings, streamingThinking, cu
       <div className="flex-1 overflow-hidden min-w-0">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-[15px] font-bold text-foreground">
-            {displayName}
+            {searchQuery && !isUser ? (
+              <HighlightedText
+                text={displayName}
+                query={searchQuery}
+                messageId={message.id}
+                field="model"
+                currentMatch={currentMatch ?? null}
+              />
+            ) : (
+              displayName
+            )}
           </span>
         </div>
         <div className="space-y-3">
@@ -236,7 +269,12 @@ export function MessageItem({ message, appearanceSettings, streamingThinking, cu
               </CollapsibleContent>
             </Collapsible>
           )}
-          <MarkdownRenderer content={message.content} />
+          <MarkdownRenderer
+            content={message.content}
+            searchQuery={searchQuery}
+            messageId={message.id}
+            currentMatch={currentMatch}
+          />
           {message.toolCalls && message.toolCalls.length > 0 && (
             <ToolCallList toolCalls={message.toolCalls} />
           )}

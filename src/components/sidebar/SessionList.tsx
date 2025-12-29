@@ -15,6 +15,8 @@ interface SessionListProps {
   onDelete: (id: string) => void;
   onToggleArchive: (id: string, isArchived: boolean) => void;
   onSessionClick?: () => void;
+  searchQuery?: string;
+  searchResultCount?: number;
 }
 
 export function SessionList({
@@ -26,7 +28,10 @@ export function SessionList({
   onDelete,
   onToggleArchive,
   onSessionClick,
+  searchQuery,
+  searchResultCount,
 }: SessionListProps) {
+  const isSearching = Boolean(searchQuery?.trim());
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const handleIntersection = useCallback(
@@ -66,13 +71,24 @@ export function SessionList({
   if (sessions.length === 0) {
     return (
       <div className="p-4 text-center text-sm text-muted-foreground">
-        チャット履歴がありません
+        {isSearching ? (
+          <>
+            「{searchQuery}」に一致するチャットはありません
+          </>
+        ) : (
+          'チャット履歴がありません'
+        )}
       </div>
     );
   }
 
   return (
     <div className="space-y-1 p-2 w-full min-w-0 overflow-hidden">
+      {isSearching && searchResultCount !== undefined && (
+        <div className="px-2 py-1 text-xs text-muted-foreground">
+          {searchResultCount}件のチャットが見つかりました
+        </div>
+      )}
       {sessions.map((session) => (
         <SessionItem
           key={session.id}

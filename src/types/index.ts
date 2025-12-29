@@ -1,5 +1,6 @@
 export * from './chat';
 export * from './models';
+export * from './search';
 export * from './session';
 export * from './settings';
 export * from './terminal';

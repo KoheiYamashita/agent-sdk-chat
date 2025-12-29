@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, useMemo } from 'react';
 import { Plus, Settings, BarChart3, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -14,7 +14,9 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { SessionList } from './SessionList';
+import { SessionSearch } from './SessionSearch';
 import { useSessions } from '@/hooks/useSessions';
+import { useSessionSearch } from '@/hooks/useSessionSearch';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { cn } from '@/lib/utils';
 
@@ -27,6 +29,16 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
   const pathname = usePathname();
   const { resetChat } = useSidebar();
   const { sessions, isLoading, hasMore, isLoadingMore, loadMore, deleteSession, toggleArchive } = useSessions();
+  const { query, setQuery, results, isSearching, clearSearch } = useSessionSearch();
+
+  // 検索結果でセッションをフィルタリング
+  const filteredSessions = useMemo(() => {
+    if (!query.trim() || results === null) {
+      return sessions;
+    }
+    const matchedIds = new Set(results.map((r) => r.id));
+    return sessions.filter((s) => matchedIds.has(s.id));
+  }, [sessions, query, results]);
 
   const handleNewChat = () => {
     if (pathname === '/chat') {
@@ -39,6 +51,7 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
       // From other pages (settings, usage), push to /chat
       router.push('/chat');
     }
+    clearSearch();
     onNavigate?.();
   };
 
@@ -48,25 +61,34 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
 
   return (
     <>
-      <div className="p-4">
+      <div className="p-4 pb-2">
         <Button className="w-full" onClick={handleNewChat}>
           <Plus className="h-4 w-4 mr-2" />
           新規チャット
         </Button>
       </div>
 
+      <SessionSearch
+        query={query}
+        onQueryChange={setQuery}
+        onClear={clearSearch}
+        isSearching={isSearching}
+      />
+
       <Separator />
 
       <ScrollArea className="flex-1 overflow-hidden w-full">
         <SessionList
-          sessions={sessions}
+          sessions={filteredSessions}
           isLoading={isLoading}
-          hasMore={hasMore}
+          hasMore={hasMore && !query.trim()}
           isLoadingMore={isLoadingMore}
           onLoadMore={loadMore}
           onDelete={deleteSession}
           onToggleArchive={toggleArchive}
           onSessionClick={handleSessionClick}
+          searchQuery={query}
+          searchResultCount={results?.length}
         />
       </ScrollArea>
 

@@ -122,6 +122,11 @@ src/
 │   │   │       └── route.ts      # POST /api/workspace/upload
 │   │   ├── usage/                # 使用量API
 │   │   │   └── route.ts          # GET /api/usage
+│   │   ├── search/               # 検索API
+│   │   │   ├── sessions/
+│   │   │   │   └── route.ts      # GET /api/search/sessions
+│   │   │   └── messages/
+│   │   │       └── route.ts      # GET /api/search/messages
 │   │   └── health/               # ヘルスチェックAPI
 │   │       └── route.ts          # GET /api/health
 │   ├── page.tsx                  # ルートページ（/chatへリダイレクト）
@@ -156,6 +161,8 @@ src/
 │   │   ├── ChatHeader.tsx        # チャットヘッダー
 │   │   ├── MessageList.tsx       # メッセージリスト
 │   │   ├── MessageItem.tsx       # 個別メッセージ表示
+│   │   ├── MessageSearch.tsx     # メッセージ検索UI
+│   │   ├── HighlightedText.tsx   # 検索ハイライト表示
 │   │   ├── InputArea.tsx         # 入力エリア
 │   │   ├── PermissionModeSelector.tsx  # 権限モード選択UI
 │   │   ├── ToolApprovalCard.tsx  # ツール実行確認カード
@@ -165,7 +172,8 @@ src/
 │   ├── sidebar/                  # サイドバー関連
 │   │   ├── Sidebar.tsx           # サイドバーメイン
 │   │   ├── SessionList.tsx       # セッション一覧
-│   │   └── SessionItem.tsx       # セッションアイテム
+│   │   ├── SessionItem.tsx       # セッションアイテム
+│   │   └── SessionSearch.tsx     # セッション検索UI
 │   ├── settings/                 # 設定関連
 │   │   ├── PermissionModeRadioGroup.tsx  # 権限モード設定
 │   │   ├── DefaultToolsCheckboxGroup.tsx # デフォルトツール選択
@@ -186,7 +194,8 @@ src/
 │       ├── FileBrowserItem.tsx   # ファイルブラウザ項目
 │       └── FilePreview.tsx       # ファイルプレビュー・編集
 ├── contexts/                     # React Context
-│   └── SidebarContext.tsx        # サイドバー状態管理
+│   ├── SidebarContext.tsx        # サイドバー状態管理
+│   └── MessageSearchContext.tsx  # メッセージ検索状態管理
 ├── lib/                          # ユーティリティ
 │   ├── claude/                   # Claude SDK関連
 │   │   ├── client.ts             # SDKクライアント
@@ -203,6 +212,7 @@ src/
 ├── hooks/                        # カスタムフック
 │   ├── useChat.ts                # チャット管理
 │   ├── useSessions.ts            # セッション管理
+│   ├── useSessionSearch.ts       # セッション検索
 │   ├── useSettings.ts            # 設定管理
 │   ├── useUsage.ts               # 使用量取得
 │   └── useModels.ts              # モデル管理（標準・カスタム）
@@ -214,7 +224,8 @@ src/
 │   ├── workspace.ts              # ワークスペース関連型
 │   ├── usage.ts                  # 使用量関連型
 │   ├── terminal.ts               # ターミナル関連型
-│   └── models.ts                 # モデル関連型（StandardModel, CustomModel, SelectableModel）
+│   ├── models.ts                 # モデル関連型（StandardModel, CustomModel, SelectableModel）
+│   └── search.ts                 # 検索関連型
 ├── terminal-server/              # ターミナルサーバー（Next.js統合）
 │   ├── handler.ts                # WebSocketハンドラー
 │   └── session-store.ts          # PTYセッション管理
@@ -466,6 +477,9 @@ MCP Server追加:
 | サイドバー横幅調整 | `src/contexts/SidebarContext.tsx` | ドラッグ可能 |
 | 新規チャットリセット | `src/contexts/SidebarContext.tsx` | `/chat`ページで新規チャットボタン押下時に状態リセット |
 | セッション削除確認 | `src/components/sidebar/SessionItem.tsx` | AlertDialogによる確認、削除後リダイレクト |
+| セッション検索 | `src/components/sidebar/SessionSearch.tsx`, `src/hooks/useSessionSearch.ts` | タイトル・メッセージ内容・モデル名で検索 |
+| メッセージ内検索 | `src/components/chat/MessageSearch.tsx`, `src/contexts/MessageSearchContext.tsx` | Cmd/Ctrl+Fで検索、マッチ間ナビゲーション |
+| 検索ハイライト | `src/components/chat/HighlightedText.tsx` | 検索キーワードのハイライト表示 |
 
 #### ナビゲーションパターン
 ブラウザ履歴スタックを適切に管理するため、以下のナビゲーションパターンを採用：
@@ -627,7 +641,6 @@ MCP Server追加:
 #### セッション拡張
 | 機能 | 優先度 | 備考 |
 |------|--------|------|
-| セッション検索 | 中 | タイトル・内容検索 |
 | セッションエクスポート | 低 | JSON/Markdown出力 |
 | セッションインポート | 低 | 履歴復元 |
 
@@ -698,9 +711,10 @@ MCP Server追加:
 - [x] パストラバーサル防止
 
 #### Phase 8: UI/UX改善
+- [x] セッション検索（タイトル・メッセージ内容・モデル名）
+- [x] メッセージ内検索（Cmd/Ctrl+F、マッチナビゲーション、ハイライト）
 - [ ] ダークモード切替UI
 - [ ] レスポンシブデザイン強化
-- [ ] セッション検索
 - [ ] エラー通知改善
 
 #### Phase 9: 品質・最適化

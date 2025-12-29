@@ -5,3 +5,5 @@ export { MessageItem } from './MessageItem';
 export { InputArea } from './InputArea';
 export { MarkdownRenderer } from './MarkdownRenderer';
 export { ToolCallList } from './ToolCallList';
+export { MessageSearch } from './MessageSearch';
+export { HighlightedText } from './HighlightedText';

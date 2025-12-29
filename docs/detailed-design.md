@@ -332,7 +332,60 @@ Subagentを削除。
 
 ---
 
-### 1.7 ターミナルWebSocket API
+### 1.7 検索API
+
+#### GET /api/search/sessions
+セッションを検索。タイトル、メッセージ内容、モデル名で検索可能。
+
+**クエリパラメータ:**
+```
+q: string  // 検索クエリ（必須、1文字以上）
+```
+
+**レスポンス:**
+```json
+{
+  "sessions": [
+    {
+      "id": "session-id",
+      "title": "セッションタイトル",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "messageCount": 10,
+      "isArchived": false
+    }
+  ],
+  "query": "検索クエリ"
+}
+```
+
+#### GET /api/search/messages
+セッション内のメッセージを検索。
+
+**クエリパラメータ:**
+```
+q: string        // 検索クエリ（必須、1文字以上）
+sessionId: string  // セッションID（必須）
+```
+
+**レスポンス:**
+```json
+{
+  "messages": [
+    {
+      "id": "message-id",
+      "role": "assistant",
+      "content": "メッセージ内容",
+      "createdAt": "2025-01-01T00:00:00.000Z"
+    }
+  ],
+  "query": "検索クエリ",
+  "sessionId": "session-id"
+}
+```
+
+---
+
+### 1.8 ターミナルWebSocket API
 
 ターミナル機能はHTTP APIではなく、WebSocketを使用してリアルタイム通信を行う。
 Next.jsのカスタムサーバー（`server.ts`）でWebSocketサーバーを統合。
@@ -396,7 +449,7 @@ interface PtySession {
 
 ---
 
-### 1.8 モデル管理API
+### 1.9 モデル管理API
 
 カスタムモデルの作成・管理と、利用可能なモデル一覧の取得を行うAPI。
 
@@ -1573,6 +1626,8 @@ __tests__/
 | ToolCallList | ✅ 実装済 | `src/components/chat/ToolCallList.tsx` | ツール実行ステータス表示 |
 | MarkdownRenderer | ✅ 実装済 | `src/components/chat/MarkdownRenderer.tsx` | react-markdown, rehype-highlight使用 |
 | ThinkingIndicator | ✅ 実装済 | `src/components/chat/MessageItem.tsx`, `src/components/ui/collapsible.tsx` | 思考過程表示（折りたたみ対応） |
+| MessageSearch | ✅ 実装済 | `src/components/chat/MessageSearch.tsx` | Cmd/Ctrl+Fで開く、マッチ間ナビゲーション |
+| HighlightedText | ✅ 実装済 | `src/components/chat/HighlightedText.tsx` | 検索キーワードハイライト表示 |
 
 #### サイドバー関連
 | コンポーネント | 状況 | ファイル | 備考 |
@@ -1580,7 +1635,7 @@ __tests__/
 | Sidebar | ✅ 実装済 | `src/components/sidebar/Sidebar.tsx` | 横幅調整対応、使用量ボタン |
 | SessionList | ✅ 実装済 | `src/components/sidebar/SessionList.tsx` | 差分ロード対応 |
 | SessionItem | ✅ 実装済 | `src/components/sidebar/SessionItem.tsx` | メニュー付き、削除確認AlertDialog |
-| SearchBar | ❌ 未実装 | - | セッション検索 |
+| SessionSearch | ✅ 実装済 | `src/components/sidebar/SessionSearch.tsx` | セッション検索（タイトル・メッセージ内容・モデル名） |
 
 #### 設定関連
 | コンポーネント | 状況 | ファイル | 備考 |
@@ -1645,6 +1700,7 @@ __tests__/
 | useSettings | ✅ 実装済 | `src/hooks/useSettings.ts` | 設定管理、デフォルトツール対応 |
 | useUsage | ✅ 実装済 | `src/hooks/useUsage.ts` | Claude Code使用量取得 |
 | useModels | ✅ 実装済 | `src/hooks/useModels.ts` | モデル管理（標準・カスタム） |
+| useSessionSearch | ✅ 実装済 | `src/hooks/useSessionSearch.ts` | セッション検索（デバウンス付き） |
 | useMCP | ❌ 未実装 | - | MCP管理（APIは実装済み） |
 | useAgents | ❌ 未実装 | - | エージェント管理（APIは実装済み） |
 
@@ -1691,9 +1747,6 @@ __tests__/
 3. **入力バリデーション未対応**
    - API入力のZodスキーマによるバリデーションが未実装
 
-4. **セッション検索未対応**
-   - タイトル・内容によるセッション検索機能が未実装
-
 #### 実装済み機能（参考）
 
 - ✅ **Markdownレンダリング**: react-markdown, rehype-highlight使用（`MarkdownRenderer.tsx`）
@@ -1706,6 +1759,8 @@ __tests__/
 - ✅ **拡張思考（Thinking）表示**: thinking_deltaストリーミング対応、折りたたみ表示（`collapsible.tsx`）
 - ✅ **外観設定機能**: ユーザー/Claudeアイコンのカスタマイズ
 - ✅ **ユーザー名・モデル名表示**: メッセージにユーザー名・モデル名を表示
+- ✅ **セッション検索**: タイトル・メッセージ内容・モデル名でセッション検索（`SessionSearch.tsx`, `useSessionSearch.ts`）
+- ✅ **メッセージ内検索**: Cmd/Ctrl+Fでチャット内検索、マッチ間ナビゲーション、ハイライト表示（`MessageSearch.tsx`, `MessageSearchContext.tsx`）
 
 ---
 

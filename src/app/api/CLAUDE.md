@@ -24,6 +24,8 @@ Next.js App RouterのAPIルートを格納しています。
 | `usage/` | `GET /api/usage` | トークン使用量統計 |
 | `health/` | `GET /api/health` | ヘルスチェック |
 | `workspace/` | 複数 | ワークスペース・ファイル操作 |
+| `search/sessions/` | `GET /api/search/sessions` | セッション検索（タイトル・メッセージ内容・モデル名） |
+| `search/messages/` | `GET /api/search/messages` | メッセージ検索（セッション内） |
 
 ## ワークスペースAPI詳細
 

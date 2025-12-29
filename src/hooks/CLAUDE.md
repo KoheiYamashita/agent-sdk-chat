@@ -33,6 +33,14 @@
 使用状況取得フック
 - `usage`: トークン使用量などの統計情報
 
+### useSessionSearch.ts
+セッション検索フック（デバウンス付き）
+- `query`: 検索クエリ
+- `setQuery()`: クエリ設定
+- `results`: 検索結果（セッション一覧）
+- `isSearching`: 検索中フラグ
+- `clearSearch()`: 検索クリア
+
 ## 注意事項
 
 - TanStack Queryを使用してサーバー状態を管理しています

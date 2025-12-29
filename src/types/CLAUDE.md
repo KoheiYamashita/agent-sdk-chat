@@ -40,6 +40,13 @@ TypeScript型定義を格納するディレクトリです。
 - `DeleteRequest/Response`: 削除型
 - `RenameRequest/Response`: 名前変更型
 
+### search.ts
+検索関連の型定義
+- `SearchSessionResult`: セッション検索結果型
+- `SessionSearchResponse`: セッション検索レスポンス型
+- `SearchMessageResult`: メッセージ検索結果型
+- `MessageSearchResponse`: メッセージ検索レスポンス型
+
 ### index.ts
 型のエクスポート集約
 
