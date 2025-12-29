@@ -39,8 +39,10 @@ npm run db:studio        # Prisma Studio起動
 **チャットストリーミング**:
 1. ユーザーが`useChat()`フック経由でメッセージ送信
 2. `POST /api/chat`がSSE（Server-Sent Events）でレスポンスをストリーミング
-3. イベント種別: `text_delta`, `thinking_delta`, `tool_call`, `tool_result`
+3. イベント種別: `text_delta`, `thinking_delta`, `tool_call`, `tool_result`, `tool_approval_request`
 4. ツール実行は`canUseTool`コールバックと`ApprovalManager`でユーザー承認が必要
+5. 承認タイムアウト: 設定画面で設定可能（デフォルト60分、0で無制限）、タイムアウト時は自動中断
+6. 中断時は待機中の承認リクエストも中断され、途中結果がDBに保存される
 
 **セッション管理**:
 - セッションはClaude SDKの`claudeSessionId`を保持し会話を継続
@@ -52,7 +54,7 @@ npm run db:studio        # Prisma Studio起動
 | モジュール | 場所 | 役割 |
 |-----------|------|------|
 | チャットフック | `src/hooks/useChat.ts` | メッセージストリーミング、ツール承認、ページネーション |
-| 承認マネージャー | `src/lib/approval-manager.ts` | Promiseベースのツール承認キュー |
+| 承認マネージャー | `src/lib/approval-manager.ts` | Promiseベースのツール承認キュー、タイムアウト・中断対応 |
 | Claude SDK連携 | `src/lib/claude/` | SDK初期化、セッション管理 |
 | ターミナルサーバー | `src/terminal-server/` | WebSocket PTYハンドラー |
 | カスタムサーバー | `server.ts` | Next.js + WebSocket統合 |
@@ -78,5 +80,4 @@ npm run db:studio        # Prisma Studio起動
 - SQLiteのJSONフィールドは文字列として保存され、アプリ層でパースされる
 - クライアントコンポーネントは`"use client"`ディレクティブが必要
 - UIコンポーネント追加: `npx shadcn@latest add <component>`
-- 設計書は`docs/overview-design.md`と`docs/detailed-design.md`を参照
 - 各ディレクトリに詳細な`CLAUDE.md`があるので参照すること

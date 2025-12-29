@@ -476,6 +476,23 @@ export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseCh
 
                 case 'tool_approval_resolved':
                   setPendingToolApproval(null);
+                  // Update the message with the decision (including interrupt)
+                  if (event.decision) {
+                    setMessages((prev) =>
+                      prev.map((msg) =>
+                        msg.id === event.requestId && msg.toolApproval
+                          ? {
+                              ...msg,
+                              toolApproval: {
+                                ...msg.toolApproval,
+                                decision: event.decision,
+                                decidedAt: new Date().toISOString(),
+                              },
+                            }
+                          : msg
+                      )
+                    );
+                  }
                   break;
 
                 case 'error':
@@ -586,6 +603,28 @@ export function useChat({ sessionId, resetKey = 0 }: UseChatOptions = {}): UseCh
         // Interrupt failed - fallback to aborting the fetch connection
         console.error('Failed to abort:', await response.text());
         abortControllerRef.current?.abort();
+      } else {
+        // Handle interrupted approvals
+        const data = await response.json() as { interruptedApprovalIds?: string[] };
+        if (data.interruptedApprovalIds && data.interruptedApprovalIds.length > 0) {
+          // Update messages with interrupt decision
+          setMessages((prev) =>
+            prev.map((msg) =>
+              data.interruptedApprovalIds!.includes(msg.id) && msg.toolApproval
+                ? {
+                    ...msg,
+                    toolApproval: {
+                      ...msg.toolApproval,
+                      decision: 'interrupt' as const,
+                      decidedAt: new Date().toISOString(),
+                    },
+                  }
+                : msg
+            )
+          );
+          // Clear pending approval if any
+          setPendingToolApproval(null);
+        }
       }
       // On success: SDK's interrupt() will stop the query and stream will end normally
       // isGenerating will be updated automatically when the SSE stream closes

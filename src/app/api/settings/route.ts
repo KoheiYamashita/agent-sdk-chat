@@ -43,6 +43,7 @@ const DEFAULT_SETTINGS: SettingsData = {
     defaultThinkingEnabled: false,
     theme: 'system',
     language: 'ja',
+    approvalTimeoutMinutes: 60, // デフォルト60分、0で無制限
   },
   permissions: {
     mode: 'acceptEdits',

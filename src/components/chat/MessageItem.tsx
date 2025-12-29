@@ -20,6 +20,7 @@ import {
   ShieldCheck,
   ShieldX,
   ShieldAlert,
+  ShieldOff,
   ChevronDown,
   ChevronRight,
   Lightbulb,
@@ -296,6 +297,8 @@ function ToolApprovalMessage({ message }: { message: Message }) {
         return { icon: ShieldCheck, text: '常に許可', color: 'text-blue-600', bg: 'bg-blue-500/10' };
       case 'deny':
         return { icon: ShieldX, text: '拒否', color: 'text-red-600', bg: 'bg-red-500/10' };
+      case 'interrupt':
+        return { icon: ShieldOff, text: '中断', color: 'text-gray-600', bg: 'bg-gray-500/10' };
       default:
         return { icon: ShieldAlert, text: '待機中...', color: 'text-amber-600', bg: 'bg-amber-500/10' };
     }

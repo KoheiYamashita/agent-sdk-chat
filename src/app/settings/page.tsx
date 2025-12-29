@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -24,7 +25,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { isValidImageUrl } from '@/lib/image-utils';
-import { Brain, Bot, ChevronRight } from 'lucide-react';
+import { Brain, Bot, ChevronRight, Clock } from 'lucide-react';
 import type { PermissionMode, SandboxSettings, AppearanceSettings, SelectableModel } from '@/types';
 
 // Render model icon (image or Bot icon)
@@ -58,6 +59,10 @@ export default function SettingsPage() {
 
   const handleThinkingEnabledChange = async (enabled: boolean) => {
     await updateGeneralSettings({ defaultThinkingEnabled: enabled });
+  };
+
+  const handleApprovalTimeoutChange = async (minutes: number) => {
+    await updateGeneralSettings({ approvalTimeoutMinutes: minutes });
   };
 
   const handleDefaultToolsChange = async (allowedTools: string[]) => {
@@ -231,6 +236,37 @@ export default function SettingsPage() {
                     <Brain className="h-4 w-4 text-purple-500" />
                     <span>デフォルトでThinkingを有効にする</span>
                   </Label>
+                </div>
+              )}
+            </div>
+
+            <div className="border-t pt-4">
+              <h3 className="text-sm font-medium mb-3">ツール承認タイムアウト</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                ツール実行の承認待ち時間を設定します。タイムアウト時は自動的に停止します。
+                0を設定すると無制限になります。
+              </p>
+              {isLoading ? (
+                <Skeleton className="h-10 w-32" />
+              ) : (
+                <div className="flex items-center gap-3">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="approval-timeout"
+                    type="number"
+                    min={0}
+                    max={1440}
+                    value={settings?.general.approvalTimeoutMinutes ?? 60}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value, 10);
+                      if (!isNaN(value) && value >= 0 && value <= 1440) {
+                        handleApprovalTimeoutChange(value);
+                      }
+                    }}
+                    disabled={isSaving}
+                    className="w-24"
+                  />
+                  <span className="text-sm text-muted-foreground">分</span>
                 </div>
               )}
             </div>

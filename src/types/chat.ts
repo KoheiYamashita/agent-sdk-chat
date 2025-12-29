@@ -24,7 +24,7 @@ export interface ToolApprovalInfo {
   toolName: string;
   toolInput: unknown;
   isDangerous: boolean;
-  decision?: 'allow' | 'deny' | 'always';
+  decision?: 'allow' | 'deny' | 'always' | 'interrupt';
   decidedAt?: string;
 }
 
@@ -51,7 +51,7 @@ export type ChatEvent =
   | { type: 'tool_use'; toolName: string; toolInput: unknown; toolUseId: string }
   | { type: 'tool_result'; toolName: string; result: unknown; toolUseId: string }
   | { type: 'tool_approval_request'; request: ToolApprovalRequest }
-  | { type: 'tool_approval_resolved'; requestId: string }
+  | { type: 'tool_approval_resolved'; requestId: string; decision?: 'allow' | 'deny' | 'always' | 'interrupt' }
   | { type: 'thinking'; content: string }
   | { type: 'thinking_delta'; delta: string }
   | { type: 'done'; result: string; usage: MessageUsage; model?: string; modelDisplayName?: string; thinkingContent?: string }
@@ -69,7 +69,7 @@ export interface ToolApprovalRequest {
 /** ツール確認レスポンス */
 export interface ToolApprovalResponse {
   requestId: string;
-  decision: 'allow' | 'deny' | 'always';
+  decision: 'allow' | 'deny' | 'always' | 'interrupt';
 }
 
 export interface ChatRequest {

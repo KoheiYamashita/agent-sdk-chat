@@ -67,6 +67,22 @@ async function getSandboxSettings(): Promise<SandboxSettings> {
   }
 }
 
+// Default approval timeout (60 minutes)
+const DEFAULT_APPROVAL_TIMEOUT_MINUTES = 60;
+
+// Helper to get approval timeout in milliseconds
+async function getApprovalTimeoutMs(): Promise<number> {
+  const settings = await prisma.settings.findUnique({ where: { key: 'general' } });
+  if (!settings) return DEFAULT_APPROVAL_TIMEOUT_MINUTES * 60 * 1000;
+  try {
+    const general = JSON.parse(settings.value) as { approvalTimeoutMinutes?: number };
+    const minutes = general.approvalTimeoutMinutes ?? DEFAULT_APPROVAL_TIMEOUT_MINUTES;
+    return minutes * 60 * 1000; // 0分の場合は0msを返す（無制限）
+  } catch {
+    return DEFAULT_APPROVAL_TIMEOUT_MINUTES * 60 * 1000;
+  }
+}
+
 export async function POST(request: Request) {
   const body = (await request.json()) as ChatRequest;
   const { message, sessionId, settings } = body;
@@ -113,6 +129,9 @@ export async function POST(request: Request) {
         }
       };
 
+      // 中断フラグ（catchブロックでエラー表示を抑制するために使用）
+      let wasInterrupted = false;
+
       try {
         // Get session-scoped always-allowed tools from DB
         const alwaysAllowedTools = parseAllowedTools(session.allowedTools);
@@ -120,6 +139,8 @@ export async function POST(request: Request) {
         const globalAllowedTools = await getGlobalAllowedTools();
         // Get sandbox settings
         const sandboxSettings = await getSandboxSettings();
+        // Get approval timeout setting
+        const approvalTimeoutMs = await getApprovalTimeoutMs();
 
         // Determine the effective workspace path:
         // 1. Use session-specific workspacePath from request if provided
@@ -216,12 +237,17 @@ export async function POST(request: Request) {
               });
 
               // Wait for client response
-              const response = await approvalManager.waitForApproval(requestId);
+              const response = await approvalManager.waitForApproval(
+                requestId,
+                session.id,
+                approvalTimeoutMs
+              );
 
               // Notify client that approval was resolved
               sendEvent({
                 type: 'tool_approval_resolved',
                 requestId,
+                decision: response.decision,
               });
 
               if (response.decision === 'always') {
@@ -231,6 +257,11 @@ export async function POST(request: Request) {
                 return { behavior: 'allow' as const, updatedInput: input };
               } else if (response.decision === 'allow') {
                 return { behavior: 'allow' as const, updatedInput: input };
+              } else if (response.decision === 'interrupt') {
+                // 中断の場合: SDKに通知しつつ、エラー表示を抑制するためにerrorではなくdenyを使用
+                // 注: sessionManager.interruptQuery()が同時に呼ばれているので、SDK側で処理が中断される
+                wasInterrupted = true;
+                return { behavior: 'deny' as const, message: 'Execution interrupted by user' };
               } else {
                 return { behavior: 'deny' as const, message: 'User denied tool execution' };
               }
@@ -242,6 +273,7 @@ export async function POST(request: Request) {
         let thinkingContent = '';
         let claudeSessionId = session.claudeSessionId;
         let currentModel: string | undefined;
+        let isResultSaved = false; // 二重保存防止フラグ
         const toolCalls: Array<{
           id: string;
           name: string;
@@ -259,6 +291,11 @@ export async function POST(request: Request) {
           const events = processSDKMessage(msg);
           for (const event of events) {
             sendEvent(event);
+
+            // Accumulate text content for persistence (中断時にも保存されるように)
+            if (event.type === 'text_delta') {
+              assistantContent += event.delta;
+            }
 
             // Accumulate thinking content for persistence
             if (event.type === 'thinking_delta') {
@@ -303,20 +340,8 @@ export async function POST(request: Request) {
             });
           }
 
-          // Accumulate assistant content (append, don't overwrite)
-          if (msg.type === 'assistant') {
-            const content = msg.message.content as ContentBlock[];
-            const textContent = content
-              .filter((c: ContentBlock) => c.type === 'text' && c.text)
-              .map((c: ContentBlock) => c.text!)
-              .join('');
-            if (textContent) {
-              // Append with separator if there's existing content
-              assistantContent = assistantContent
-                ? assistantContent + '\n\n' + textContent
-                : textContent;
-            }
-          }
+          // Note: Assistant content is now accumulated from text_delta events above
+          // This ensures partial content is saved even when interrupted
 
           // Save final result
           if (msg.type === 'result' && 'result' in msg) {
@@ -352,6 +377,7 @@ export async function POST(request: Request) {
                 thinkingContent: thinkingContent || null,
               },
             });
+            isResultSaved = true; // 正常完了時にフラグを立てる
 
             // Update session title if it's still the default
             if (session.title === '新規チャット' || session.title === message.slice(0, 50)) {
@@ -375,6 +401,26 @@ export async function POST(request: Request) {
         } finally {
           // Always unregister the query when done (success or interrupt)
           sessionManager.unregisterQuery(session.id);
+
+          // 停止/エラー時に途中結果をDB保存
+          if (!isResultSaved && (assistantContent || toolCalls.length > 0)) {
+            try {
+              await prisma.message.create({
+                data: {
+                  sessionId: session.id,
+                  role: 'assistant',
+                  content: assistantContent || '', // contentは必須なので空文字列を使用
+                  toolCalls: toolCalls.length > 0 ? JSON.stringify(toolCalls) : null,
+                  model: currentModel,
+                  modelDisplayName: settings?.modelDisplayName || null,
+                  thinkingContent: thinkingContent || null,
+                },
+              });
+              console.log(`[Chat] Saved partial result for session ${session.id}`);
+            } catch (saveError) {
+              console.error('[Chat] Failed to save partial result:', saveError);
+            }
+          }
         }
 
         if (!isControllerClosed) {
@@ -387,13 +433,25 @@ export async function POST(request: Request) {
           }
         }
       } catch (error) {
-        console.error('Chat error:', error);
         // Ensure query is unregistered on error
         sessionManager.unregisterQuery(session.id);
-        sendEvent({
-          type: 'error',
-          message: error instanceof Error ? error.message : 'Unknown error',
-        });
+
+        // 中断によるエラーは表示しない
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const isInterruptError = wasInterrupted ||
+          errorMessage.includes('interrupted') ||
+          errorMessage.includes('exited with code');
+
+        if (!isInterruptError) {
+          console.error('Chat error:', error);
+          sendEvent({
+            type: 'error',
+            message: errorMessage,
+          });
+        } else {
+          console.log('[Chat] Suppressed interrupt-related error:', errorMessage);
+        }
+
         if (!isControllerClosed) {
           try {
             controller.close();
