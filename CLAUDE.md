@@ -38,7 +38,9 @@ npm run db:studio        # Prisma Studio起動
 
 **チャットストリーミング**:
 1. ユーザーが`useChat()`フック経由でメッセージ送信
-2. `POST /api/chat`がSSE（Server-Sent Events）でレスポンスをストリーミング
+2. `POST /api/chat`がAPIキー認証後、SSE（Server-Sent Events）でレスポンスをストリーミング
+   - `danger.useSubscriptionPlan`がfalseの場合: 設定されたAPIキーを使用（必須）
+   - `danger.useSubscriptionPlan`がtrueの場合: サブスクリプションプランを使用（APIキー不要）
 3. イベント種別: `text_delta`, `thinking_delta`, `tool_call`, `tool_result`, `tool_approval_request`
 4. ツール実行は`canUseTool`コールバックと`ApprovalManager`でユーザー承認が必要
 5. 承認タイムアウト: 設定画面で設定可能（デフォルト60分、0で無制限）、タイムアウト時は自動中断
@@ -76,7 +78,8 @@ npm run db:studio        # Prisma Studio起動
 - **CustomModel**: `baseModel`, `systemPrompt`, アイコンカスタマイズ, `skillSettings`（JSON）
 - **Skill**: スキル定義（`name`, `content`（SKILL.md）, `isEnabled`）
 - **MCPServer**: MCPサーバー設定（stdio/sse/httpタイプ）
-- **Settings**: アプリ設定のKey-Valueストア
+- **Settings**: アプリ設定のKey-Valueストア（`general`, `permissions`, `sandbox`, `appearance`, `titleGeneration`, `danger`）
+  - `DangerSettings`: `showUsage`（使用量表示の有効化、デフォルトfalse）
 
 ## 開発時の注意事項
 

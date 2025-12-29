@@ -1,6 +1,9 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useUsage } from '@/hooks/useUsage';
+import { useSettings } from '@/hooks/useSettings';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -115,7 +118,30 @@ function ExtraUsageCard({ extraUsage }: ExtraUsageCardProps) {
 }
 
 export default function UsagePage() {
+  const router = useRouter();
+  const { settings, isLoading: isSettingsLoading } = useSettings();
   const { usage, isLoading, error, refetch } = useUsage();
+
+  const showUsage = settings?.danger?.showUsage ?? false;
+
+  // Redirect to settings page if showUsage is disabled
+  useEffect(() => {
+    if (!isSettingsLoading && !showUsage) {
+      router.replace('/settings/danger');
+    }
+  }, [isSettingsLoading, showUsage, router]);
+
+  // Show loading while checking settings
+  if (isSettingsLoading || !showUsage) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <div className="space-y-4">
+          <UsageMetricSkeleton />
+          <UsageMetricSkeleton />
+        </div>
+      </div>
+    );
+  }
 
   if (error) {
     return (

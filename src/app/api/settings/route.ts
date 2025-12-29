@@ -69,6 +69,9 @@ const DEFAULT_SETTINGS: SettingsData = {
     customFaviconUrl: '',
   },
   titleGeneration: DEFAULT_TITLE_GENERATION,
+  danger: {
+    showUsage: false,
+  },
 };
 
 export async function GET() {
@@ -94,6 +97,7 @@ export async function GET() {
       titleGeneration:
         (settingsMap.titleGeneration as SettingsData['titleGeneration']) ??
         DEFAULT_SETTINGS.titleGeneration,
+      danger: (settingsMap.danger as SettingsData['danger']) ?? DEFAULT_SETTINGS.danger,
     };
 
     return NextResponse.json(result);
@@ -116,7 +120,7 @@ export async function PUT(request: Request) {
     }
 
     // Upsert each settings category
-    const categories = ['general', 'permissions', 'sandbox', 'appearance', 'titleGeneration'] as const;
+    const categories = ['general', 'permissions', 'sandbox', 'appearance', 'titleGeneration', 'danger'] as const;
 
     for (const category of categories) {
       if (body[category]) {

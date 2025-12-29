@@ -26,7 +26,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { isValidImageUrl } from '@/lib/image-utils';
-import { Brain, Bot, ChevronRight, Clock, Wand2 } from 'lucide-react';
+import { Brain, Bot, ChevronRight, Clock, Wand2, AlertTriangle } from 'lucide-react';
 import type { PermissionMode, SandboxSettings, AppearanceSettings, TitleGenerationSettings, SelectableModel } from '@/types';
 
 // Render model icon (image or Bot icon)
@@ -435,6 +435,29 @@ export default function SettingsPage() {
               disabled={isSaving}
             />
           )}
+        </CardContent>
+      </Card>
+
+      <Card className="border-destructive/50 bg-destructive/5 hover:bg-destructive/10 transition-colors duration-300">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive">
+            <AlertTriangle className="h-4 w-4" />
+            Danger Zone
+          </CardTitle>
+          <CardDescription>
+            上級者向けの設定です。変更前に内容をよくご確認ください。
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button variant="outline" className="w-full justify-between border-destructive/30 hover:border-destructive/50" asChild>
+            <Link href="/settings/danger">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="h-4 w-4 text-destructive" />
+                <span>危険な設定を管理</span>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </Link>
+          </Button>
         </CardContent>
       </Card>
     </div>

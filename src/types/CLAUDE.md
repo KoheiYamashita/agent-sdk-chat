@@ -26,9 +26,10 @@ TypeScript型定義を格納するディレクトリです。
 
 ### settings.ts
 設定関連の型定義
-- `Settings`: アプリケーション設定型
+- `SettingsData`: アプリケーション設定型
 - `AppearanceSettings`: 外観設定型
 - `TitleGenerationSettings`: タイトル自動生成設定型（`enabled`, `model`, `prompt`）
+- `DangerSettings`: 危険な設定型（`showUsage`）
 
 ### terminal.ts
 ターミナル関連の型定義

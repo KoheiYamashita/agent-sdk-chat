@@ -6,6 +6,7 @@ export interface SettingsData {
   sandbox: SandboxSettings;
   appearance: AppearanceSettings;
   titleGeneration?: TitleGenerationSettings;
+  danger?: DangerSettings;
 }
 
 export interface TitleGenerationSettings {
@@ -48,6 +49,10 @@ export interface PermissionSettings {
 export interface SandboxSettings {
   enabled: boolean;
   workspacePath: string;
+}
+
+export interface DangerSettings {
+  showUsage: boolean;
 }
 
 export interface MCPServerConfig {

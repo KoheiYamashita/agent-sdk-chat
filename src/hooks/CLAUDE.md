@@ -40,7 +40,11 @@
 ### useSettings.ts
 設定管理フック
 - `settings`: 現在の設定
-- `updateSettings()`: 設定更新
+- `updateGeneralSettings()`: 一般設定更新
+- `updateAppearanceSettings()`: 外観設定更新
+- `updateTitleGenerationSettings()`: タイトル生成設定更新
+- `updateDangerSettings()`: 危険な設定更新（`showUsage`など）
+- `saveSettings()`: 設定保存
 
 ### useUsage.ts
 使用状況取得フック

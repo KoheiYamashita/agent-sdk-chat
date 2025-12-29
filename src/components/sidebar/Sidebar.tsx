@@ -17,6 +17,7 @@ import { SessionList } from './SessionList';
 import { SessionSearch } from './SessionSearch';
 import { useSessions } from '@/hooks/useSessions';
 import { useSessionSearch } from '@/hooks/useSessionSearch';
+import { useSettings } from '@/hooks/useSettings';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { cn } from '@/lib/utils';
 import type { SessionSummary } from '@/types';
@@ -31,6 +32,9 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
   const { resetChat } = useSidebar();
   const { sessions, isLoading, hasMore, isLoadingMore, loadMore, deleteSession, toggleArchive, setSessionTag } = useSessions();
   const { query, setQuery, results, isSearching, clearSearch } = useSessionSearch();
+  const { settings } = useSettings();
+
+  const showUsage = settings?.danger?.showUsage ?? false;
 
   // 検索結果をキャッシュ（検索クリア後も現在のセッションを表示するため）
   const [searchResultsCache, setSearchResultsCache] = useState<Map<string, SessionSummary>>(new Map());
@@ -131,12 +135,14 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
             ファイル
           </Button>
         </Link>
-        <Link href="/usage" onClick={onNavigate}>
-          <Button variant="ghost" className="w-full justify-start">
-            <BarChart3 className="h-4 w-4 mr-2" />
-            使用量
-          </Button>
-        </Link>
+        {showUsage && (
+          <Link href="/usage" onClick={onNavigate}>
+            <Button variant="ghost" className="w-full justify-start">
+              <BarChart3 className="h-4 w-4 mr-2" />
+              使用量
+            </Button>
+          </Link>
+        )}
         <Link href="/settings" onClick={onNavigate}>
           <Button variant="ghost" className="w-full justify-start">
             <Settings className="h-4 w-4 mr-2" />

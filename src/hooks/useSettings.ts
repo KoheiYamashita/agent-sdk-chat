@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { SettingsData, GeneralSettings, AppearanceSettings, TitleGenerationSettings } from '@/types';
+import type { SettingsData, GeneralSettings, AppearanceSettings, TitleGenerationSettings, DangerSettings } from '@/types';
 
 const SETTINGS_QUERY_KEY = ['settings'];
 
@@ -68,6 +68,7 @@ export function useSettings() {
       sandbox: newSettings.sandbox ?? settings.sandbox,
       appearance: newSettings.appearance ?? settings.appearance,
       titleGeneration: newSettings.titleGeneration ?? settings.titleGeneration,
+      danger: newSettings.danger ?? settings.danger,
     };
 
     await mutation.mutateAsync(merged);
@@ -98,6 +99,17 @@ export function useSettings() {
     await mutation.mutateAsync(newSettings);
   };
 
+  const updateDangerSettings = async (danger: DangerSettings) => {
+    if (!settings) return;
+
+    const newSettings: SettingsData = {
+      ...settings,
+      danger,
+    };
+
+    await mutation.mutateAsync(newSettings);
+  };
+
   return {
     settings,
     isLoading,
@@ -107,6 +119,7 @@ export function useSettings() {
     updateGeneralSettings,
     updateAppearanceSettings,
     updateTitleGenerationSettings,
+    updateDangerSettings,
     saveSettings,
   };
 }
