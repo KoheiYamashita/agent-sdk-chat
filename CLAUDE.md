@@ -43,6 +43,7 @@ npm run db:studio        # Prisma Studio起動
 4. ツール実行は`canUseTool`コールバックと`ApprovalManager`でユーザー承認が必要
 5. 承認タイムアウト: 設定画面で設定可能（デフォルト60分、0で無制限）、タイムアウト時は自動中断
 6. 中断時は待機中の承認リクエストも中断され、途中結果がDBに保存される
+7. ページリロード時: サーバーメモリから`isProcessing`と`pendingToolApproval`を復元し、ポーリングで処理完了を監視
 
 **セッション管理**:
 - セッションはClaude SDKの`claudeSessionId`を保持し会話を継続
@@ -53,8 +54,8 @@ npm run db:studio        # Prisma Studio起動
 
 | モジュール | 場所 | 役割 |
 |-----------|------|------|
-| チャットフック | `src/hooks/useChat.ts` | メッセージストリーミング、ツール承認、ページネーション |
-| 承認マネージャー | `src/lib/approval-manager.ts` | Promiseベースのツール承認キュー、タイムアウト・中断対応 |
+| チャットフック | `src/hooks/useChat.ts` | メッセージストリーミング、ツール承認、ページネーション、リロード時状態復元 |
+| 承認マネージャー | `src/lib/approval-manager.ts` | Promiseベースのツール承認キュー、セッション紐づけ、タイムアウト・中断対応 |
 | Claude SDK連携 | `src/lib/claude/` | SDK初期化、セッション管理 |
 | ターミナルサーバー | `src/terminal-server/` | WebSocket PTYハンドラー |
 | カスタムサーバー | `server.ts` | Next.js + WebSocket統合 |

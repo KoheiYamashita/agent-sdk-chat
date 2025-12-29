@@ -12,7 +12,7 @@ TypeScript型定義を格納するディレクトリです。
 
 ### session.ts
 セッション関連の型定義
-- `Session`: セッション型
+- `Session`: セッション型（`isProcessing`, `pendingToolApproval`はランタイム状態）
 - `SessionSettings`: セッション設定型
 
 ### settings.ts

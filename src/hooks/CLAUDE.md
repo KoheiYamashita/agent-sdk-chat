@@ -10,12 +10,14 @@
 - ストリーミングレスポンスの処理
 - ツール承認・拒否
 - セッション管理との連携
+- ページリロード時の状態復元とポーリング
 
 主要な機能:
 - `sendMessage()`: メッセージ送信
 - `approveToolCall()`: ツール実行承認
 - `rejectToolCall()`: ツール実行拒否
 - `abortChat()`: チャット中断
+- リロード時: サーバーから`isProcessing`/`pendingToolApproval`を復元、ポーリングで処理完了を監視
 
 ### useSessions.ts
 セッション管理フック（TanStack Query使用）

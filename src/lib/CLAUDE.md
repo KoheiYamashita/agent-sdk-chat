@@ -24,8 +24,9 @@ Claude Agent SDKとの連携モジュール
 
 ### approval-manager.ts
 ツール実行承認の管理
-- 承認待ちのツール呼び出しをキューで管理
+- 承認待ちのツール呼び出しをキューで管理（セッションID紐づけ）
 - 承認/拒否の結果をPromiseで返す
+- `getPendingForSession()`: セッションの待機中承認リクエストを取得（リロード時状態復元用）
 
 ### providers.tsx
 Reactプロバイダーの統合
