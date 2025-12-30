@@ -6,6 +6,7 @@
 
 - `tools.ts` - Claude SDKで使用可能なツールの定義（名前、説明、危険度フラグ）
 - `title-generation.ts` - タイトル自動生成のデフォルト設定とプロンプトテンプレート
+- `workspace-claude-md.ts` - ワークスペースに自動作成されるCLAUDE.mdのデフォルトテンプレート
 
 ## 注意事項
 

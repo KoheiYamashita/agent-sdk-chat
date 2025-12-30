@@ -7,7 +7,6 @@ import type { DeleteRequest, DeleteResponse } from '@/types/workspace';
 
 // Default sandbox settings
 const DEFAULT_SANDBOX_SETTINGS: SandboxSettings = {
-  enabled: true,
   workspacePath: './workspace',
 };
 

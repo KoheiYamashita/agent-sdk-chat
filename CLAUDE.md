@@ -79,6 +79,7 @@ npm run db:studio        # Prisma Studio起動
 - **Skill**: スキル定義（`name`, `content`（SKILL.md）, `isEnabled`）
 - **MCPServer**: MCPサーバー設定（stdio/sse/httpタイプ）
 - **Settings**: アプリ設定のKey-Valueストア（`general`, `permissions`, `sandbox`, `appearance`, `titleGeneration`, `danger`）
+  - `SandboxSettings`: `workspacePath`（ワークスペースパス）, `claudeMdTemplate`（ワークスペースのCLAUDE.mdテンプレート）
   - `DangerSettings`: `showUsage`（使用量表示の有効化、デフォルトfalse）
 
 ## 開発時の注意事項

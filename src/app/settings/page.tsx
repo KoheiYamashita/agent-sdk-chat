@@ -396,7 +396,7 @@ export default function SettingsPage() {
             </div>
           ) : (
             <SandboxSettingsForm
-              settings={settings?.sandbox ?? { enabled: true, workspacePath: './workspace' }}
+              settings={settings?.sandbox ?? { workspacePath: './workspace' }}
               onChange={handleSandboxSettingsChange}
               disabled={isSaving}
             />

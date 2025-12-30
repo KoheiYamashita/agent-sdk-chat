@@ -8,6 +8,7 @@ import { sessionManager } from '@/lib/claude/session-manager';
 import { generateUUID } from '@/lib/utils/uuid';
 import { getAllToolNames, getDangerousToolNames } from '@/lib/constants/tools';
 import { DEFAULT_TITLE_GENERATION } from '@/lib/constants/title-generation';
+import { DEFAULT_WORKSPACE_CLAUDE_MD } from '@/lib/constants/workspace-claude-md';
 import { resolveSkillEnabled } from '@/types/skills';
 import { generateSessionTitle } from '@/lib/claude/title-generator';
 import type { ChatRequest, ChatEvent, MessageUsage, ToolApprovalRequest, SandboxSettings, Skill, SkillSettings, TitleGenerationSettings } from '@/types';
@@ -55,7 +56,6 @@ async function getGlobalAllowedTools(): Promise<Set<string>> {
 
 // Default sandbox settings
 const DEFAULT_SANDBOX_SETTINGS: SandboxSettings = {
-  enabled: true,
   workspacePath: './workspace',
 };
 
@@ -68,6 +68,83 @@ async function getSandboxSettings(): Promise<SandboxSettings> {
   } catch {
     return DEFAULT_SANDBOX_SETTINGS;
   }
+}
+
+// Helper to write CLAUDE.md to workspace if it doesn't exist
+async function writeClaudeMdToWorkspace(
+  workspacePath: string,
+  template: string
+): Promise<void> {
+  const claudeMdPath = path.join(workspacePath, 'CLAUDE.md');
+  try {
+    await fs.access(claudeMdPath);
+    // File exists, skip creation to preserve user modifications
+  } catch {
+    // File doesn't exist, create it
+    await fs.writeFile(claudeMdPath, template, 'utf-8');
+    console.log('[Chat] Created CLAUDE.md in workspace:', claudeMdPath);
+  }
+}
+
+// File path parameter names used by various tools
+const FILE_PATH_PARAMS = ['file_path', 'path', 'notebook_path', 'filePath'];
+
+// Tools that operate on files and should have paths normalized
+const FILE_TOOLS = [
+  'Edit',
+  'Write',
+  'Read',
+  'NotebookEdit',
+  'NotebookRead',
+  'Glob',
+  'Grep',
+  'LSP',
+];
+
+// Helper to check if a path is within workspace
+function isPathWithinWorkspace(targetPath: string, workspacePath: string): boolean {
+  const normalizedTarget = path.normalize(targetPath);
+  const normalizedWorkspace = path.normalize(workspacePath);
+  // Check exact match or starts with workspace + separator
+  return normalizedTarget === normalizedWorkspace ||
+         normalizedTarget.startsWith(normalizedWorkspace + path.sep);
+}
+
+// Helper to normalize file paths in tool input to be within workspace
+function normalizeToolInput(
+  toolName: string,
+  input: Record<string, unknown>,
+  workspacePath: string
+): { normalizedInput: Record<string, unknown>; wasModified: boolean } {
+  // Only process file-related tools
+  if (!FILE_TOOLS.includes(toolName)) {
+    return { normalizedInput: input, wasModified: false };
+  }
+
+  const normalizedInput = { ...input };
+  let wasModified = false;
+
+  for (const paramName of FILE_PATH_PARAMS) {
+    const filePath = input[paramName];
+    if (typeof filePath !== 'string') continue;
+
+    // Resolve path: absolute paths stay as-is, relative paths are resolved against workspace
+    const resolvedPath = path.isAbsolute(filePath)
+      ? filePath
+      : path.resolve(workspacePath, filePath);
+
+    // Check if resolved path is outside workspace
+    if (!isPathWithinWorkspace(resolvedPath, workspacePath)) {
+      // Extract filename and place it in workspace
+      const fileName = path.basename(filePath);
+      const newPath = path.join(workspacePath, fileName);
+      normalizedInput[paramName] = newPath;
+      wasModified = true;
+      console.log(`[Chat] Normalized path: ${filePath} -> ${newPath}`);
+    }
+  }
+
+  return { normalizedInput, wasModified };
 }
 
 // Default approval timeout (60 minutes)
@@ -254,10 +331,12 @@ export async function POST(request: Request) {
           workspacePath = baseWorkspacePath;
         }
 
-        // Create workspace directory if it doesn't exist (when sandbox is enabled)
-        if (sandboxSettings.enabled) {
-          await fs.mkdir(workspacePath, { recursive: true });
-        }
+        // Create workspace directory if it doesn't exist
+        await fs.mkdir(workspacePath, { recursive: true });
+
+        // Create CLAUDE.md in workspace if it doesn't exist
+        const claudeMdTemplate = sandboxSettings.claudeMdTemplate ?? DEFAULT_WORKSPACE_CLAUDE_MD;
+        await writeClaudeMdToWorkspace(workspacePath, claudeMdTemplate);
 
         // Fetch and write enabled skills to workspace
         const allSkills = await prisma.skill.findMany({
@@ -282,9 +361,9 @@ export async function POST(request: Request) {
         // Get session skill settings from request
         const sessionSkillSettings: SkillSettings | null = settings?.skillSettings ?? null;
 
-        // Write skills to workspace (only if sandbox is enabled and we have skills)
+        // Write skills to workspace if we have skills
         const hasSkills = allSkills.length > 0;
-        if (sandboxSettings.enabled && hasSkills) {
+        if (hasSkills) {
           const dbSkills: Skill[] = allSkills.map((s) => ({
             id: s.id,
             name: s.name,
@@ -343,30 +422,28 @@ export async function POST(request: Request) {
             // SDK will skip canUseTool for these tools
             allowedTools: autoAllowedTools,
 
-            // Sandbox and workspace settings
-            cwd: sandboxSettings.enabled ? workspacePath : undefined,
-            sandbox: sandboxSettings.enabled
-              ? {
-                  enabled: true,
-                  network: {
-                    allowedDomains: [], // Empty array = no network restrictions (WebFetch/WebSearch can access any domain)
-                  },
-                }
-              : undefined,
+            // Workspace settings
+            cwd: workspacePath,
 
             // Permission handler for tools not in allowedTools
             canUseTool: async (toolName: string, input: Record<string, unknown>) => {
+              // Normalize file paths to be within workspace
+              const { normalizedInput, wasModified } = normalizeToolInput(toolName, input, workspacePath);
+              if (wasModified) {
+                console.log(`[Chat] Tool ${toolName} input was normalized to workspace`);
+              }
+
               // Generate unique request ID
               const requestId = generateUUID();
 
               // Determine if tool is dangerous
               const isDangerous = dangerousToolNames.includes(toolName);
 
-              // Send approval request to client
+              // Send approval request to client (with normalized input so user sees correct path)
               const approvalRequest: ToolApprovalRequest = {
                 requestId,
                 toolName,
-                toolInput: input,
+                toolInput: normalizedInput,
                 isDangerous,
               };
 
@@ -394,9 +471,9 @@ export async function POST(request: Request) {
                 alwaysAllowedTools.add(toolName);
                 // Save to DB for future requests in this session
                 await saveAllowedTools(session.id, alwaysAllowedTools);
-                return { behavior: 'allow' as const, updatedInput: input };
+                return { behavior: 'allow' as const, updatedInput: normalizedInput };
               } else if (response.decision === 'allow') {
-                return { behavior: 'allow' as const, updatedInput: input };
+                return { behavior: 'allow' as const, updatedInput: normalizedInput };
               } else if (response.decision === 'interrupt') {
                 // 中断の場合: SDKに通知しつつ、エラー表示を抑制するためにerrorではなくdenyを使用
                 // 注: sessionManager.interruptQuery()が同時に呼ばれているので、SDK側で処理が中断される

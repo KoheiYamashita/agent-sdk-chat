@@ -47,8 +47,8 @@ export interface PermissionSettings {
 }
 
 export interface SandboxSettings {
-  enabled: boolean;
   workspacePath: string;
+  claudeMdTemplate?: string;
 }
 
 export interface DangerSettings {

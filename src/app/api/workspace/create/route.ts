@@ -6,7 +6,6 @@ import type { SandboxSettings } from '@/types';
 
 // Default sandbox settings
 const DEFAULT_SANDBOX_SETTINGS: SandboxSettings = {
-  enabled: true,
   workspacePath: './workspace',
 };
 

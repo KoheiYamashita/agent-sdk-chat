@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { DEFAULT_TITLE_GENERATION } from '@/lib/constants/title-generation';
+import { DEFAULT_WORKSPACE_CLAUDE_MD } from '@/lib/constants/workspace-claude-md';
 import type { SettingsData, AppearanceSettings } from '@/types';
 
 // セキュリティ: 画像URLの検証（data: URLまたは有効なhttps URLのみ許可）
@@ -54,8 +55,8 @@ const DEFAULT_SETTINGS: SettingsData = {
     disallowedTools: [],
   },
   sandbox: {
-    enabled: true,
     workspacePath: './workspace',
+    claudeMdTemplate: DEFAULT_WORKSPACE_CLAUDE_MD,
   },
   appearance: {
     userIcon: 'user',

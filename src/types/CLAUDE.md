@@ -28,6 +28,7 @@ TypeScript型定義を格納するディレクトリです。
 設定関連の型定義
 - `SettingsData`: アプリケーション設定型
 - `AppearanceSettings`: 外観設定型
+- `SandboxSettings`: ワークスペース設定型（`workspacePath`, `claudeMdTemplate`）
 - `TitleGenerationSettings`: タイトル自動生成設定型（`enabled`, `model`, `prompt`）
 - `DangerSettings`: 危険な設定型（`showUsage`）
 
