@@ -16,9 +16,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'Agent SDK Chat',
   description: 'A chat application powered by Claude Agent SDK',
-  icons: {
-    icon: '/favicon.svg',
-  },
 };
 
 export default function RootLayout({

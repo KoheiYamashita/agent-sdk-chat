@@ -518,6 +518,35 @@ export function AppearanceSettingsForm({
         )}
       </div>
 
+      {/* Preview */}
+      <div className="space-y-3">
+        <Label className="text-sm font-medium">{t('preview')}</Label>
+        <div className="flex items-center gap-4 p-4 rounded-lg bg-muted/30 border border-border/50">
+          <div className="flex items-center gap-2">
+            <Avatar className="h-8 w-8 ring-2 ring-background shadow-sm">
+              {localSettings.userIcon === 'image' && localSettings.userImageUrl ? (
+                <AvatarImage src={localSettings.userImageUrl} alt="User" />
+              ) : null}
+              <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-xs">
+                {renderUserAvatarContent()}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-sm text-muted-foreground">{localSettings.userName || tChat('you')}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Avatar className="h-8 w-8 ring-2 ring-background shadow-sm">
+              {localSettings.botIcon === 'image' && localSettings.botImageUrl ? (
+                <AvatarImage src={localSettings.botImageUrl} alt="Bot" />
+              ) : null}
+              <AvatarFallback className="bg-gradient-to-br from-secondary to-secondary/80 text-xs">
+                {renderBotAvatarContent()}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-sm text-muted-foreground">Claude</span>
+          </div>
+        </div>
+      </div>
+
       {/* Favicon Selection */}
       <div className="space-y-3">
         <Label className="text-sm font-medium">{t('favicon')}</Label>
@@ -619,35 +648,6 @@ export function AppearanceSettingsForm({
             <p className="text-xs text-muted-foreground">{t('imageFormats', { size: 64 })}</p>
           </div>
         )}
-      </div>
-
-      {/* Preview */}
-      <div className="space-y-3">
-        <Label className="text-sm font-medium">{t('preview')}</Label>
-        <div className="flex items-center gap-4 p-4 rounded-lg bg-muted/30 border border-border/50">
-          <div className="flex items-center gap-2">
-            <Avatar className="h-8 w-8 ring-2 ring-background shadow-sm">
-              {localSettings.userIcon === 'image' && localSettings.userImageUrl ? (
-                <AvatarImage src={localSettings.userImageUrl} alt="User" />
-              ) : null}
-              <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-xs">
-                {renderUserAvatarContent()}
-              </AvatarFallback>
-            </Avatar>
-            <span className="text-sm text-muted-foreground">{localSettings.userName || tChat('you')}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Avatar className="h-8 w-8 ring-2 ring-background shadow-sm">
-              {localSettings.botIcon === 'image' && localSettings.botImageUrl ? (
-                <AvatarImage src={localSettings.botImageUrl} alt="Bot" />
-              ) : null}
-              <AvatarFallback className="bg-gradient-to-br from-secondary to-secondary/80 text-xs">
-                {renderBotAvatarContent()}
-              </AvatarFallback>
-            </Avatar>
-            <span className="text-sm text-muted-foreground">Claude</span>
-          </div>
-        </div>
       </div>
     </div>
   );
