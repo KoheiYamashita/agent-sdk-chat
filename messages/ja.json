@@ -115,6 +115,7 @@
   "settings": {
     "title": "設定",
     "loadError": "設定の読み込みに失敗しました:",
+    "backToSettings": "設定に戻る",
     "language": {
       "title": "言語",
       "description": "アプリケーションの表示言語を設定します。"
@@ -147,6 +148,7 @@
     "general": {
       "title": "一般設定",
       "description": "アプリケーションの基本設定を変更します。",
+      "manage": "一般設定を管理",
       "defaultModel": "デフォルトモデル",
       "defaultModelDescription": "新しいチャットで使用するデフォルトのモデルを設定します。チャット画面で個別に変更することもできます。",
       "selectModel": "モデルを選択",
@@ -160,11 +162,22 @@
       "approvalTimeout": "ツール承認タイムアウト",
       "approvalTimeoutDescription": "ツール実行の承認待ち時間を設定します。タイムアウト時は自動的に停止します。0を設定すると無制限になります。"
     },
+    "chat": {
+      "title": "チャット設定",
+      "description": "権限モード、承認タイムアウト、タイトル生成の設定を管理します。",
+      "manage": "チャット設定を管理"
+    },
     "permissions": {
       "title": "デフォルトで許可するツール",
       "description": "チェックしたツールは新しいチャット開始時から自動的に許可されます。チェックしていないツールは毎回確認を求めます。",
       "selectAll": "すべて選択",
-      "deselectAll": "すべて解除"
+      "deselectAll": "すべて解除",
+      "manage": "ツール権限を管理"
+    },
+    "workspace": {
+      "title": "ワークスペース設定",
+      "description": "サンドボックス設定とCLAUDE.mdテンプレートを管理します。",
+      "manage": "ワークスペース設定を管理"
     },
     "sandbox": {
       "title": "サンドボックス設定",
@@ -179,6 +192,7 @@
     "appearance": {
       "title": "外観設定",
       "description": "チャット画面に表示されるユーザーとClaudeのアイコンをカスタマイズします。",
+      "manage": "外観設定を管理",
       "userIcon": "ユーザーアイコン",
       "botIcon": "Claudeアイコン",
       "favicon": "ファビコン",

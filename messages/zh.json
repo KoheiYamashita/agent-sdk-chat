@@ -115,6 +115,7 @@
   "settings": {
     "title": "设置",
     "loadError": "加载设置失败：",
+    "backToSettings": "返回设置",
     "language": {
       "title": "语言",
       "description": "设置应用程序的显示语言。"
@@ -147,6 +148,7 @@
     "general": {
       "title": "通用设置",
       "description": "更改应用程序的基本设置。",
+      "manage": "管理通用设置",
       "defaultModel": "默认模型",
       "defaultModelDescription": "设置新对话的默认模型。您可以在对话界面单独更改。",
       "selectModel": "选择模型",
@@ -160,11 +162,22 @@
       "approvalTimeout": "工具审批超时",
       "approvalTimeoutDescription": "设置工具执行审批的等待时间。超时后自动停止。设为0表示无限制。"
     },
+    "chat": {
+      "title": "对话设置",
+      "description": "管理权限模式、审批超时和标题生成设置。",
+      "manage": "管理对话设置"
+    },
     "permissions": {
       "title": "默认允许的工具",
       "description": "勾选的工具在开始新对话时会自动允许。未勾选的工具每次都需要确认。",
       "selectAll": "全选",
-      "deselectAll": "全不选"
+      "deselectAll": "全不选",
+      "manage": "管理工具权限"
+    },
+    "workspace": {
+      "title": "工作区设置",
+      "description": "管理沙盒设置和 CLAUDE.md 模板。",
+      "manage": "管理工作区设置"
     },
     "sandbox": {
       "title": "沙盒设置",
@@ -179,6 +192,7 @@
     "appearance": {
       "title": "外观设置",
       "description": "自定义对话界面中显示的用户和 Claude 图标。",
+      "manage": "管理外观设置",
       "userIcon": "用户图标",
       "botIcon": "Claude 图标",
       "favicon": "网站图标",

@@ -115,6 +115,7 @@
   "settings": {
     "title": "Settings",
     "loadError": "Failed to load settings:",
+    "backToSettings": "Back to Settings",
     "language": {
       "title": "Language",
       "description": "Set the display language for the application."
@@ -147,6 +148,7 @@
     "general": {
       "title": "General Settings",
       "description": "Change basic application settings.",
+      "manage": "Manage General Settings",
       "defaultModel": "Default Model",
       "defaultModelDescription": "Set the default model for new chats. You can change it individually on the chat screen.",
       "selectModel": "Select model",
@@ -160,11 +162,22 @@
       "approvalTimeout": "Tool Approval Timeout",
       "approvalTimeoutDescription": "Set the timeout for tool execution approval. Automatically stops on timeout. Set to 0 for unlimited."
     },
+    "chat": {
+      "title": "Chat Settings",
+      "description": "Manage permission modes, approval timeout, and title generation settings.",
+      "manage": "Manage Chat Settings"
+    },
     "permissions": {
       "title": "Default Allowed Tools",
       "description": "Checked tools are automatically allowed when starting a new chat. Unchecked tools require confirmation each time.",
       "selectAll": "Select All",
-      "deselectAll": "Deselect All"
+      "deselectAll": "Deselect All",
+      "manage": "Manage Tool Permissions"
+    },
+    "workspace": {
+      "title": "Workspace Settings",
+      "description": "Manage sandbox settings and CLAUDE.md template.",
+      "manage": "Manage Workspace Settings"
     },
     "sandbox": {
       "title": "Sandbox Settings",
@@ -179,6 +192,7 @@
     "appearance": {
       "title": "Appearance Settings",
       "description": "Customize the user and Claude icons displayed on the chat screen.",
+      "manage": "Manage Appearance Settings",
       "userIcon": "User Icon",
       "botIcon": "Claude Icon",
       "favicon": "Favicon",
