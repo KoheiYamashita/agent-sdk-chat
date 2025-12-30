@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
@@ -41,6 +42,7 @@ export function CustomModelCard({
   onToggleEnabled,
   disabled = false,
 }: CustomModelCardProps) {
+  const t = useTranslations('models');
   const [imageError, setImageError] = useState(false);
   const IconComponent = model.icon ? ICON_MAP[model.icon] : Bot;
   const iconColor = model.iconColor || 'text-primary';
@@ -83,7 +85,7 @@ export function CustomModelCard({
             <h4 className="font-medium truncate">{model.displayName}</h4>
             {!model.isEnabled && (
               <span className="text-xs text-muted-foreground px-1.5 py-0.5 bg-muted rounded">
-                無効
+                {t('disabled')}
               </span>
             )}
           </div>
@@ -108,7 +110,7 @@ export function CustomModelCard({
           checked={model.isEnabled}
           onCheckedChange={onToggleEnabled}
           disabled={disabled}
-          aria-label={model.isEnabled ? '無効にする' : '有効にする'}
+          aria-label={model.isEnabled ? t('disable') : t('enable')}
         />
         <Button
           variant="ghost"

@@ -4,6 +4,7 @@ import { useState, useCallback, ReactNode } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
+import { useTranslations } from 'next-intl';
 import { Check, Copy, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MermaidRenderer } from '@/components/workspace/MermaidRenderer';
@@ -93,9 +94,14 @@ function processChildren(
 interface CodeBlockProps {
   children: React.ReactNode;
   className?: string;
+  translations: {
+    copyCode: string;
+    copy: string;
+    copied: string;
+  };
 }
 
-function CodeBlock({ children, className }: CodeBlockProps) {
+function CodeBlock({ children, className, translations }: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
 
   // 言語名を抽出
@@ -119,17 +125,17 @@ function CodeBlock({ children, className }: CodeBlockProps) {
         <button
           onClick={handleCopy}
           className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-          title="コードをコピー"
+          title={translations.copyCode}
         >
           {copied ? (
             <>
               <Check className="h-3.5 w-3.5 text-green-500" />
-              <span className="text-green-500">コピー済み</span>
+              <span className="text-green-500">{translations.copied}</span>
             </>
           ) : (
             <>
               <Copy className="h-3.5 w-3.5" />
-              <span>コピー</span>
+              <span>{translations.copy}</span>
             </>
           )}
         </button>
@@ -149,6 +155,13 @@ export function MarkdownRenderer({
   messageId,
   currentMatch,
 }: MarkdownRendererProps) {
+  const t = useTranslations('chat');
+  // 翻訳オブジェクトを事前に作成（CodeBlockに渡す用）
+  const codeTranslations = {
+    copyCode: t('copyCode'),
+    copy: t('copy'),
+    copied: t('copied'),
+  };
   // 累積マッチ数を追跡するためのカウンターオブジェクト（レンダリング毎に新規作成）
   const matchCounter = { count: 0 };
 
@@ -182,7 +195,7 @@ export function MarkdownRenderer({
           {highlightText(children)}
         </code>
       ) : (
-        <CodeBlock className={codeClassName}>{children}</CodeBlock>
+        <CodeBlock className={codeClassName} translations={codeTranslations}>{children}</CodeBlock>
       );
     },
     // 段落内のテキストをハイライト

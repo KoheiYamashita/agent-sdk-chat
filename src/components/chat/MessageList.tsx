@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useCallback, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2 } from 'lucide-react';
@@ -41,6 +42,8 @@ export function MessageList({
   const [prevScrollHeight, setPrevScrollHeight] = useState(0);
   const isInitialLoad = useRef(true);
 
+  // 翻訳
+  const t = useTranslations('chat');
   // 検索コンテキスト
   const { query: searchQuery, currentMatch } = useMessageSearch();
 
@@ -116,7 +119,7 @@ export function MessageList({
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center text-muted-foreground">
           <p className="text-lg font-medium">Agent SDK Chat</p>
-          <p className="text-sm mt-1">メッセージを入力して会話を始めましょう</p>
+          <p className="text-sm mt-1">{t('emptyMessage')}</p>
         </div>
       </div>
     );

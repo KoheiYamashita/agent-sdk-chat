@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import mermaid from 'mermaid';
 import DOMPurify from 'dompurify';
 import { cn } from '@/lib/utils';
@@ -27,6 +28,7 @@ function initMermaid() {
 }
 
 export function MermaidRenderer({ content, className }: MermaidRendererProps) {
+  const t = useTranslations('mermaid');
   const containerRef = useRef<HTMLDivElement>(null);
   const [svg, setSvg] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
@@ -48,10 +50,10 @@ export function MermaidRenderer({ content, className }: MermaidRendererProps) {
       const id = `mermaid-${Date.now()}-${renderId}`;
       const { svg: renderedSvg } = await mermaid.render(id, diagramContent);
 
-      // 古いレンダリングリクエストは無視
+      // Ignore stale render requests
       if (renderId !== renderIdRef.current) return;
 
-      // SVGをサニタイズ
+      // Sanitize SVG
       const sanitizedSvg = DOMPurify.sanitize(renderedSvg, {
         USE_PROFILES: { svg: true, svgFilters: true },
       });
@@ -59,10 +61,10 @@ export function MermaidRenderer({ content, className }: MermaidRendererProps) {
       setSvg(sanitizedSvg);
       setError(null);
     } catch (err) {
-      // 古いレンダリングリクエストは無視
+      // Ignore stale render requests
       if (renderId !== renderIdRef.current) return;
 
-      const errorMessage = err instanceof Error ? err.message : 'ダイアグラムのレンダリングに失敗しました';
+      const errorMessage = err instanceof Error ? err.message : 'RENDER_ERROR';
       setError(errorMessage);
       setSvg('');
     } finally {
@@ -76,7 +78,7 @@ export function MermaidRenderer({ content, className }: MermaidRendererProps) {
     renderIdRef.current += 1;
     const currentRenderId = renderIdRef.current;
 
-    // デバウンス処理
+    // Debounce
     const timeoutId = setTimeout(() => {
       renderDiagram(content, currentRenderId);
     }, 300);
@@ -96,9 +98,9 @@ export function MermaidRenderer({ content, className }: MermaidRendererProps) {
     return (
       <div className={cn('flex flex-col items-center justify-center py-8 px-4', className)}>
         <AlertTriangle className="h-8 w-8 text-destructive mb-2" />
-        <p className="text-sm text-destructive font-medium">ダイアグラムの描画に失敗しました</p>
+        <p className="text-sm text-destructive font-medium">{t('renderError')}</p>
         <pre className="mt-2 text-xs text-muted-foreground max-w-full overflow-auto whitespace-pre-wrap">
-          {error}
+          {error === 'RENDER_ERROR' ? t('renderError') : error}
         </pre>
       </div>
     );
@@ -107,7 +109,7 @@ export function MermaidRenderer({ content, className }: MermaidRendererProps) {
   if (!svg) {
     return (
       <div className={cn('flex items-center justify-center py-8 text-muted-foreground', className)}>
-        <p className="text-sm">ダイアグラムを入力してください</p>
+        <p className="text-sm">{t('noContent')}</p>
       </div>
     );
   }

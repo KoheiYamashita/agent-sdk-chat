@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -29,6 +30,7 @@ export function SkillsDropdown({
   onSkillSettingsChange,
   disabled = false,
 }: SkillsDropdownProps) {
+  const t = useTranslations('chat');
   const [open, setOpen] = useState(false);
 
   // Filter skills: show only skills that are enabled (considering global and customModel settings)
@@ -89,7 +91,7 @@ export function SkillsDropdown({
       <PopoverContent className="w-64 p-2" align="start">
         <div className="space-y-1">
           <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
-            Skills ({enabledCount}/{availableSkills.length} 有効)
+            Skills ({t('skillsEnabled', { count: enabledCount, total: availableSkills.length })})
           </div>
           {availableSkills.map((skill) => {
             const checked = isSkillChecked(skill);

@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import {
   Select,
   SelectContent,
@@ -21,44 +22,36 @@ interface PermissionModeSelectorProps {
   onThinkingToggle?: () => void;
 }
 
-const modes: {
+interface ModeConfig {
   value: PermissionMode;
-  label: string;
   shortLabel: string;
   icon: React.ComponentType<{ className?: string }>;
-  description: string;
   variant: 'default' | 'warning' | 'destructive';
-}[] = [
+}
+
+const modeConfigs: ModeConfig[] = [
   {
     value: 'default',
-    label: 'Default - 各操作を確認',
     shortLabel: 'Default',
     icon: Shield,
-    description: '各ツール実行前に確認を求めます',
     variant: 'default',
   },
   {
     value: 'acceptEdits',
-    label: 'Accept Edits - 編集は自動許可',
     shortLabel: 'Accept Edits',
     icon: FileEdit,
-    description: 'ファイル編集は自動許可、その他は確認',
     variant: 'default',
   },
   {
     value: 'bypassPermissions',
-    label: 'Bypass - すべて自動許可',
     shortLabel: 'Bypass',
     icon: Zap,
-    description: 'すべてのツール実行を自動許可（注意）',
     variant: 'destructive',
   },
   {
     value: 'plan',
-    label: 'Plan - 計画のみ作成',
     shortLabel: 'Plan',
     icon: ClipboardList,
-    description: '実行せず計画のみ作成',
     variant: 'default',
   },
 ];
@@ -71,8 +64,26 @@ export function PermissionModeSelector({
   thinkingEnabled = false,
   onThinkingToggle,
 }: PermissionModeSelectorProps) {
-  const currentMode = modes.find((m) => m.value === value) ?? modes[0];
+  const t = useTranslations('chat');
+  const tSettings = useTranslations('settings.permissionMode');
+  const currentMode = modeConfigs.find((m) => m.value === value) ?? modeConfigs[0];
   const isDestructive = currentMode.variant === 'destructive';
+
+  // Get localized labels for modes
+  const getModeLabel = (modeValue: PermissionMode): string => {
+    switch (modeValue) {
+      case 'default':
+        return tSettings('default.label');
+      case 'acceptEdits':
+        return tSettings('acceptEdits.label');
+      case 'bypassPermissions':
+        return tSettings('bypassPermissions.label');
+      case 'plan':
+        return tSettings('plan.label');
+      default:
+        return modeValue;
+    }
+  };
 
   return (
     <>
@@ -87,10 +98,10 @@ export function PermissionModeSelector({
             isDestructive && 'border-destructive/50 text-destructive'
           )}
         >
-          <SelectValue placeholder="権限モードを選択" />
+          <SelectValue placeholder={t('selectPermission')} />
         </SelectTrigger>
         <SelectContent>
-          {modes.map((mode) => {
+          {modeConfigs.map((mode) => {
             const ModeIcon = mode.icon;
             return (
               <SelectItem
@@ -104,7 +115,7 @@ export function PermissionModeSelector({
                 <div className="flex items-center gap-2">
                   <ModeIcon className="h-3.5 w-3.5" />
                   <div className="flex flex-col">
-                    <span>{mode.label}</span>
+                    <span>{getModeLabel(mode.value)}</span>
                   </div>
                 </div>
               </SelectItem>
@@ -122,7 +133,7 @@ export function PermissionModeSelector({
             'h-8 shrink-0 gap-1.5 text-xs',
             thinkingEnabled && 'bg-primary/10 text-primary hover:bg-primary/20'
           )}
-          title={thinkingEnabled ? 'Thinking モード: ON' : 'Thinking モード: OFF'}
+          title={thinkingEnabled ? t('thinkingOn') : t('thinkingOff')}
         >
           <Brain className="h-4 w-4" />
           <span className="hidden sm:inline">Thinking</span>
@@ -135,10 +146,10 @@ export function PermissionModeSelector({
           onClick={onFilesClick}
           disabled={disabled}
           className="h-8 shrink-0 gap-1.5 text-xs"
-          title="ファイルを開く"
+          title={t('openFile')}
         >
           <FolderOpen className="h-4 w-4" />
-          <span>ファイル</span>
+          <span>{t('file')}</span>
         </Button>
       )}
     </>

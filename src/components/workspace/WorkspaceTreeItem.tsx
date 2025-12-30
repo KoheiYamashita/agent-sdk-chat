@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { ChevronRight, Folder, FolderOpen, Plus, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,8 @@ export function WorkspaceTreeItem({
   onCreateFolder,
   depth = 0,
 }: WorkspaceTreeItemProps) {
+  const t = useTranslations('workspace');
+  const tCommon = useTranslations('common');
   const [isExpanded, setIsExpanded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [children, setChildren] = useState<DirectoryItem[] | null>(null);
@@ -165,7 +168,7 @@ export function WorkspaceTreeItem({
                 type="text"
                 value={newFolderName}
                 onChange={(e) => setNewFolderName(e.target.value)}
-                placeholder="フォルダ名"
+                placeholder={t('folderName')}
                 className="h-7 text-sm"
                 autoFocus
                 onKeyDown={(e) => {
@@ -187,7 +190,7 @@ export function WorkspaceTreeItem({
                 {isSubmitting ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
-                  '作成'
+                  tCommon('create')
                 )}
               </Button>
             </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { Search, X, Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
@@ -17,13 +18,14 @@ export function SessionSearch({
   onClear,
   isSearching,
 }: SessionSearchProps) {
+  const t = useTranslations('session');
   return (
     <div className="px-4 pb-2">
       <div className="relative">
         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           type="text"
-          placeholder="チャットを検索..."
+          placeholder={t('searchPlaceholder')}
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
           className="pl-8 pr-8 h-9"

@@ -1,52 +1,52 @@
 /**
- * Claude Agent SDK のビルトインツール定義
+ * Claude Agent SDK built-in tool definitions
  */
 
 export interface ToolDefinition {
   name: string;
   displayName: string;
-  description: string;
+  descriptionKey: string; // Translation key in tools.descriptions namespace
   category: 'read' | 'write' | 'execute' | 'web' | 'other';
   isDangerous: boolean;
 }
 
 /**
- * Claude Agent SDK で使用される主要なツール
+ * Main tools used by Claude Agent SDK
  */
 export const BUILTIN_TOOLS: ToolDefinition[] = [
   // Read-only tools
   {
     name: 'Read',
     displayName: 'Read',
-    description: 'ファイルを読み取る',
+    descriptionKey: 'Read',
     category: 'read',
     isDangerous: false,
   },
   {
     name: 'Glob',
     displayName: 'Glob',
-    description: 'パターンでファイルを検索',
+    descriptionKey: 'Glob',
     category: 'read',
     isDangerous: false,
   },
   {
     name: 'Grep',
     displayName: 'Grep',
-    description: 'ファイル内容を検索',
+    descriptionKey: 'Grep',
     category: 'read',
     isDangerous: false,
   },
   {
     name: 'LSP',
     displayName: 'LSP',
-    description: 'コード定義・参照を取得',
+    descriptionKey: 'LSP',
     category: 'read',
     isDangerous: false,
   },
   {
     name: 'NotebookRead',
     displayName: 'NotebookRead',
-    description: 'Jupyter Notebookを読み取る',
+    descriptionKey: 'NotebookRead',
     category: 'read',
     isDangerous: false,
   },
@@ -55,21 +55,21 @@ export const BUILTIN_TOOLS: ToolDefinition[] = [
   {
     name: 'Write',
     displayName: 'Write',
-    description: 'ファイルを作成・上書き',
+    descriptionKey: 'Write',
     category: 'write',
     isDangerous: true,
   },
   {
     name: 'Edit',
     displayName: 'Edit',
-    description: 'ファイルを編集',
+    descriptionKey: 'Edit',
     category: 'write',
     isDangerous: true,
   },
   {
     name: 'NotebookEdit',
     displayName: 'NotebookEdit',
-    description: 'Jupyter Notebookを編集',
+    descriptionKey: 'NotebookEdit',
     category: 'write',
     isDangerous: true,
   },
@@ -78,14 +78,14 @@ export const BUILTIN_TOOLS: ToolDefinition[] = [
   {
     name: 'Bash',
     displayName: 'Bash',
-    description: 'シェルコマンドを実行',
+    descriptionKey: 'Bash',
     category: 'execute',
     isDangerous: true,
   },
   {
     name: 'KillShell',
     displayName: 'KillShell',
-    description: 'シェルプロセスを終了',
+    descriptionKey: 'KillShell',
     category: 'execute',
     isDangerous: true,
   },
@@ -94,14 +94,14 @@ export const BUILTIN_TOOLS: ToolDefinition[] = [
   {
     name: 'WebFetch',
     displayName: 'WebFetch',
-    description: 'URLからコンテンツを取得',
+    descriptionKey: 'WebFetch',
     category: 'web',
     isDangerous: false,
   },
   {
     name: 'WebSearch',
     displayName: 'WebSearch',
-    description: 'Web検索を実行',
+    descriptionKey: 'WebSearch',
     category: 'web',
     isDangerous: false,
   },
@@ -110,84 +110,79 @@ export const BUILTIN_TOOLS: ToolDefinition[] = [
   {
     name: 'Task',
     displayName: 'Task',
-    description: 'サブタスクを実行',
+    descriptionKey: 'Task',
     category: 'other',
     isDangerous: false,
   },
   {
     name: 'TaskOutput',
     displayName: 'TaskOutput',
-    description: 'タスク出力を取得',
+    descriptionKey: 'TaskOutput',
     category: 'other',
     isDangerous: false,
   },
   {
     name: 'TodoWrite',
     displayName: 'TodoWrite',
-    description: 'TODOリストを管理',
+    descriptionKey: 'TodoWrite',
     category: 'other',
     isDangerous: false,
   },
   {
     name: 'AskUserQuestion',
     displayName: 'AskUserQuestion',
-    description: 'ユーザーに質問',
+    descriptionKey: 'AskUserQuestion',
     category: 'other',
     isDangerous: false,
   },
   {
     name: 'Skill',
     displayName: 'Skill',
-    description: 'プロジェクトスキルを実行',
+    descriptionKey: 'Skill',
     category: 'other',
     isDangerous: false,
   },
 ];
 
 /**
- * カテゴリ名の日本語ラベル
+ * Category keys for translation (use with t('tools.categories.${key}'))
  */
-export const TOOL_CATEGORIES = {
-  read: '読み取り専用',
-  write: 'ファイル書き込み',
-  execute: 'コマンド実行',
-  web: 'Web操作',
-  other: 'その他',
-} as const;
+export const TOOL_CATEGORY_KEYS = ['read', 'write', 'execute', 'web', 'other'] as const;
 
-export type ToolCategory = keyof typeof TOOL_CATEGORIES;
+export type ToolCategory = (typeof TOOL_CATEGORY_KEYS)[number];
 
 /**
- * カテゴリでツールをグループ化
+ * Group tools by category
+ * Use with useTranslations('tools') to get translated labels
  */
 export function getToolsByCategory(): Array<{
   category: ToolCategory;
-  label: string;
+  categoryKey: string;
   tools: ToolDefinition[];
 }> {
-  return Object.entries(TOOL_CATEGORIES).map(([key, label]) => ({
-    category: key as ToolCategory,
-    label,
+  return TOOL_CATEGORY_KEYS.map((key) => ({
+    category: key,
+    categoryKey: `categories.${key}`,
     tools: BUILTIN_TOOLS.filter((t) => t.category === key),
   }));
 }
 
 /**
- * ツール名からツール定義を取得
+ * Get tool definition by name
  */
 export function getToolByName(name: string): ToolDefinition | undefined {
   return BUILTIN_TOOLS.find((t) => t.name === name);
 }
 
 /**
- * 全ツール名のリストを取得
+ * Get list of all tool names
  */
 export function getAllToolNames(): string[] {
   return BUILTIN_TOOLS.map((t) => t.name);
 }
 
 /**
- * 危険なツール名のリストを取得
+ * Get list of dangerous tool names
  */
 export function getDangerousToolNames(): string[] {
   return BUILTIN_TOOLS.filter((t) => t.isDangerous).map((t) => t.name);

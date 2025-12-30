@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Trash2, MoreHorizontal, Archive, ArchiveRestore, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -34,6 +35,8 @@ interface SessionItemProps {
 export function SessionItem({ session, onDelete, onToggleArchive, onSetTag, onClick }: SessionItemProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const t = useTranslations('session');
+  const tCommon = useTranslations('common');
   const isActive = pathname === `/chat/${session.id}`;
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -114,18 +117,18 @@ export function SessionItem({ session, onDelete, onToggleArchive, onSetTag, onCl
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={handleSetTag}>
               <Tag className="h-4 w-4 mr-2" />
-              タグ設定
+              {t('setTag')}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleToggleArchive}>
               {session.isArchived ? (
                 <>
                   <ArchiveRestore className="h-4 w-4 mr-2" />
-                  アーカイブ解除
+                  {t('unarchive')}
                 </>
               ) : (
                 <>
                   <Archive className="h-4 w-4 mr-2" />
-                  アーカイブ
+                  {t('archive')}
                 </>
               )}
             </DropdownMenuItem>
@@ -134,7 +137,7 @@ export function SessionItem({ session, onDelete, onToggleArchive, onSetTag, onCl
               onClick={handleDeleteClick}
             >
               <Trash2 className="h-4 w-4 mr-2" />
-              削除
+              {tCommon('delete')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -145,13 +148,13 @@ export function SessionItem({ session, onDelete, onToggleArchive, onSetTag, onCl
           <AlertDialogHeader>
             <AlertDialogTitle>{session.title}</AlertDialogTitle>
             <AlertDialogDescription>
-              本当に削除しますか？
+              {t('deleteConfirm')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>キャンセル</AlertDialogCancel>
+            <AlertDialogCancel>{tCommon('cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmDelete}>
-              削除
+              {tCommon('delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useSettings } from '@/hooks/useSettings';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -19,6 +20,9 @@ import {
 import { AlertTriangle, BarChart3 } from 'lucide-react';
 
 export default function DangerSettingsPage() {
+  const t = useTranslations('settings.danger');
+  const tCommon = useTranslations('common');
+  const tSettings = useTranslations('settings');
   const { settings, isLoading, error, isSaving, updateDangerSettings } = useSettings();
   const [showUsageDialog, setShowUsageDialog] = useState(false);
 
@@ -46,7 +50,7 @@ export default function DangerSettingsPage() {
       <div className="max-w-2xl mx-auto">
         <Card>
           <CardContent className="pt-6">
-            <p className="text-destructive">設定の読み込みに失敗しました: {error}</p>
+            <p className="text-destructive">{tSettings('loadError')} {error}</p>
           </CardContent>
         </Card>
       </div>
@@ -59,19 +63,18 @@ export default function DangerSettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-destructive">
             <AlertTriangle className="h-5 w-5" />
-            Danger Zone
+            {t('title')}
           </CardTitle>
           <CardDescription>
-            これらの設定は上級者向けです。変更前に内容をよくご確認ください。
+            {t('description')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-4">
             <div className="border-b border-destructive/20 pb-4">
-              <h3 className="text-sm font-medium mb-3">使用量表示</h3>
+              <h3 className="text-sm font-medium mb-3">{t('showUsage.title')}</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                サイドバーに使用量表示へのリンクを追加します。
-                ローカルのClaude Code認証情報を使用してサブスクリプションの利用状況を確認できます。
+                {t('showUsage.description')}
               </p>
               {isLoading ? (
                 <div className="flex items-center space-x-3">
@@ -88,7 +91,7 @@ export default function DangerSettingsPage() {
                   />
                   <Label htmlFor="show-usage" className="flex items-center gap-2 cursor-pointer">
                     <BarChart3 className="h-4 w-4 text-muted-foreground" />
-                    <span>使用量表示を有効化</span>
+                    <span>{t('showUsage.label')}</span>
                   </Label>
                 </div>
               )}
@@ -102,25 +105,24 @@ export default function DangerSettingsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-amber-500" />
-              注意
+              {t('showUsage.dialogTitle')}
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-3 text-sm text-muted-foreground">
                 <p>
-                  この設定を有効にすると、ローカルのClaude Code認証情報を
-                  使用してサブスクリプションの利用量を表示します。
+                  {t('showUsage.dialogDescription')}
                 </p>
                 <ul className="list-disc list-inside space-y-1">
-                  <li>この機能は個人利用のみを想定しています</li>
-                  <li>サードパーティへのサブスク認証提供はAnthropicの利用規約に抵触する可能性があります</li>
-                  <li>自己責任でご利用ください</li>
+                  <li>{t('showUsage.dialogPoint1')}</li>
+                  <li>{t('showUsage.dialogPoint2')}</li>
+                  <li>{t('showUsage.dialogPoint3')}</li>
                 </ul>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleCancelShowUsage}>キャンセル</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmShowUsage}>理解して有効化</AlertDialogAction>
+            <AlertDialogCancel onClick={handleCancelShowUsage}>{tCommon('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmShowUsage}>{t('showUsage.enable')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

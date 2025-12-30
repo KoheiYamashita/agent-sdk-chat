@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -74,6 +75,7 @@ export function IconPicker({
   onChange,
   disabled = false,
 }: IconPickerProps) {
+  const t = useTranslations('iconPicker');
   const [isOpen, setIsOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -154,7 +156,7 @@ export function IconPicker({
           </div>
           <span className="text-sm">
             {hasValidImage
-              ? '画像アイコン'
+              ? t('imageIcon')
               : `${selectedIcon.name} / ${selectedColor.label}`}
           </span>
         </Button>
@@ -162,12 +164,12 @@ export function IconPicker({
       <PopoverContent className="w-80" align="start">
         <Tabs defaultValue={activeTab}>
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="icon">アイコン</TabsTrigger>
-            <TabsTrigger value="image">画像</TabsTrigger>
+            <TabsTrigger value="icon">{t('iconTab')}</TabsTrigger>
+            <TabsTrigger value="image">{t('imageTab')}</TabsTrigger>
           </TabsList>
           <TabsContent value="icon" className="space-y-4 pt-4">
             <div>
-              <h4 className="text-sm font-medium mb-2">アイコン</h4>
+              <h4 className="text-sm font-medium mb-2">{t('iconLabel')}</h4>
               <div className="grid grid-cols-7 gap-1">
                 {ICONS.map(({ name, Icon }) => (
                   <Button
@@ -184,7 +186,7 @@ export function IconPicker({
               </div>
             </div>
             <div>
-              <h4 className="text-sm font-medium mb-2">色</h4>
+              <h4 className="text-sm font-medium mb-2">{t('colorLabel')}</h4>
               <div className="flex gap-1">
                 {COLORS.map(({ name, label, bg }) => (
                   <button
@@ -225,17 +227,17 @@ export function IconPicker({
                 {isUploading ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    処理中...
+                    {t('processing')}
                   </>
                 ) : (
                   <>
                     <ImagePlus className="h-4 w-4 mr-2" />
-                    画像を選択
+                    {t('selectImage')}
                   </>
                 )}
               </Button>
               <p className="text-xs text-muted-foreground">
-                PNG, JPG, GIF, WebP形式に対応（128pxに最適化）
+                {t('imageFormats')}
               </p>
             </div>
             {hasValidImage && (
@@ -260,13 +262,13 @@ export function IconPicker({
                   onClick={handleClearImage}
                 >
                   <X className="h-4 w-4 mr-2" />
-                  画像を削除してアイコンに戻す
+                  {t('removeImage')}
                 </Button>
               </div>
             )}
             {imageError && (
               <p className="text-xs text-destructive text-center">
-                画像を読み込めませんでした
+                {t('imageLoadError')}
               </p>
             )}
           </TabsContent>

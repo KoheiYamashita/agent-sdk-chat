@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { GitBranch, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +13,7 @@ interface GitCloneFormProps {
 }
 
 export function GitCloneForm({ onCloneSuccess }: GitCloneFormProps) {
+  const t = useTranslations('gitClone');
   const [repositoryUrl, setRepositoryUrl] = useState('');
   const [targetFolderName, setTargetFolderName] = useState('');
   const [isCloning, setIsCloning] = useState(false);
@@ -19,7 +21,7 @@ export function GitCloneForm({ onCloneSuccess }: GitCloneFormProps) {
 
   const handleClone = useCallback(async () => {
     if (!repositoryUrl.trim()) {
-      setError('リポジトリURLを入力してください');
+      setError(t('errors.urlRequired'));
       return;
     }
 
@@ -48,44 +50,44 @@ export function GitCloneForm({ onCloneSuccess }: GitCloneFormProps) {
         let errorMessage = result.error;
         switch (result.errorCode) {
           case 'INVALID_URL':
-            errorMessage = '無効なGitリポジトリURLです';
+            errorMessage = t('errors.invalidUrl');
             break;
           case 'REPOSITORY_NOT_FOUND':
-            errorMessage = 'リポジトリが見つかりません。URLを確認してください';
+            errorMessage = t('errors.notFound');
             break;
           case 'AUTHENTICATION_FAILED':
-            errorMessage = '認証に失敗しました。このリポジトリへのアクセス権限を確認してください';
+            errorMessage = t('errors.authFailed');
             break;
           case 'FOLDER_EXISTS':
-            errorMessage = `フォルダ "${targetFolderName || 'リポジトリ名'}" は既に存在します。別の名前を指定してください`;
+            errorMessage = t('errors.folderExists', { name: targetFolderName || 'repo' });
             break;
           case 'TIMEOUT':
-            errorMessage = 'クローン操作がタイムアウトしました。大きなリポジトリの場合は時間がかかる場合があります';
+            errorMessage = t('errors.timeout');
             break;
           case 'PATH_OUTSIDE_WORKSPACE':
-            errorMessage = 'ワークスペース外へのアクセスは許可されていません';
+            errorMessage = t('errors.pathTraversal');
             break;
         }
         setError(errorMessage);
       }
     } catch (err) {
       console.error('Clone error:', err);
-      setError('クローン処理中にエラーが発生しました');
+      setError(t('errors.generic'));
     } finally {
       setIsCloning(false);
     }
-  }, [repositoryUrl, targetFolderName, onCloneSuccess]);
+  }, [repositoryUrl, targetFolderName, onCloneSuccess, t]);
 
   return (
     <div className="p-4 space-y-4">
       <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
         <GitBranch className="h-4 w-4" />
-        <span>Gitリポジトリをクローン</span>
+        <span>{t('title')}</span>
       </div>
 
       <div className="space-y-3">
         <div className="space-y-2">
-          <Label htmlFor="repository-url">リポジトリURL</Label>
+          <Label htmlFor="repository-url">{t('repoUrl')}</Label>
           <Input
             id="repository-url"
             type="text"
@@ -98,13 +100,13 @@ export function GitCloneForm({ onCloneSuccess }: GitCloneFormProps) {
 
         <div className="space-y-2">
           <Label htmlFor="target-folder">
-            クローン先フォルダ名
-            <span className="text-muted-foreground text-xs ml-1">(オプション)</span>
+            {t('targetFolder')}
+            <span className="text-muted-foreground text-xs ml-1">({t('optional')})</span>
           </Label>
           <Input
             id="target-folder"
             type="text"
-            placeholder="空欄の場合はリポジトリ名を使用"
+            placeholder={t('targetFolderPlaceholder')}
             value={targetFolderName}
             onChange={(e) => setTargetFolderName(e.target.value)}
             disabled={isCloning}
@@ -126,17 +128,17 @@ export function GitCloneForm({ onCloneSuccess }: GitCloneFormProps) {
           {isCloning ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              クローン中...
+              {t('cloning')}
             </>
           ) : (
-            'クローン開始'
+            t('clone')
           )}
         </Button>
       </div>
 
       {isCloning && (
         <p className="text-xs text-muted-foreground text-center">
-          リポジトリのサイズによっては時間がかかる場合があります
+          {t('largeRepoHint')}
         </p>
       )}
     </div>

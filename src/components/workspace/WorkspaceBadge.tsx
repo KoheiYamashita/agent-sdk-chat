@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Folder } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -24,10 +25,11 @@ interface WorkspaceBadgeProps {
 }
 
 export function WorkspaceBadge({ path, className }: WorkspaceBadgeProps) {
+  const t = useTranslations('workspaceBadge');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Display path (relative from workspace root)
-  const displayPath = path === '.' || !path ? 'デフォルト' : path;
+  const displayPath = path === '.' || !path ? t('default') : path;
 
   // Truncate long paths for display
   const maxLength = 20;
@@ -67,10 +69,10 @@ export function WorkspaceBadge({ path, className }: WorkspaceBadgeProps) {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Folder className="h-5 w-5" />
-                作業スペース
+                {t('workspace')}
               </DialogTitle>
               <DialogDescription>
-                現在の作業ディレクトリ
+                {t('currentDir')}
               </DialogDescription>
             </DialogHeader>
             <div className="mt-4">
@@ -78,7 +80,7 @@ export function WorkspaceBadge({ path, className }: WorkspaceBadgeProps) {
                 <code className="text-sm break-all">{displayPath}</code>
               </div>
               <p className="text-xs text-muted-foreground mt-3">
-                このディレクトリ内でClaudeがファイル操作を行います。
+                {t('dirHint')}
               </p>
             </div>
           </DialogContent>

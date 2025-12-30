@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { FolderOpen, GitBranch } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -26,6 +27,8 @@ export function WorkspaceSelector({
   selectedPath,
   onSelect,
 }: WorkspaceSelectorProps) {
+  const t = useTranslations('workspaceSelector');
+  const tWorkspace = useTranslations('workspace');
   const [localSelectedPath, setLocalSelectedPath] = useState<string | null>(selectedPath);
   const [displayPath, setDisplayPath] = useState<string | null>(null);
 
@@ -46,10 +49,10 @@ export function WorkspaceSelector({
     <div className="flex flex-col items-center justify-center min-h-[400px] p-4">
       <div className="text-center mb-8">
         <h2 className="text-2xl font-semibold mb-3 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-          新しいチャットを開始
+          {t('startNewChat')}
         </h2>
         <p className="text-muted-foreground text-sm">
-          作業スペースを選択してメッセージを入力してください
+          {t('selectWorkspaceHint')}
         </p>
       </div>
 
@@ -59,10 +62,10 @@ export function WorkspaceSelector({
             <div className="p-1.5 rounded-md bg-foreground/10">
               <FolderOpen className="h-4 w-4 text-foreground/80" />
             </div>
-            作業スペースを選択
+            {t('selectWorkspace')}
           </CardTitle>
           <CardDescription>
-            Claudeが操作するディレクトリを選択してください
+            {t('selectWorkspaceDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -70,11 +73,11 @@ export function WorkspaceSelector({
             <TabsList className="w-full mb-3">
               <TabsTrigger value="folder" className="flex-1 gap-1.5">
                 <FolderOpen className="h-3.5 w-3.5" />
-                フォルダ選択
+                {t('selectFolder')}
               </TabsTrigger>
               <TabsTrigger value="git" className="flex-1 gap-1.5">
                 <GitBranch className="h-3.5 w-3.5" />
-                Git Clone
+                {tWorkspace('clone')}
               </TabsTrigger>
             </TabsList>
 
@@ -96,7 +99,7 @@ export function WorkspaceSelector({
 
           {displayPath && (
             <p className="text-xs text-muted-foreground mt-3">
-              選択中: <code className="bg-foreground/10 text-foreground/80 px-1.5 py-0.5 rounded">{displayPath}</code>
+              {t('selected')} <code className="bg-foreground/10 text-foreground/80 px-1.5 py-0.5 rounded">{displayPath}</code>
             </p>
           )}
         </CardContent>

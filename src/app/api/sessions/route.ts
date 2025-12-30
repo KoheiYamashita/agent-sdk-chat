@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { createServerTranslator } from '@/lib/i18n/server';
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -66,9 +67,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST() {
   try {
+    const t = await createServerTranslator('session');
     const session = await prisma.session.create({
       data: {
-        title: '新規チャット',
+        title: t('newChat'),
       },
     });
 

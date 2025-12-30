@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useCallback, useRef, useState, useMemo, useEffect } from 'react';
 import { Plus, Settings, BarChart3, FolderOpen } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
@@ -29,6 +30,7 @@ interface SidebarContentProps {
 function SidebarContent({ onNavigate }: SidebarContentProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const t = useTranslations('sidebar');
   const { resetChat } = useSidebar();
   const { sessions, isLoading, hasMore, isLoadingMore, loadMore, deleteSession, toggleArchive, setSessionTag } = useSessions();
   const { query, setQuery, results, isSearching, clearSearch } = useSessionSearch();
@@ -97,7 +99,7 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
       <div className="p-4 pb-2">
         <Button className="w-full" onClick={handleNewChat}>
           <Plus className="h-4 w-4 mr-2" />
-          新規チャット
+          {t('newChat')}
         </Button>
       </div>
 
@@ -132,21 +134,21 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
         <Link href="/files" onClick={onNavigate}>
           <Button variant="ghost" className="w-full justify-start">
             <FolderOpen className="h-4 w-4 mr-2" />
-            ファイル
+            {t('files')}
           </Button>
         </Link>
         {showUsage && (
           <Link href="/usage" onClick={onNavigate}>
             <Button variant="ghost" className="w-full justify-start">
               <BarChart3 className="h-4 w-4 mr-2" />
-              使用量
+              {t('usage')}
             </Button>
           </Link>
         )}
         <Link href="/settings" onClick={onNavigate}>
           <Button variant="ghost" className="w-full justify-start">
             <Settings className="h-4 w-4 mr-2" />
-            設定
+            {t('settings')}
           </Button>
         </Link>
       </div>
@@ -208,6 +210,7 @@ interface MobileSidebarProps {
 }
 
 export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
+  const t = useTranslations('sidebar');
   const handleNavigate = () => {
     onOpenChange(false);
   };
@@ -216,7 +219,7 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="w-72 p-0 flex flex-col">
         <SheetHeader className="p-4 pb-0">
-          <SheetTitle>メニュー</SheetTitle>
+          <SheetTitle>{t('menu')}</SheetTitle>
         </SheetHeader>
         <div className="flex-1 flex flex-col overflow-hidden">
           <SidebarContent onNavigate={handleNavigate} />

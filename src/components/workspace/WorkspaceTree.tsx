@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Folder, Plus, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,7 @@ export function WorkspaceTree({
   onSelect,
   className,
 }: WorkspaceTreeProps) {
+  const t = useTranslations('workspace');
   const [rootItems, setRootItems] = useState<DirectoryItem[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -133,7 +135,7 @@ export function WorkspaceTree({
           onClick={handleSelectRoot}
         >
           <Folder className="h-4 w-4 text-primary shrink-0" />
-          <span className="text-sm font-medium">{basePath} (デフォルト)</span>
+          <span className="text-sm font-medium">{basePath} ({t('default')})</span>
         </div>
 
         {/* Root children */}
@@ -158,7 +160,7 @@ export function WorkspaceTree({
               type="text"
               value={newFolderName}
               onChange={(e) => setNewFolderName(e.target.value)}
-              placeholder="フォルダ名"
+              placeholder={t('folderName')}
               className="h-7 text-sm"
               autoFocus
               onKeyDown={(e) => {
@@ -180,7 +182,7 @@ export function WorkspaceTree({
               {isSubmitting ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
-                '作成'
+                t('create')
               )}
             </Button>
           </div>
@@ -192,7 +194,7 @@ export function WorkspaceTree({
             onClick={() => setIsCreatingFolder(true)}
           >
             <Plus className="h-4 w-4" />
-            新しいフォルダを作成
+            {t('createNewFolder')}
           </Button>
         )}
       </div>

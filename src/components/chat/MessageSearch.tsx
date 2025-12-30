@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { Search, X, ChevronUp, ChevronDown, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { useMessageSearch } from '@/contexts/MessageSearchContext';
 import { cn } from '@/lib/utils';
 
 export function MessageSearch() {
+  const t = useTranslations('chat');
   const {
     query,
     setQuery,
@@ -61,7 +63,7 @@ export function MessageSearch() {
       <Input
         ref={inputRef}
         type="text"
-        placeholder="メッセージを検索..."
+        placeholder={t('searchPlaceholder')}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onKeyDown={handleKeyDown}
@@ -75,7 +77,7 @@ export function MessageSearch() {
           {isSearching ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : totalServerMatches === 0 ? (
-            '0件'
+            t('noResults')
           ) : (
             `${currentMatchIndex + 1}/${totalServerMatches}`
           )}
@@ -88,7 +90,7 @@ export function MessageSearch() {
           className="h-7 w-7"
           onClick={goToPrev}
           disabled={totalServerMatches === 0 || isSearching}
-          title="前のマッチへ（古い方向）"
+          title={t('prevMatch')}
         >
           <ChevronUp className="h-4 w-4" />
         </Button>
@@ -98,7 +100,7 @@ export function MessageSearch() {
           className="h-7 w-7"
           onClick={goToNext}
           disabled={totalServerMatches === 0 || isSearching}
-          title="次のマッチへ（新しい方向）"
+          title={t('nextMatch')}
         >
           <ChevronDown className="h-4 w-4" />
         </Button>

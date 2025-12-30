@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,6 +28,8 @@ export function TitleGenerationSettingsForm({
   onChange,
   disabled = false,
 }: TitleGenerationSettingsFormProps) {
+  const t = useTranslations('settings.titleGeneration');
+
   const handleEnabledChange = (checked: boolean) => {
     onChange({
       ...settings,
@@ -68,13 +71,13 @@ export function TitleGenerationSettingsForm({
         <Label htmlFor="title-gen-enabled" className="flex-1 cursor-pointer">
           <div className="flex items-center gap-2">
             <Type className="h-4 w-4 text-primary" />
-            <span className="font-medium">タイトル自動生成</span>
+            <span className="font-medium">{t('enabled')}</span>
             <Badge variant="secondary" className="text-xs">
-              推奨
+              {t('recommended')}
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground mt-1">
-            新規チャット開始時、最初のアシスタント応答後にタイトルを自動生成します。
+            {t('enabledDescription')}
           </p>
         </Label>
       </div>
@@ -83,7 +86,7 @@ export function TitleGenerationSettingsForm({
         <div className="space-y-2">
           <Label htmlFor="title-gen-model" className="text-sm font-medium flex items-center gap-2">
             <Bot className="h-4 w-4 text-muted-foreground" />
-            使用モデル
+            {t('model')}
           </Label>
           <Select
             value={settings.model || 'auto'}
@@ -91,12 +94,12 @@ export function TitleGenerationSettingsForm({
             disabled={disabled || !settings.enabled}
           >
             <SelectTrigger id="title-gen-model" className="w-full">
-              <SelectValue placeholder="モデルを選択" />
+              <SelectValue placeholder={t('modelPlaceholder')} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="auto">
                 <div className="flex items-center gap-2">
-                  <span>自動（{defaultHaikuName}）</span>
+                  <span>{t('modelAuto', { model: defaultHaikuName })}</span>
                 </div>
               </SelectItem>
               {models.map((model) => (
@@ -107,26 +110,27 @@ export function TitleGenerationSettingsForm({
             </SelectContent>
           </Select>
           <p className="text-xs text-muted-foreground">
-            タイトル生成に使用するモデルを選択します。軽量なHaikuモデルがおすすめです。
+            {t('modelDescription')}
           </p>
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="title-gen-prompt" className="text-sm font-medium">
-            プロンプトテンプレート
+            {t('prompt')}
           </Label>
           <Textarea
             id="title-gen-prompt"
             value={settings.prompt}
             onChange={(e) => handlePromptChange(e.target.value)}
             disabled={disabled || !settings.enabled}
-            placeholder="タイトル生成用のプロンプト..."
+            placeholder={t('promptPlaceholder')}
             className="min-h-[200px] font-mono text-sm"
           />
           <p className="text-xs text-muted-foreground">
             <code className="bg-muted px-1 py-0.5 rounded">&lt;chat_history&gt;</code>
-            はユーザーメッセージとアシスタント応答に置換されます。
-            出力はJSON形式 <code className="bg-muted px-1 py-0.5 rounded">{`{ "title": "..." }`}</code> を想定しています。
+            {t('promptDescriptionPart1')}
+            <code className="bg-muted px-1 py-0.5 rounded">{`{ "title": "..." }`}</code>
+            {t('promptDescriptionPart2')}
           </p>
         </div>
       </div>

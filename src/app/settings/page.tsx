@@ -26,7 +26,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { isValidImageUrl } from '@/lib/image-utils';
-import { Brain, Bot, ChevronRight, Clock, Wand2, AlertTriangle } from 'lucide-react';
+import { Brain, Bot, ChevronRight, Clock, Wand2, AlertTriangle, Globe } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { PermissionMode, SandboxSettings, AppearanceSettings, TitleGenerationSettings, SelectableModel } from '@/types';
 
 // Render model icon (image or Bot icon)
@@ -47,8 +48,14 @@ function ModelIcon({ model }: { model: SelectableModel }) {
 }
 
 export default function SettingsPage() {
+  const t = useTranslations('settings');
+  const tCommon = useTranslations('common');
   const { settings, isLoading, error, isSaving, updateGeneralSettings, updateAppearanceSettings, updateTitleGenerationSettings, saveSettings } = useSettings();
   const { selectableModels, standardModels, isLoading: isLoadingModels } = useAllModels();
+
+  const handleLanguageChange = async (language: 'ja' | 'en' | 'zh') => {
+    await updateGeneralSettings({ language });
+  };
 
   const handleDefaultModelChange = async (modelId: string) => {
     await updateGeneralSettings({ defaultModel: modelId });
@@ -93,7 +100,7 @@ export default function SettingsPage() {
       <div className="max-w-2xl mx-auto">
         <Card>
           <CardContent className="pt-6">
-            <p className="text-destructive">設定の読み込みに失敗しました: {error}</p>
+            <p className="text-destructive">{t('loadError')} {error}</p>
           </CardContent>
         </Card>
       </div>
@@ -106,10 +113,10 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <div className="h-1.5 w-1.5 rounded-full bg-foreground/50" />
-            カスタムモデル
+            {t('customModels.title')}
           </CardTitle>
           <CardDescription>
-            システムプロンプトを設定したカスタムモデルを作成・管理します。
+            {t('customModels.description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -117,7 +124,7 @@ export default function SettingsPage() {
             <Link href="/settings/models">
               <div className="flex items-center gap-3">
                 <Bot className="h-4 w-4 text-primary" />
-                <span>カスタムモデルを管理</span>
+                <span>{t('customModels.manage')}</span>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </Link>
@@ -129,10 +136,10 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <div className="h-1.5 w-1.5 rounded-full bg-foreground/50" />
-            Skills
+            {t('skills.title')}
           </CardTitle>
           <CardDescription>
-            Claude Agent SDKのSkillsを管理します。Skillsは再利用可能な指示をClaudeに提供します。
+            {t('skills.description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -140,7 +147,7 @@ export default function SettingsPage() {
             <Link href="/settings/skills">
               <div className="flex items-center gap-3">
                 <Wand2 className="h-4 w-4 text-primary" />
-                <span>Skillsを管理</span>
+                <span>{t('skills.manage')}</span>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </Link>
@@ -152,10 +159,10 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <div className="h-1.5 w-1.5 rounded-full bg-foreground/50" />
-            タイトル自動生成
+            {t('titleGeneration.title')}
           </CardTitle>
           <CardDescription>
-            新規チャット開始時に、会話内容からタイトルを自動生成します。
+            {t('titleGeneration.description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -186,19 +193,46 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <div className="h-1.5 w-1.5 rounded-full bg-foreground/50" />
-            一般設定
+            {t('general.title')}
           </CardTitle>
           <CardDescription>
-            アプリケーションの基本設定を変更します。
+            {t('general.description')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-4">
             <div>
-              <h3 className="text-sm font-medium mb-3">デフォルトモデル</h3>
+              <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
+                <Globe className="h-4 w-4 text-muted-foreground" />
+                {t('language.title')}
+              </h3>
               <p className="text-sm text-muted-foreground mb-4">
-                新しいチャットで使用するデフォルトのモデルを設定します。
-                チャット画面で個別に変更することもできます。
+                {t('language.description')}
+              </p>
+              {isLoading ? (
+                <Skeleton className="h-10 w-full max-w-xs" />
+              ) : (
+                <Select
+                  value={settings?.general.language ?? 'ja'}
+                  onValueChange={(value) => handleLanguageChange(value as 'ja' | 'en' | 'zh')}
+                  disabled={isSaving}
+                >
+                  <SelectTrigger className="w-full max-w-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ja">日本語</SelectItem>
+                    <SelectItem value="en">English</SelectItem>
+                    <SelectItem value="zh">中文</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+
+            <div className="border-t pt-4">
+              <h3 className="text-sm font-medium mb-3">{t('general.defaultModel')}</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                {t('general.defaultModelDescription')}
               </p>
               {isLoading || isLoadingModels ? (
                 <Skeleton className="h-10 w-full" />
@@ -209,11 +243,11 @@ export default function SettingsPage() {
                   disabled={isSaving}
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="モデルを選択" />
+                    <SelectValue placeholder={t('general.selectModel')} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      <SelectLabel>標準モデル</SelectLabel>
+                      <SelectLabel>{t('general.standardModels')}</SelectLabel>
                       {selectableModels
                         .filter((m) => m.type === 'standard')
                         .map((model) => (
@@ -229,7 +263,7 @@ export default function SettingsPage() {
                       <>
                         <SelectSeparator />
                         <SelectGroup>
-                          <SelectLabel>カスタムモデル</SelectLabel>
+                          <SelectLabel>{t('general.customModels')}</SelectLabel>
                           {selectableModels
                             .filter((m) => m.type === 'custom')
                             .map((model) => (
@@ -249,10 +283,9 @@ export default function SettingsPage() {
             </div>
 
             <div className="border-t pt-4">
-              <h3 className="text-sm font-medium mb-3">デフォルト権限モード</h3>
+              <h3 className="text-sm font-medium mb-3">{t('general.defaultPermissionMode')}</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                新しいチャットで使用するデフォルトの権限モードを設定します。
-                チャット画面で個別に変更することもできます。
+                {t('general.defaultPermissionModeDescription')}
               </p>
               {isLoading ? (
                 <div className="space-y-3">
@@ -276,10 +309,9 @@ export default function SettingsPage() {
             </div>
 
             <div className="border-t pt-4">
-              <h3 className="text-sm font-medium mb-3">拡張思考（Thinking）</h3>
+              <h3 className="text-sm font-medium mb-3">{t('general.thinking')}</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Claude の拡張思考機能を有効にすると、より深い推論が可能になります。
-                トークン使用量が増加する場合があります。
+                {t('general.thinkingDescription')}
               </p>
               {isLoading ? (
                 <div className="flex items-center space-x-3">
@@ -296,17 +328,16 @@ export default function SettingsPage() {
                   />
                   <Label htmlFor="thinking-enabled" className="flex items-center gap-2 cursor-pointer">
                     <Brain className="h-4 w-4 text-purple-500" />
-                    <span>デフォルトでThinkingを有効にする</span>
+                    <span>{t('general.enableThinkingByDefault')}</span>
                   </Label>
                 </div>
               )}
             </div>
 
             <div className="border-t pt-4">
-              <h3 className="text-sm font-medium mb-3">ツール承認タイムアウト</h3>
+              <h3 className="text-sm font-medium mb-3">{t('general.approvalTimeout')}</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                ツール実行の承認待ち時間を設定します。タイムアウト時は自動的に停止します。
-                0を設定すると無制限になります。
+                {t('general.approvalTimeoutDescription')}
               </p>
               {isLoading ? (
                 <Skeleton className="h-10 w-32" />
@@ -328,7 +359,7 @@ export default function SettingsPage() {
                     disabled={isSaving}
                     className="w-24"
                   />
-                  <span className="text-sm text-muted-foreground">分</span>
+                  <span className="text-sm text-muted-foreground">{tCommon('minutes')}</span>
                 </div>
               )}
             </div>
@@ -340,11 +371,10 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <div className="h-1.5 w-1.5 rounded-full bg-foreground/50" />
-            デフォルトで許可するツール
+            {t('permissions.title')}
           </CardTitle>
           <CardDescription>
-            チェックしたツールは新しいチャット開始時から自動的に許可されます。
-            チェックしていないツールは毎回確認を求めます。
+            {t('permissions.description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -374,11 +404,10 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <div className="h-1.5 w-1.5 rounded-full bg-foreground/50" />
-            サンドボックス設定
+            {t('sandbox.title')}
           </CardTitle>
           <CardDescription>
-            Claude Codeの実行環境を制限し、安全性を高めます。
-            サンドボックスモードでは、指定したワークスペース内でのみ動作します。
+            {t('sandbox.description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -408,10 +437,10 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <div className="h-1.5 w-1.5 rounded-full bg-foreground/50" />
-            外観設定
+            {t('appearance.title')}
           </CardTitle>
           <CardDescription>
-            チャット画面に表示されるユーザーとClaudeのアイコンをカスタマイズします。
+            {t('appearance.description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -442,10 +471,10 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-destructive">
             <AlertTriangle className="h-4 w-4" />
-            Danger Zone
+            {t('danger.title')}
           </CardTitle>
           <CardDescription>
-            上級者向けの設定です。変更前に内容をよくご確認ください。
+            {t('danger.description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -453,7 +482,7 @@ export default function SettingsPage() {
             <Link href="/settings/danger">
               <div className="flex items-center gap-3">
                 <AlertTriangle className="h-4 w-4 text-destructive" />
-                <span>危険な設定を管理</span>
+                <span>{t('danger.manage')}</span>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </Link>

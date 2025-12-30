@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   User,
   UserCircle,
@@ -131,6 +132,8 @@ export function MessageItem({
   searchQuery,
   currentMatch,
 }: MessageItemProps) {
+  const t = useTranslations('chat');
+  const tThinking = useTranslations('thinking');
   const [isThinkingOpen, setIsThinkingOpen] = useState(false);
   const [customModelImageError, setCustomModelImageError] = useState(false);
   const isUser = message.role === 'user';
@@ -190,7 +193,7 @@ export function MessageItem({
   // DBにモデル情報がある場合のみモデル名を表示、ない場合は「Claude」
   const modelId = message.model;
   const displayName = isUser
-    ? (userName || 'あなた')
+    ? (userName || t('you'))
     : (modelId ? getModelDisplayName(modelId, message.modelDisplayName ?? undefined) : 'Claude');
 
   // 現在のマッチがこのメッセージかどうか
@@ -258,7 +261,7 @@ export function MessageItem({
                 )}
                 <Brain className="h-4 w-4 text-purple-500" />
                 <span className="font-medium">
-                  {streamingThinking ? 'Thinking...' : 'Thinking'}
+                  {streamingThinking ? tThinking('thinkingProgress') : tThinking('thinking')}
                 </span>
               </CollapsibleTrigger>
               <CollapsibleContent className="mt-2">
@@ -286,21 +289,22 @@ export function MessageItem({
 }
 
 function ToolApprovalMessage({ message }: { message: Message }) {
+  const t = useTranslations('toolApproval');
   const approval = message.toolApproval!;
   const decision = approval.decision;
 
   const getDecisionInfo = () => {
     switch (decision) {
       case 'allow':
-        return { icon: ShieldCheck, text: '許可', color: 'text-green-600', bg: 'bg-green-500/10' };
+        return { icon: ShieldCheck, text: t('decision.allow'), color: 'text-green-600', bg: 'bg-green-500/10' };
       case 'always':
-        return { icon: ShieldCheck, text: '常に許可', color: 'text-blue-600', bg: 'bg-blue-500/10' };
+        return { icon: ShieldCheck, text: t('decision.always'), color: 'text-blue-600', bg: 'bg-blue-500/10' };
       case 'deny':
-        return { icon: ShieldX, text: '拒否', color: 'text-red-600', bg: 'bg-red-500/10' };
+        return { icon: ShieldX, text: t('decision.deny'), color: 'text-red-600', bg: 'bg-red-500/10' };
       case 'interrupt':
-        return { icon: ShieldOff, text: '中断', color: 'text-gray-600', bg: 'bg-gray-500/10' };
+        return { icon: ShieldOff, text: t('decision.interrupt'), color: 'text-gray-600', bg: 'bg-gray-500/10' };
       default:
-        return { icon: ShieldAlert, text: '待機中...', color: 'text-amber-600', bg: 'bg-amber-500/10' };
+        return { icon: ShieldAlert, text: t('decision.waiting'), color: 'text-amber-600', bg: 'bg-amber-500/10' };
     }
   };
 
@@ -315,12 +319,12 @@ function ToolApprovalMessage({ message }: { message: Message }) {
       </Avatar>
       <div className="flex-1 space-y-2 overflow-hidden min-w-0">
         <div className="flex items-center gap-2 text-sm">
-          <span className="font-medium">ツール実行確認:</span>
+          <span className="font-medium">{t('confirmation')}</span>
           <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
             {approval.toolName}
           </code>
           {approval.isDangerous && (
-            <span className="text-xs text-amber-600">⚠️ 危険</span>
+            <span className="text-xs text-amber-600">⚠️ {t('dangerous')}</span>
           )}
         </div>
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { AlertTriangle } from 'lucide-react';
 import {
@@ -63,7 +64,7 @@ function parseCsv(content: string): ParsedCsv {
 
       // クォートが閉じられていない場合はエラー
       if (inQuotes) {
-        throw new Error('クォートが閉じられていません');
+        throw new Error('UNCLOSED_QUOTE');
       }
 
       result.push(current.trim());
@@ -78,21 +79,29 @@ function parseCsv(content: string): ParsedCsv {
     return {
       headers: [],
       rows: [],
-      error: err instanceof Error ? err.message : 'CSVの解析に失敗しました',
+      error: err instanceof Error ? err.message : 'PARSE_ERROR',
     };
   }
 }
 
 export function CsvPreview({ content, className }: CsvPreviewProps) {
+  const t = useTranslations('csv');
   const { headers, rows, error } = useMemo(() => parseCsv(content), [content]);
+
+  // Translate error message
+  const getErrorMessage = (err: string): string => {
+    if (err === 'UNCLOSED_QUOTE') return t('unclosedQuote');
+    if (err === 'PARSE_ERROR') return t('parseError');
+    return err;
+  };
 
   if (error) {
     return (
       <div className={cn('flex flex-col items-center justify-center py-8 px-4', className)}>
         <AlertTriangle className="h-8 w-8 text-destructive mb-2" />
-        <p className="text-sm text-destructive font-medium">CSVの解析に失敗しました</p>
+        <p className="text-sm text-destructive font-medium">{t('parseError')}</p>
         <pre className="mt-2 text-xs text-muted-foreground max-w-full overflow-auto whitespace-pre-wrap">
-          {error}
+          {getErrorMessage(error)}
         </pre>
       </div>
     );
@@ -101,7 +110,7 @@ export function CsvPreview({ content, className }: CsvPreviewProps) {
   if (headers.length === 0) {
     return (
       <div className={cn('flex items-center justify-center py-8 text-muted-foreground', className)}>
-        <p className="text-sm">CSVデータがありません</p>
+        <p className="text-sm">{t('noData')}</p>
       </div>
     );
   }
@@ -114,7 +123,7 @@ export function CsvPreview({ content, className }: CsvPreviewProps) {
             <TableHead className="w-12 text-center bg-muted/50">#</TableHead>
             {headers.map((header, index) => (
               <TableHead key={index} className="bg-muted/50 font-semibold">
-                {header || `列${index + 1}`}
+                {header || t('column', { index: index + 1 })}
               </TableHead>
             ))}
           </TableRow>
@@ -135,7 +144,7 @@ export function CsvPreview({ content, className }: CsvPreviewProps) {
         </TableBody>
       </Table>
       <div className="px-4 py-2 text-xs text-muted-foreground border-t">
-        {rows.length} 行 × {headers.length} 列
+        {t('rowsColumns', { rows: rows.length, columns: headers.length })}
       </div>
     </div>
   );

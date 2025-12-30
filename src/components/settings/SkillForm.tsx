@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -32,6 +33,8 @@ export function SkillForm({
   onCancel,
   disabled = false,
 }: SkillFormProps) {
+  const t = useTranslations('skills');
+  const tCommon = useTranslations('common');
   const [name, setName] = useState(skill?.name ?? '');
   const [displayName, setDisplayName] = useState(skill?.displayName ?? '');
   const [description, setDescription] = useState(skill?.description ?? '');
@@ -74,46 +77,46 @@ export function SkillForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="displayName">表示名 *</Label>
+          <Label htmlFor="displayName">{t('displayNameRequired')}</Label>
           <Input
             id="displayName"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="例: コードレビュー"
+            placeholder={t('displayNamePlaceholder')}
             disabled={isLoading}
             required
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="name">識別名</Label>
+          <Label htmlFor="name">{t('identifier')}</Label>
           <Input
             id="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="例: code-review"
+            placeholder={t('identifierPlaceholder')}
             disabled={isLoading || !!skill}
             className="font-mono text-sm"
           />
           <p className="text-xs text-muted-foreground">
-            英数字とハイフンのみ使用可能
+            {t('identifierHint')}
           </p>
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="description">説明</Label>
+        <Label htmlFor="description">{t('descriptionLabel')}</Label>
         <Input
           id="description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="例: コードの品質とベストプラクティスをレビューします"
+          placeholder={t('descriptionPlaceholder')}
           disabled={isLoading}
         />
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="content">
-          SKILL.md 内容 *
+          {t('contentRequired')}
           <span className="ml-2 text-xs text-muted-foreground font-normal">
             YAML frontmatter + Markdown
           </span>
@@ -129,7 +132,7 @@ export function SkillForm({
           required
         />
         <p className="text-xs text-muted-foreground">
-          YAML frontmatterにname, description, allowed-tools, modelなどを指定できます
+          {t('contentHint')}
         </p>
       </div>
 
@@ -140,13 +143,13 @@ export function SkillForm({
           onClick={onCancel}
           disabled={isLoading}
         >
-          キャンセル
+          {tCommon('cancel')}
         </Button>
         <Button
           type="submit"
           disabled={isLoading || !name || !displayName || !content}
         >
-          {skill ? '更新' : '作成'}
+          {skill ? t('update') : tCommon('create')}
         </Button>
       </div>
     </form>

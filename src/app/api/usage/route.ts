@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
+import { createServerTranslator } from '@/lib/i18n/server';
 
 interface OAuthTokens {
   accessToken: string;
@@ -72,11 +73,13 @@ async function refreshAccessToken(oauth: OAuthTokens): Promise<OAuthTokens | nul
   }
 }
 
-async function getValidAccessToken(): Promise<{ token: string } | { error: string; message: string }> {
+type TranslatorFn = (key: string, params?: Record<string, string | number>) => string;
+
+async function getValidAccessToken(t: TranslatorFn): Promise<{ token: string } | { error: string; message: string }> {
   const credentials = await getCredentials();
 
   if (!credentials?.claudeAiOauth?.accessToken) {
-    return { error: 'credentials_not_found', message: '認証情報が見つかりません。Claude Codeにログインしてください。' };
+    return { error: 'credentials_not_found', message: t('credentialsNotFound') };
   }
 
   const oauth = credentials.claudeAiOauth;
@@ -91,7 +94,7 @@ async function getValidAccessToken(): Promise<{ token: string } | { error: strin
   const newOauth = await refreshAccessToken(oauth);
 
   if (!newOauth) {
-    return { error: 'refresh_failed', message: 'トークンの更新に失敗しました。再ログインしてください。' };
+    return { error: 'refresh_failed', message: t('refreshFailed') };
   }
 
   // Save the new credentials
@@ -104,8 +107,10 @@ async function getValidAccessToken(): Promise<{ token: string } | { error: strin
 
 export async function GET() {
   try {
+    const t = await createServerTranslator('usage.errors');
+
     // 1. Get valid access token (refresh if needed)
-    const tokenResult = await getValidAccessToken();
+    const tokenResult = await getValidAccessToken(t);
 
     if ('error' in tokenResult) {
       return NextResponse.json(
@@ -131,13 +136,13 @@ export async function GET() {
 
       if (response.status === 401) {
         return NextResponse.json(
-          { error: 'unauthorized', message: '認証に失敗しました。再ログインしてください。' },
+          { error: 'unauthorized', message: t('unauthorized') },
           { status: 401 }
         );
       }
 
       return NextResponse.json(
-        { error: 'api_error', message: '使用量データの取得に失敗しました。' },
+        { error: 'api_error', message: t('apiFailed') },
         { status: 500 }
       );
     }
@@ -147,8 +152,9 @@ export async function GET() {
 
   } catch (error) {
     console.error('Failed to fetch usage:', error);
+    const t = await createServerTranslator('usage.errors');
     return NextResponse.json(
-      { error: 'internal_error', message: '内部エラーが発生しました。' },
+      { error: 'internal_error', message: t('internal') },
       { status: 500 }
     );
   }

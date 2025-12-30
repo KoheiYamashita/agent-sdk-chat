@@ -1,0 +1,519 @@
+{
+  "common": {
+    "cancel": "キャンセル",
+    "delete": "削除",
+    "save": "保存",
+    "create": "作成",
+    "error": "エラー",
+    "loading": "読み込み中...",
+    "send": "送信",
+    "close": "閉じる",
+    "open": "開く",
+    "back": "戻る",
+    "minutes": "分",
+    "confirm": "確認",
+    "warning": "注意"
+  },
+  "sidebar": {
+    "newChat": "新規チャット",
+    "files": "ファイル",
+    "usage": "使用量",
+    "settings": "設定",
+    "menu": "メニュー"
+  },
+  "chat": {
+    "send": "送信",
+    "inputPlaceholder": "メッセージを入力... (Shift+Enter送信)",
+    "stopGeneration": "生成を停止",
+    "openTerminal": "ターミナルを開く",
+    "closeTerminal": "ターミナルを閉じる",
+    "archived": "このチャットはアーカイブされています（閲覧専用）",
+    "you": "あなた",
+    "footer": "Agent SDK Chat - Claude Agent SDK を使用",
+    "error": "エラー:",
+    "newChat": "新規チャット",
+    "emptyMessage": "メッセージを入力して会話を始めましょう",
+    "searchPlaceholder": "メッセージを検索...",
+    "noResults": "0件",
+    "prevMatch": "前のマッチへ（古い方向）",
+    "nextMatch": "次のマッチへ（新しい方向）",
+    "selectModel": "モデルを選択",
+    "standardModels": "標準モデル",
+    "customModels": "カスタムモデル",
+    "manageModels": "モデルを管理...",
+    "selectPermission": "権限モードを選択",
+    "thinkingOn": "Thinking モード: ON",
+    "thinkingOff": "Thinking モード: OFF",
+    "openFile": "ファイルを開く",
+    "file": "ファイル",
+    "skillsEnabled": "{count}/{total} 有効",
+    "copyCode": "コードをコピー",
+    "copy": "コピー",
+    "copied": "コピー済み"
+  },
+  "toolApproval": {
+    "title": "ツール実行の確認",
+    "toolName": "ツール名:",
+    "input": "入力:",
+    "none": "なし",
+    "deny": "拒否",
+    "denyShortcut": "拒否 [d]",
+    "allow": "許可",
+    "allowShortcut": "許可 [a]",
+    "alwaysAllow": "常に許可",
+    "alwaysAllowShortcut": "常に許可 [y]",
+    "confirmation": "ツール実行確認:",
+    "dangerous": "危険",
+    "decision": {
+      "allow": "許可",
+      "always": "常に許可",
+      "deny": "拒否",
+      "interrupt": "中断",
+      "waiting": "待機中..."
+    }
+  },
+  "thinking": {
+    "thinking": "Thinking",
+    "thinkingProgress": "Thinking..."
+  },
+  "session": {
+    "newChat": "新規チャット",
+    "setTag": "タグ設定",
+    "archive": "アーカイブ",
+    "unarchive": "アーカイブ解除",
+    "deleteConfirm": "本当に削除しますか？",
+    "searchPlaceholder": "チャットを検索...",
+    "searchResults": "{count}件のチャットが見つかりました",
+    "noResults": "該当するセッションがありません",
+    "noHistory": "チャット履歴がありません",
+    "noMatchingChats": "「{query}」に一致するチャットはありません",
+    "untagged": "タグなし",
+    "tag": {
+      "setTitle": "タグを設定",
+      "none": "タグなし",
+      "name": "タグ名",
+      "newPlaceholder": "新規タグ名",
+      "createNew": "新規タグを作成",
+      "createError": "タグの作成に失敗しました",
+      "setError": "タグの設定に失敗しました",
+      "rename": "名前変更",
+      "renameTitle": "タグ名を変更",
+      "renamePlaceholder": "タグ名を入力",
+      "deleteTitle": "タグ「{name}」を削除",
+      "deleteDisabled": "削除できません",
+      "deleteConfirm": "このタグを削除しますか？この操作は取り消せません。",
+      "deleteDisabledReason": "タグ「{name}」には{count}件のセッションが紐づいています。先にセッションのタグを解除してください。",
+      "errors": {
+        "nameRequired": "タグ名を入力してください",
+        "alreadyExists": "同じ名前のタグが既に存在します",
+        "notFound": "タグが見つかりません",
+        "hasSessionsPrefix": "このタグには",
+        "hasSessionsSuffix": "件のセッションが紐づいています。先にセッションのタグを解除してください。"
+      }
+    }
+  },
+  "settings": {
+    "title": "設定",
+    "loadError": "設定の読み込みに失敗しました:",
+    "language": {
+      "title": "言語",
+      "description": "アプリケーションの表示言語を設定します。"
+    },
+    "customModels": {
+      "title": "カスタムモデル",
+      "description": "システムプロンプトを設定したカスタムモデルを作成・管理します。",
+      "manage": "カスタムモデルを管理"
+    },
+    "skills": {
+      "title": "Skills",
+      "description": "Claude Agent SDKのSkillsを管理します。Skillsは再利用可能な指示をClaudeに提供します。",
+      "manage": "Skillsを管理"
+    },
+    "titleGeneration": {
+      "title": "タイトル自動生成",
+      "description": "新規チャット開始時に、会話内容からタイトルを自動生成します。",
+      "enabled": "タイトル自動生成",
+      "enabledDescription": "新規チャット開始時、最初のアシスタント応答後にタイトルを自動生成します。",
+      "recommended": "推奨",
+      "model": "使用モデル",
+      "modelPlaceholder": "モデルを選択",
+      "modelAuto": "自動（{model}）",
+      "modelDescription": "タイトル生成に使用するモデルを選択します。軽量なHaikuモデルがおすすめです。",
+      "prompt": "プロンプトテンプレート",
+      "promptPlaceholder": "タイトル生成用のプロンプト...",
+      "promptDescriptionPart1": "はユーザーメッセージとアシスタント応答に置換されます。出力はJSON形式",
+      "promptDescriptionPart2": "を想定しています。"
+    },
+    "general": {
+      "title": "一般設定",
+      "description": "アプリケーションの基本設定を変更します。",
+      "defaultModel": "デフォルトモデル",
+      "defaultModelDescription": "新しいチャットで使用するデフォルトのモデルを設定します。チャット画面で個別に変更することもできます。",
+      "selectModel": "モデルを選択",
+      "standardModels": "標準モデル",
+      "customModels": "カスタムモデル",
+      "defaultPermissionMode": "デフォルト権限モード",
+      "defaultPermissionModeDescription": "新しいチャットで使用するデフォルトの権限モードを設定します。チャット画面で個別に変更することもできます。",
+      "thinking": "拡張思考（Thinking）",
+      "thinkingDescription": "Claude の拡張思考機能を有効にすると、より深い推論が可能になります。トークン使用量が増加する場合があります。",
+      "enableThinkingByDefault": "デフォルトでThinkingを有効にする",
+      "approvalTimeout": "ツール承認タイムアウト",
+      "approvalTimeoutDescription": "ツール実行の承認待ち時間を設定します。タイムアウト時は自動的に停止します。0を設定すると無制限になります。"
+    },
+    "permissions": {
+      "title": "デフォルトで許可するツール",
+      "description": "チェックしたツールは新しいチャット開始時から自動的に許可されます。チェックしていないツールは毎回確認を求めます。",
+      "selectAll": "すべて選択",
+      "deselectAll": "すべて解除"
+    },
+    "sandbox": {
+      "title": "サンドボックス設定",
+      "description": "Claude Codeの実行環境を制限し、安全性を高めます。サンドボックスモードでは、指定したワークスペース内でのみ動作します。",
+      "workspacePath": "ワークスペースパス",
+      "workspacePathDescription": "Claude Codeが動作するディレクトリを指定します。相対パス（./workspace）または絶対パス（/path/to/workspace）が使用できます。",
+      "workspacePathPlaceholder": "./workspace",
+      "claudeMdTemplate": "CLAUDE.md テンプレート",
+      "claudeMdTemplateDescription": "新しいワークスペースにCLAUDE.mdが存在しない場合、このテンプレートから自動作成されます。既存のCLAUDE.mdは上書きされません。",
+      "claudeMdTemplatePlaceholder": "ワークスペースのCLAUDE.mdテンプレート..."
+    },
+    "appearance": {
+      "title": "外観設定",
+      "description": "チャット画面に表示されるユーザーとClaudeのアイコンをカスタマイズします。",
+      "userIcon": "ユーザーアイコン",
+      "botIcon": "Claudeアイコン",
+      "favicon": "ファビコン",
+      "faviconDescription": "ブラウザのタブに表示されるアイコンを設定します",
+      "iconType": {
+        "icon": "アイコン",
+        "initials": "イニシャル",
+        "image": "画像"
+      },
+      "iconLabels": {
+        "user": "ユーザー",
+        "userCircle": "丸型",
+        "userRound": "丸",
+        "circleUser": "サークル",
+        "smile": "スマイル",
+        "star": "スター",
+        "heart": "ハート",
+        "bot": "ボット",
+        "brain": "脳",
+        "sparkles": "キラキラ",
+        "cpu": "CPU",
+        "zap": "稲妻",
+        "wand": "魔法",
+        "messageCircle": "メッセージ",
+        "robot": "ロボット",
+        "code": "コード",
+        "terminal": "ターミナル",
+        "custom": "カスタム"
+      },
+      "initials": "イニシャル",
+      "initialsPlaceholder": "例: YT",
+      "initialsDescription": "2文字まで入力できます",
+      "imageUrl": "画像URL",
+      "imageUrlPlaceholder": "https://...",
+      "selectImage": "画像を選択",
+      "processing": "処理中...",
+      "currentImage": "現在の画像",
+      "imageFormats": "PNG, JPG, GIF, WebP形式に対応（{size}pxに最適化）",
+      "userName": "表示名",
+      "userNamePlaceholder": "例: Taro",
+      "userNameDescription": "チャットで表示される名前（空白の場合は「あなた」と表示）",
+      "preview": "プレビュー"
+    },
+    "danger": {
+      "title": "Danger Zone",
+      "description": "これらの設定は上級者向けです。変更前に内容をよくご確認ください。",
+      "manage": "危険な設定を管理",
+      "showUsage": {
+        "title": "使用量表示",
+        "label": "使用量表示を有効化",
+        "description": "サイドバーに使用量表示へのリンクを追加します。ローカルのClaude Code認証情報を使用してサブスクリプションの利用状況を確認できます。",
+        "dialogTitle": "注意",
+        "dialogDescription": "この設定を有効にすると、ローカルのClaude Code認証情報を使用してサブスクリプションの利用量を表示します。",
+        "dialogPoint1": "この機能は個人利用のみを想定しています",
+        "dialogPoint2": "サードパーティへのサブスク認証提供はAnthropicの利用規約に抵触する可能性があります",
+        "dialogPoint3": "自己責任でご利用ください",
+        "enable": "理解して有効化"
+      }
+    },
+    "permissionMode": {
+      "default": {
+        "label": "デフォルト",
+        "description": "通常の権限設定を使用（ツール実行時に確認）"
+      },
+      "acceptEdits": {
+        "label": "編集を許可",
+        "description": "ファイル編集は自動許可、その他は確認",
+        "recommended": "推奨"
+      },
+      "bypassPermissions": {
+        "label": "すべて許可",
+        "description": "すべてのツール実行を自動許可",
+        "warning": "注意"
+      },
+      "plan": {
+        "label": "プランモード",
+        "description": "読み取り専用、変更は提案のみ"
+      }
+    }
+  },
+  "files": {
+    "title": "ファイル",
+    "newFolder": "新規フォルダ",
+    "newFile": "新規ファイル",
+    "upload": "アップロード",
+    "refresh": "更新",
+    "folderName": "フォルダ名",
+    "fileName": "ファイル名",
+    "rename": "名前変更",
+    "download": "ダウンロード",
+    "copyPath": "パスをコピー",
+    "deleteConfirm": "「{name}」を削除しますか？",
+    "deleteWarning": "この操作は取り消せません。",
+    "emptyFolder": "このフォルダは空です",
+    "preview": "プレビュー",
+    "edit": "編集",
+    "saveChanges": "変更を保存",
+    "discardChanges": "変更を破棄"
+  },
+  "usage": {
+    "title": "使用量",
+    "overview": "使用量の概要",
+    "overviewDescription": "Claude Codeの使用状況を確認できます",
+    "period": "期間",
+    "inputTokens": "入力トークン",
+    "outputTokens": "出力トークン",
+    "totalCost": "合計コスト",
+    "noData": "使用量データがありません",
+    "refresh": "更新",
+    "retry": "再試行",
+    "utilization": "使用率",
+    "used": "{value}% 使用中",
+    "reset": "リセット",
+    "fiveHour": {
+      "title": "5時間セッション使用量",
+      "description": "現在のセッションでの使用量（5時間ローリングウィンドウ）"
+    },
+    "sevenDay": {
+      "title": "7日間 全モデル使用量",
+      "description": "過去7日間の全モデル合計使用量"
+    },
+    "sevenDaySonnet": {
+      "title": "7日間 Sonnet使用量",
+      "description": "過去7日間のSonnetモデル使用量"
+    },
+    "sevenDayOpus": {
+      "title": "7日間 Opus使用量",
+      "description": "過去7日間のOpusモデル使用量（Maxプラン向け）"
+    },
+    "extraCredits": {
+      "title": "追加クレジット",
+      "description": "月間追加クレジットの使用状況",
+      "usedLimit": "使用済み / 月間上限",
+      "status": "ステータス",
+      "enabled": "有効",
+      "disabled": "無効"
+    },
+    "errors": {
+      "credentialsNotFound": "認証情報が見つかりません。Claude Codeにログインしてください。",
+      "refreshFailed": "トークンの更新に失敗しました。再ログインしてください。",
+      "unauthorized": "認証に失敗しました。再ログインしてください。",
+      "apiFailed": "使用量データの取得に失敗しました。",
+      "internal": "内部エラーが発生しました。"
+    }
+  },
+  "workspace": {
+    "title": "ワークスペース",
+    "select": "ワークスペースを選択",
+    "create": "新規作成",
+    "clone": "Gitクローン",
+    "name": "ワークスペース名",
+    "gitUrl": "GitリポジトリURL",
+    "cloning": "クローン中...",
+    "folderName": "フォルダ名",
+    "default": "デフォルト",
+    "createNewFolder": "新しいフォルダを作成"
+  },
+  "fileBrowser": {
+    "noFiles": "ファイルがありません"
+  },
+  "models": {
+    "title": "カスタムモデル",
+    "description": "システムプロンプトを設定したカスタムモデルを作成・管理します。",
+    "create": "新規作成",
+    "createNew": "新規カスタムモデル",
+    "edit": "編集",
+    "editModel": "モデルを編集: {name}",
+    "name": "モデル名",
+    "baseModel": "ベースモデル",
+    "systemPrompt": "システムプロンプト",
+    "icon": "アイコン",
+    "deleteConfirm": "このカスタムモデルを削除してもよろしいですか？",
+    "empty": "カスタムモデルがまだありません。",
+    "emptyHint": "「新規作成」ボタンから作成してください。",
+    "standard": "標準モデル",
+    "standardDescription": "利用可能な標準モデルの一覧です（読み取り専用）。",
+    "backToSettings": "設定に戻る",
+    "displayName": "表示名",
+    "displayNameRequired": "表示名 *",
+    "displayNamePlaceholder": "例: コードレビューアシスタント",
+    "identifier": "識別名",
+    "identifierPlaceholder": "例: code-reviewer",
+    "identifierHint": "英数字とハイフンのみ使用可能",
+    "selectModel": "モデルを選択",
+    "systemPromptPlaceholder": "このモデルの役割や振る舞いを定義するプロンプトを入力...",
+    "descriptionLabel": "説明",
+    "descriptionPlaceholder": "例: コードの品質とベストプラクティスをレビューします",
+    "skillsSettings": "Skills設定",
+    "skillsSettingsHint": "このモデルでのSkillsの有効/無効を設定します。デフォルトはグローバル設定に従います。",
+    "update": "更新",
+    "disabled": "無効",
+    "enable": "有効にする",
+    "disable": "無効にする"
+  },
+  "skills": {
+    "title": "Skills",
+    "description": "Claude Agent SDKのSkillsを管理します。Skillsは再利用可能な指示をClaudeに提供します。",
+    "create": "新規作成",
+    "createNew": "新規Skill",
+    "edit": "編集",
+    "editSkill": "Skillを編集: {name}",
+    "name": "スキル名",
+    "content": "スキル内容 (SKILL.md)",
+    "enabled": "有効",
+    "deleteConfirm": "このスキルを削除してもよろしいですか？",
+    "empty": "Skillがまだありません。",
+    "emptyHint": "「新規作成」ボタンから作成してください。",
+    "backToSettings": "設定に戻る",
+    "displayName": "表示名",
+    "displayNameRequired": "表示名 *",
+    "displayNamePlaceholder": "例: コードレビュー",
+    "identifier": "識別名",
+    "identifierPlaceholder": "例: code-review",
+    "identifierHint": "英数字とハイフンのみ使用可能",
+    "descriptionLabel": "説明",
+    "descriptionPlaceholder": "例: コードの品質とベストプラクティスをレビューします",
+    "contentRequired": "SKILL.md 内容 *",
+    "contentHint": "YAML frontmatterにname, description, allowed-tools, modelなどを指定できます",
+    "update": "更新",
+    "disabled": "無効",
+    "default": "デフォルト",
+    "noSkills": "Skillがまだ登録されていません。",
+    "addSkillsHint": "設定画面からSkillsを追加してください。"
+  },
+  "iconPicker": {
+    "imageIcon": "画像アイコン",
+    "iconTab": "アイコン",
+    "imageTab": "画像",
+    "iconLabel": "アイコン",
+    "colorLabel": "色",
+    "processing": "処理中...",
+    "selectImage": "画像を選択",
+    "imageFormats": "PNG, JPG, GIF, WebP形式に対応（128pxに最適化）",
+    "removeImage": "画像を削除してアイコンに戻す",
+    "imageLoadError": "画像を読み込めませんでした"
+  },
+  "toolCall": {
+    "inputParams": "入力パラメータ",
+    "outputResult": "出力結果"
+  },
+  "filePreview": {
+    "unsupportedFormat": "このファイル形式は表示できません",
+    "selectFile": "ファイルを選択してください",
+    "folderNotPreviewable": "フォルダは表示できません",
+    "unsaved": "未保存",
+    "editMode": "編集モード",
+    "previewMode": "プレビュー",
+    "splitView": "分割表示",
+    "save": "保存",
+    "pdfNotSupported": "PDFを表示できません。",
+    "download": "ダウンロード",
+    "videoNotSupported": "お使いのブラウザは動画再生に対応していません",
+    "audioNotSupported": "お使いのブラウザは音声再生に対応していません",
+    "contentPlaceholder": "ファイルの内容がここに表示されます"
+  },
+  "fileBrowser": {
+    "copyPath": "パスをコピー",
+    "copyPathPrompt": "パスをコピーしてください:",
+    "rename": "名前を変更",
+    "noFiles": "ファイルがありません"
+  },
+  "gitClone": {
+    "title": "Gitリポジトリをクローン",
+    "repoUrl": "リポジトリURL",
+    "targetFolder": "クローン先フォルダ名",
+    "optional": "オプション",
+    "targetFolderPlaceholder": "空欄の場合はリポジトリ名を使用",
+    "cloning": "クローン中...",
+    "clone": "クローン開始",
+    "largeRepoHint": "リポジトリのサイズによっては時間がかかる場合があります",
+    "errors": {
+      "urlRequired": "リポジトリURLを入力してください",
+      "invalidUrl": "無効なGitリポジトリURLです",
+      "notFound": "リポジトリが見つかりません。URLを確認してください",
+      "authFailed": "認証に失敗しました。このリポジトリへのアクセス権限を確認してください",
+      "folderExists": "フォルダ「{name}」は既に存在します。別の名前を指定してください",
+      "timeout": "クローン操作がタイムアウトしました。大きなリポジトリの場合は時間がかかる場合があります",
+      "pathTraversal": "ワークスペース外へのアクセスは許可されていません",
+      "generic": "クローン処理中にエラーが発生しました"
+    }
+  },
+  "workspaceSelector": {
+    "startNewChat": "新しいチャットを開始",
+    "selectWorkspaceHint": "作業スペースを選択してメッセージを入力してください",
+    "selectWorkspace": "作業スペースを選択",
+    "selectWorkspaceDesc": "Claudeが操作するディレクトリを選択してください",
+    "selectFolder": "フォルダ選択",
+    "selected": "選択中:"
+  },
+  "workspaceBadge": {
+    "default": "デフォルト",
+    "workspace": "作業スペース",
+    "currentDir": "現在の作業ディレクトリ",
+    "dirHint": "このディレクトリ内でClaudeがファイル操作を行います。"
+  },
+  "csv": {
+    "unclosedQuote": "クォートが閉じられていません",
+    "parseError": "CSVの解析に失敗しました",
+    "noData": "CSVデータがありません",
+    "column": "列{index}",
+    "rowsColumns": "{rows} 行 × {columns} 列"
+  },
+  "json": {
+    "parseError": "JSONの解析に失敗しました"
+  },
+  "mermaid": {
+    "renderError": "ダイアグラムの描画に失敗しました",
+    "noContent": "ダイアグラムを入力してください"
+  },
+  "tools": {
+    "categories": {
+      "read": "読み取り専用",
+      "write": "ファイル書き込み",
+      "execute": "コマンド実行",
+      "web": "Web操作",
+      "other": "その他"
+    },
+    "descriptions": {
+      "Read": "ファイルを読み取る",
+      "Glob": "パターンでファイルを検索",
+      "Grep": "ファイル内容を検索",
+      "LSP": "コード定義・参照を取得",
+      "NotebookRead": "Jupyter Notebookを読み取る",
+      "Write": "ファイルを作成・上書き",
+      "Edit": "ファイルを編集",
+      "NotebookEdit": "Jupyter Notebookを編集",
+      "Bash": "シェルコマンドを実行",
+      "KillShell": "シェルプロセスを終了",
+      "WebFetch": "URLからコンテンツを取得",
+      "WebSearch": "Web検索を実行",
+      "Task": "サブタスクを実行",
+      "TaskOutput": "タスク出力を取得",
+      "TodoWrite": "TODOリストを管理",
+      "AskUserQuestion": "ユーザーに質問",
+      "Skill": "プロジェクトスキルを実行"
+    }
+  }
+}

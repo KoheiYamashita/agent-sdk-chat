@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useTags } from '@/hooks/useTags';
 import {
   Dialog,
@@ -28,6 +29,8 @@ export function TagSelectDialog({
   currentTagId,
   onSelect,
 }: TagSelectDialogProps) {
+  const t = useTranslations('session.tag');
+  const tCommon = useTranslations('common');
   const { tags, createTag, isCreating } = useTags();
   const [selectedTagId, setSelectedTagId] = useState<string | null>(currentTagId);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
@@ -54,7 +57,7 @@ export function TagSelectDialog({
         await onSelect(newTag.id);
         onOpenChange(false);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'タグの作成に失敗しました');
+        setError(err instanceof Error ? err.message : t('createError'));
       }
     } else {
       try {
@@ -63,7 +66,7 @@ export function TagSelectDialog({
         await onSelect(selectedTagId);
         onOpenChange(false);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'タグの設定に失敗しました');
+        setError(err instanceof Error ? err.message : t('setError'));
       } finally {
         setIsSaving(false);
       }
@@ -79,7 +82,7 @@ export function TagSelectDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>タグを設定</DialogTitle>
+          <DialogTitle>{t('setTitle')}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
@@ -90,7 +93,7 @@ export function TagSelectDialog({
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="none" id="tag-none" />
               <Label htmlFor="tag-none" className="cursor-pointer">
-                タグなし
+                {t('none')}
               </Label>
             </div>
             {tags.map((tag) => (
@@ -111,7 +114,7 @@ export function TagSelectDialog({
               <div className="space-y-2">
                 <div className="flex gap-2">
                   <Input
-                    placeholder="新規タグ名"
+                    placeholder={t('newPlaceholder')}
                     value={newTagName}
                     onChange={(e) => setNewTagName(e.target.value)}
                     autoFocus
@@ -147,7 +150,7 @@ export function TagSelectDialog({
                 onClick={() => setIsCreatingNew(true)}
               >
                 <Plus className="h-4 w-4 mr-2" />
-                新規タグを作成
+                {t('createNew')}
               </Button>
             )}
           </div>
@@ -160,14 +163,14 @@ export function TagSelectDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            キャンセル
+            {tCommon('cancel')}
           </Button>
           <Button
             onClick={handleSave}
             disabled={isCreating || isSaving || (isCreatingNew && !newTagName.trim())}
           >
             {(isCreating || isSaving) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            保存
+            {tCommon('save')}
           </Button>
         </DialogFooter>
       </DialogContent>

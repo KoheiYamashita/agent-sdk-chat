@@ -20,6 +20,10 @@ Claude Agent SDKとの連携モジュール
 ### constants/
 定数定義
 
+### i18n/
+サーバーサイドの国際化ユーティリティ
+- `server.ts`: `createServerTranslator()` - API Routesで翻訳を取得
+
 ## 主要ファイル
 
 ### approval-manager.ts

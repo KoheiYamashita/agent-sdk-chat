@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { createServerTranslator } from '@/lib/i18n/server';
 import type { TagWithSessionCount, TagsResponse, TagCreateRequest } from '@/types';
 
 // GET: List all tags with session counts
@@ -32,11 +33,12 @@ export async function GET() {
 // POST: Create a new tag
 export async function POST(request: Request) {
   try {
+    const t = await createServerTranslator('session.tag.errors');
     const body = (await request.json()) as TagCreateRequest;
 
     if (!body.name || !body.name.trim()) {
       return NextResponse.json(
-        { error: 'タグ名を入力してください' },
+        { error: t('nameRequired') },
         { status: 400 }
       );
     }
@@ -50,7 +52,7 @@ export async function POST(request: Request) {
 
     if (existing) {
       return NextResponse.json(
-        { error: '同じ名前のタグが既に存在します' },
+        { error: t('alreadyExists') },
         { status: 409 }
       );
     }

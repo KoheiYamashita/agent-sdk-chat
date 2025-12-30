@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 import {
   Select,
   SelectContent,
@@ -110,6 +111,7 @@ export function ModelSelector({
   disabled = false,
   isLoading = false,
 }: ModelSelectorProps) {
+  const t = useTranslations('chat');
   const { standardModels, customModels } = useMemo(() => {
     return {
       standardModels: models.filter((m) => m.type === 'standard'),
@@ -146,14 +148,14 @@ export function ModelSelector({
               <Bot className="h-3.5 w-3.5 text-foreground" />
             )}
             <span className="truncate">
-              {selectedModel ? getShortDisplayName(selectedModel) : 'モデルを選択'}
+              {selectedModel ? getShortDisplayName(selectedModel) : t('selectModel')}
             </span>
           </div>
         </SelectValue>
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>
-          <SelectLabel>標準モデル</SelectLabel>
+          <SelectLabel>{t('standardModels')}</SelectLabel>
           {standardModels.map((model) => (
             <SelectItem key={model.id} value={model.id} className="text-xs">
               <div className="flex items-center gap-2">
@@ -175,7 +177,7 @@ export function ModelSelector({
           <>
             <SelectSeparator />
             <SelectGroup>
-              <SelectLabel>カスタムモデル</SelectLabel>
+              <SelectLabel>{t('customModels')}</SelectLabel>
               {customModels.map((model) => (
                 <SelectItem key={model.id} value={model.id} className="text-xs">
                   <div className="flex items-center gap-2">
@@ -202,7 +204,7 @@ export function ModelSelector({
             className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             <Settings className="h-3.5 w-3.5" />
-            モデルを管理...
+            {t('manageModels')}
           </Link>
         </div>
       </SelectContent>

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { createServerTranslator } from '@/lib/i18n/server';
 import type { TagWithSessionCount, TagUpdateRequest } from '@/types';
 
 interface RouteParams {
@@ -9,6 +10,7 @@ interface RouteParams {
 // PATCH: Update a tag (rename)
 export async function PATCH(request: Request, { params }: RouteParams) {
   try {
+    const t = await createServerTranslator('session.tag.errors');
     const { id } = await params;
     const body = (await request.json()) as TagUpdateRequest;
 
@@ -18,7 +20,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     });
 
     if (!existing) {
-      return NextResponse.json({ error: 'タグが見つかりません' }, { status: 404 });
+      return NextResponse.json({ error: t('notFound') }, { status: 404 });
     }
 
     // Validate name if provided
@@ -26,7 +28,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       const trimmedName = body.name.trim();
       if (!trimmedName) {
         return NextResponse.json(
-          { error: 'タグ名を入力してください' },
+          { error: t('nameRequired') },
           { status: 400 }
         );
       }
@@ -41,7 +43,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
       if (duplicate) {
         return NextResponse.json(
-          { error: '同じ名前のタグが既に存在します' },
+          { error: t('alreadyExists') },
           { status: 409 }
         );
       }
@@ -80,6 +82,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 // DELETE: Delete a tag
 export async function DELETE(_request: Request, { params }: RouteParams) {
   try {
+    const t = await createServerTranslator('session.tag.errors');
     const { id } = await params;
 
     // Check if tag exists
@@ -93,14 +96,14 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
     });
 
     if (!existing) {
-      return NextResponse.json({ error: 'タグが見つかりません' }, { status: 404 });
+      return NextResponse.json({ error: t('notFound') }, { status: 404 });
     }
 
     // Check if any sessions are associated
     if (existing._count.sessions > 0) {
       return NextResponse.json(
         {
-          error: `このタグには${existing._count.sessions}件のセッションが紐づいています。先にセッションのタグを解除してください。`,
+          error: `${t('hasSessionsPrefix')}${existing._count.sessions}${t('hasSessionsSuffix')}`,
         },
         { status: 409 }
       );

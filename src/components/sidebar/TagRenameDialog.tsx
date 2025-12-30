@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Dialog,
   DialogContent,
@@ -30,6 +31,8 @@ export function TagRenameDialog({
   isLoading,
   error,
 }: TagRenameDialogProps) {
+  const t = useTranslations('session.tag');
+  const tCommon = useTranslations('common');
   const [name, setName] = useState(currentName);
 
   // Reset state when dialog opens
@@ -52,16 +55,16 @@ export function TagRenameDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>タグ名を変更</DialogTitle>
+          <DialogTitle>{t('renameTitle')}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="tag-name">タグ名</Label>
+            <Label htmlFor="tag-name">{t('name')}</Label>
             <Input
               id="tag-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="タグ名を入力"
+              placeholder={t('renamePlaceholder')}
               autoFocus
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && canSave) {
@@ -76,11 +79,11 @@ export function TagRenameDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            キャンセル
+            {tCommon('cancel')}
           </Button>
           <Button onClick={handleSave} disabled={!canSave}>
             {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            保存
+            {tCommon('save')}
           </Button>
         </DialogFooter>
       </DialogContent>

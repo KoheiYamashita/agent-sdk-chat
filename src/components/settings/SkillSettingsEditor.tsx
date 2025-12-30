@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Wand2 } from 'lucide-react';
@@ -19,6 +20,7 @@ export function SkillSettingsEditor({
   onChange,
   disabled = false,
 }: SkillSettingsEditorProps) {
+  const t = useTranslations('skills');
   const handleStateChange = (skillId: string, value: SkillOverrideState) => {
     const newSettings = { ...settings };
     if (value === 'default') {
@@ -36,9 +38,9 @@ export function SkillSettingsEditor({
   if (skills.length === 0) {
     return (
       <div className="text-sm text-muted-foreground py-4 text-center">
-        Skillがまだ登録されていません。
+        {t('noSkills')}
         <br />
-        設定画面からSkillsを追加してください。
+        {t('addSkillsHint')}
       </div>
     );
   }
@@ -83,7 +85,7 @@ export function SkillSettingsEditor({
                   htmlFor={`${skill.id}-enabled`}
                   className="text-xs cursor-pointer"
                 >
-                  有効
+                  {t('enabled')}
                 </Label>
               </div>
               <div className="flex items-center space-x-1">
@@ -92,7 +94,7 @@ export function SkillSettingsEditor({
                   htmlFor={`${skill.id}-disabled`}
                   className="text-xs cursor-pointer"
                 >
-                  無効
+                  {t('disabled')}
                 </Label>
               </div>
               <div className="flex items-center space-x-1">
@@ -101,7 +103,7 @@ export function SkillSettingsEditor({
                   htmlFor={`${skill.id}-default`}
                   className="text-xs cursor-pointer"
                 >
-                  デフォルト
+                  {t('default')}
                 </Label>
               </div>
             </RadioGroup>

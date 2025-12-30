@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { ChevronDown, ChevronRight, Loader2, Check, X, Terminal, FileText, Search, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ToolCall } from '@/types';
@@ -39,6 +40,7 @@ function getToolIcon(name: string) {
 }
 
 function ToolCallItem({ toolCall }: { toolCall: ToolCall }) {
+  const t = useTranslations('toolCall');
   const [isExpanded, setIsExpanded] = useState(false);
 
   const statusConfig = {
@@ -91,7 +93,7 @@ function ToolCallItem({ toolCall }: { toolCall: ToolCall }) {
           <div>
             <div className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-foreground/30" />
-              入力パラメータ
+              {t('inputParams')}
             </div>
             <pre className="text-xs bg-muted/30 p-3 rounded-md overflow-x-auto font-mono text-foreground/80">
               {JSON.stringify(toolCall.input, null, 2)}
@@ -101,7 +103,7 @@ function ToolCallItem({ toolCall }: { toolCall: ToolCall }) {
             <div>
               <div className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500/50" />
-                出力結果
+                {t('outputResult')}
               </div>
               <pre className="text-xs bg-muted/30 p-3 rounded-md overflow-x-auto max-h-48 font-mono text-foreground/80">
                 {typeof toolCall.output === 'string'

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useSkills } from '@/hooks/useSkills';
 import { SkillForm } from '@/components/settings/SkillForm';
 import { SkillCard } from '@/components/settings/SkillCard';
@@ -18,6 +19,7 @@ import { ArrowLeft, Plus } from 'lucide-react';
 import type { Skill, SkillCreateRequest } from '@/types';
 
 export default function SkillsSettingsPage() {
+  const t = useTranslations('skills');
   const [isCreating, setIsCreating] = useState(false);
   const [editingSkill, setEditingSkill] = useState<Skill | null>(null);
 
@@ -46,7 +48,7 @@ export default function SkillsSettingsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('このスキルを削除してもよろしいですか？')) {
+    if (confirm(t('deleteConfirm'))) {
       await deleteSkill(id);
     }
   };
@@ -61,7 +63,7 @@ export default function SkillsSettingsPage() {
         <Button variant="ghost" size="sm" asChild>
           <Link href="/settings">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            設定に戻る
+            {t('backToSettings')}
           </Link>
         </Button>
       </div>
@@ -72,16 +74,16 @@ export default function SkillsSettingsPage() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <div className="h-1.5 w-1.5 rounded-full bg-foreground/50" />
-                Skills
+                {t('title')}
               </CardTitle>
               <CardDescription>
-                Claude Agent SDKのSkillsを管理します。Skillsは再利用可能な指示をClaudeに提供します。
+                {t('description')}
               </CardDescription>
             </div>
             {!isCreating && !editingSkill && (
               <Button onClick={() => setIsCreating(true)} size="sm">
                 <Plus className="h-4 w-4 mr-2" />
-                新規作成
+                {t('create')}
               </Button>
             )}
           </div>
@@ -90,7 +92,7 @@ export default function SkillsSettingsPage() {
           {isCreating && (
             <Card className="border-dashed">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">新規Skill</CardTitle>
+                <CardTitle className="text-base">{t('createNew')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <SkillForm
@@ -106,7 +108,7 @@ export default function SkillsSettingsPage() {
             <Card className="border-dashed border-primary">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">
-                  Skillを編集: {editingSkill.displayName}
+                  {t('editSkill', { name: editingSkill.displayName })}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -128,9 +130,9 @@ export default function SkillsSettingsPage() {
             </div>
           ) : skills.length === 0 && !isCreating ? (
             <div className="text-center py-8 text-muted-foreground">
-              <p>Skillがまだありません。</p>
+              <p>{t('empty')}</p>
               <p className="text-sm mt-1">
-                「新規作成」ボタンから作成してください。
+                {t('emptyHint')}
               </p>
             </div>
           ) : (

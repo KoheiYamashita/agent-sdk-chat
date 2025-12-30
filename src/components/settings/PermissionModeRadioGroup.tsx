@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -11,42 +12,15 @@ interface PermissionModeRadioGroupProps {
   disabled?: boolean;
 }
 
-const modes: {
-  value: PermissionMode;
-  label: string;
-  description: string;
-  recommended?: boolean;
-  warning?: boolean;
-}[] = [
-  {
-    value: 'default',
-    label: 'Default',
-    description: '各ツール実行前に確認を求めます。最も安全なモードです。',
-    recommended: true,
-  },
-  {
-    value: 'acceptEdits',
-    label: 'Accept Edits',
-    description: 'ファイルの読み書きは自動許可し、その他のツール実行は確認を求めます。',
-  },
-  {
-    value: 'bypassPermissions',
-    label: 'Bypass Permissions',
-    description: 'すべてのツール実行を自動許可します。信頼できる環境でのみ使用してください。',
-    warning: true,
-  },
-  {
-    value: 'plan',
-    label: 'Plan',
-    description: '計画モード。実際のツール実行は行わず、計画のみを作成します。',
-  },
-];
+const modeKeys = ['default', 'acceptEdits', 'bypassPermissions', 'plan'] as const;
 
 export function PermissionModeRadioGroup({
   value,
   onChange,
   disabled = false,
 }: PermissionModeRadioGroupProps) {
+  const t = useTranslations('settings.permissionMode');
+
   return (
     <RadioGroup
       value={value}
@@ -54,32 +28,32 @@ export function PermissionModeRadioGroup({
       className="space-y-3"
       disabled={disabled}
     >
-      {modes.map((mode) => (
-        <div key={mode.value} className="flex items-start space-x-3">
+      {modeKeys.map((modeKey) => (
+        <div key={modeKey} className="flex items-start space-x-3">
           <RadioGroupItem
-            value={mode.value}
-            id={`permission-mode-${mode.value}`}
+            value={modeKey}
+            id={`permission-mode-${modeKey}`}
             className="mt-1"
           />
           <Label
-            htmlFor={`permission-mode-${mode.value}`}
+            htmlFor={`permission-mode-${modeKey}`}
             className="flex-1 cursor-pointer"
           >
             <div className="flex items-center gap-2">
-              <span className="font-medium">{mode.label}</span>
-              {mode.recommended && (
+              <span className="font-medium">{t(`${modeKey}.label`)}</span>
+              {modeKey === 'acceptEdits' && (
                 <Badge variant="secondary" className="text-xs">
-                  推奨
+                  {t('acceptEdits.recommended')}
                 </Badge>
               )}
-              {mode.warning && (
+              {modeKey === 'bypassPermissions' && (
                 <Badge variant="destructive" className="text-xs">
-                  注意
+                  {t('bypassPermissions.warning')}
                 </Badge>
               )}
             </div>
             <p className="text-sm text-muted-foreground mt-1">
-              {mode.description}
+              {t(`${modeKey}.description`)}
             </p>
           </Label>
         </div>

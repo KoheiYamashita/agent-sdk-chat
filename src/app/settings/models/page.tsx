@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useCustomModels, useSupportedModels } from '@/hooks/useModels';
 import { useSkills } from '@/hooks/useSkills';
 import { CustomModelForm } from '@/components/settings/CustomModelForm';
@@ -19,6 +20,7 @@ import { ArrowLeft, Plus } from 'lucide-react';
 import type { CustomModel, CustomModelCreateRequest } from '@/types';
 
 export default function ModelsSettingsPage() {
+  const t = useTranslations('models');
   const [isCreating, setIsCreating] = useState(false);
   const [editingModel, setEditingModel] = useState<CustomModel | null>(null);
 
@@ -58,7 +60,7 @@ export default function ModelsSettingsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('このカスタムモデルを削除してもよろしいですか？')) {
+    if (confirm(t('deleteConfirm'))) {
       await deleteModel(id);
     }
   };
@@ -73,7 +75,7 @@ export default function ModelsSettingsPage() {
         <Button variant="ghost" size="sm" asChild>
           <Link href="/settings">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            設定に戻る
+            {t('backToSettings')}
           </Link>
         </Button>
       </div>
@@ -84,16 +86,16 @@ export default function ModelsSettingsPage() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <div className="h-1.5 w-1.5 rounded-full bg-foreground/50" />
-                カスタムモデル
+                {t('title')}
               </CardTitle>
               <CardDescription>
-                システムプロンプトを設定したカスタムモデルを作成・管理します。
+                {t('description')}
               </CardDescription>
             </div>
             {!isCreating && !editingModel && (
               <Button onClick={() => setIsCreating(true)} size="sm">
                 <Plus className="h-4 w-4 mr-2" />
-                新規作成
+                {t('create')}
               </Button>
             )}
           </div>
@@ -102,7 +104,7 @@ export default function ModelsSettingsPage() {
           {isCreating && (
             <Card className="border-dashed">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">新規カスタムモデル</CardTitle>
+                <CardTitle className="text-base">{t('createNew')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <CustomModelForm
@@ -120,7 +122,7 @@ export default function ModelsSettingsPage() {
             <Card className="border-dashed border-primary">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">
-                  モデルを編集: {editingModel.displayName}
+                  {t('editModel', { name: editingModel.displayName })}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -144,9 +146,9 @@ export default function ModelsSettingsPage() {
             </div>
           ) : customModels.length === 0 && !isCreating ? (
             <div className="text-center py-8 text-muted-foreground">
-              <p>カスタムモデルがまだありません。</p>
+              <p>{t('empty')}</p>
               <p className="text-sm mt-1">
-                「新規作成」ボタンから作成してください。
+                {t('emptyHint')}
               </p>
             </div>
           ) : (
@@ -170,10 +172,10 @@ export default function ModelsSettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <div className="h-1.5 w-1.5 rounded-full bg-foreground/50" />
-            標準モデル
+            {t('standard')}
           </CardTitle>
           <CardDescription>
-            利用可能な標準モデルの一覧です（読み取り専用）。
+            {t('standardDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>

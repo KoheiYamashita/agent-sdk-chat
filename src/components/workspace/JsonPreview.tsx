@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { AlertTriangle, Copy, Check, ChevronDown, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,9 +16,11 @@ interface JsonNodeProps {
   name?: string;
   depth?: number;
   isLast?: boolean;
+  itemsLabel: string;
+  keysLabel: string;
 }
 
-function JsonNode({ data, name, depth = 0, isLast = true }: JsonNodeProps) {
+function JsonNode({ data, name, depth = 0, isLast = true, itemsLabel, keysLabel }: JsonNodeProps) {
   const [isExpanded, setIsExpanded] = useState(depth < 2);
 
   const isObject = data !== null && typeof data === 'object';
@@ -99,7 +102,7 @@ function JsonNode({ data, name, depth = 0, isLast = true }: JsonNodeProps) {
             <span className="text-muted-foreground mx-1">...</span>
             <span className="text-muted-foreground">{bracket[1]}</span>
             <span className="text-xs text-muted-foreground ml-2">
-              ({entries.length} {isArray ? 'items' : 'keys'})
+              ({entries.length} {isArray ? itemsLabel : keysLabel})
             </span>
           </>
         )}
@@ -114,6 +117,8 @@ function JsonNode({ data, name, depth = 0, isLast = true }: JsonNodeProps) {
               name={isArray ? undefined : key}
               depth={depth + 1}
               isLast={index === entries.length - 1}
+              itemsLabel={itemsLabel}
+              keysLabel={keysLabel}
             />
           ))}
           <div style={{ paddingLeft: depth * 16 }}>
@@ -127,6 +132,7 @@ function JsonNode({ data, name, depth = 0, isLast = true }: JsonNodeProps) {
 }
 
 export function JsonPreview({ content, className }: JsonPreviewProps) {
+  const t = useTranslations('json');
   const [copied, setCopied] = useState(false);
 
   const { parsed, error, formatted } = useMemo(() => {
@@ -137,7 +143,7 @@ export function JsonPreview({ content, className }: JsonPreviewProps) {
     } catch (err) {
       return {
         parsed: null,
-        error: err instanceof Error ? err.message : 'JSONの解析に失敗しました',
+        error: err instanceof Error ? err.message : 'PARSE_ERROR',
         formatted: null,
       };
     }
@@ -150,7 +156,7 @@ export function JsonPreview({ content, className }: JsonPreviewProps) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // クリップボードへのコピーに失敗
+      // Copy failed
     }
   }, [formatted]);
 
@@ -158,9 +164,9 @@ export function JsonPreview({ content, className }: JsonPreviewProps) {
     return (
       <div className={cn('flex flex-col items-center justify-center py-8 px-4', className)}>
         <AlertTriangle className="h-8 w-8 text-destructive mb-2" />
-        <p className="text-sm text-destructive font-medium">JSONの解析に失敗しました</p>
+        <p className="text-sm text-destructive font-medium">{t('parseError')}</p>
         <pre className="mt-2 text-xs text-muted-foreground max-w-full overflow-auto whitespace-pre-wrap">
-          {error}
+          {error === 'PARSE_ERROR' ? t('parseError') : error}
         </pre>
       </div>
     );
@@ -183,7 +189,7 @@ export function JsonPreview({ content, className }: JsonPreviewProps) {
         </Button>
       </div>
       <div className="font-mono text-sm leading-relaxed overflow-auto p-4 bg-muted/30 rounded-lg">
-        <JsonNode data={parsed} />
+        <JsonNode data={parsed} itemsLabel={t('items')} keysLabel={t('keys')} />
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Folder, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -24,6 +25,7 @@ export function FileBrowserTree({
   refreshKey = 0,
   workspacePath,
 }: FileBrowserTreeProps) {
+  const t = useTranslations('fileBrowser');
   const [rootItems, setRootItems] = useState<DirectoryItem[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -202,7 +204,7 @@ export function FileBrowserTree({
         {/* Empty state */}
         {rootItems?.length === 0 && (
           <div className="text-sm text-muted-foreground p-4 text-center">
-            ファイルがありません
+{t('noFiles')}
           </div>
         )}
       </div>

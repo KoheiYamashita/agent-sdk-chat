@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Send, Square, Terminal } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { PermissionModeSelector } from './PermissionModeSelector';
@@ -63,6 +64,7 @@ export function InputArea({
   customModelSkillSettings,
   onSkillSettingsChange,
 }: InputAreaProps) {
+  const t = useTranslations('chat');
   const [input, setInput] = useState('');
   const [permissionMode, setPermissionMode] = useState<PermissionMode>(defaultPermissionMode);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -150,7 +152,7 @@ export function InputArea({
                 size="icon"
                 variant="ghost"
                 onClick={onTerminalToggle}
-                title={isTerminalOpen ? 'ターミナルを閉じる' : 'ターミナルを開く'}
+                title={isTerminalOpen ? t('closeTerminal') : t('openTerminal')}
                 className={cn(
                   'rounded-lg flex-shrink-0 h-10 w-10',
                   isTerminalOpen && 'bg-primary/10 text-primary'
@@ -166,7 +168,7 @@ export function InputArea({
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="メッセージを入力... (Shift+Enter送信)"
+                placeholder={t('inputPlaceholder')}
                 className="min-h-[56px] max-h-[200px] resize-none pr-14 sm:pr-16 text-sm sm:text-base bg-card/50 border-border/40 focus-visible:bg-card"
                 disabled={disabled || isGenerating}
                 rows={1}
@@ -177,7 +179,7 @@ export function InputArea({
                     size="icon"
                     variant="destructive"
                     onClick={handleStopClick}
-                    title="生成を停止"
+                    title={t('stopGeneration')}
                     className="rounded-lg"
                   >
                     <Square className="h-4 w-4" />
@@ -187,7 +189,7 @@ export function InputArea({
                     size="icon"
                     onClick={handleSubmit}
                     disabled={!input.trim() || disabled}
-                    title="送信"
+                    title={t('send')}
                     className="rounded-lg"
                   >
                     <Send className="h-4 w-4" />
@@ -197,7 +199,7 @@ export function InputArea({
             </div>
           </div>
           <p className="text-xs text-muted-foreground/70 mt-3 text-center hidden sm:block">
-            Agent SDK Chat - Claude Agent SDK を使用
+            {t('footer')}
           </p>
       </div>
     </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useCallback, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { SessionItem } from './SessionItem';
 import { TagGroupHeader } from './TagGroupHeader';
 import { TagSelectDialog } from './TagSelectDialog';
@@ -44,6 +45,7 @@ export function SessionList({
   searchQuery,
   searchResultCount,
 }: SessionListProps) {
+  const t = useTranslations('session');
   const isSearching = Boolean(searchQuery?.trim());
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const { tags, updateTag, deleteTag, isUpdating, updateError } = useTags();
@@ -135,12 +137,12 @@ export function SessionList({
     const untaggedSessions = groupMap.get(null) ?? [];
     result.push({
       tagId: null,
-      tagName: 'タグなし',
+      tagName: t('untagged'),
       sessions: untaggedSessions,
     });
 
     return result;
-  }, [sessions, tags]);
+  }, [sessions, tags, t]);
 
   const toggleGroup = (tagId: string | null) => {
     setOpenGroups((prev) => {
@@ -204,7 +206,7 @@ export function SessionList({
   if (sessions.length === 0 && !isSearching && tags.length === 0) {
     return (
       <div className="p-4 text-center text-sm text-muted-foreground">
-        チャット履歴がありません
+        {t('noHistory')}
       </div>
     );
   }
@@ -215,12 +217,12 @@ export function SessionList({
       <div className="space-y-1 p-2 w-full min-w-0 overflow-hidden">
         {searchResultCount !== undefined && (
           <div className="px-2 py-1 text-xs text-muted-foreground">
-            {searchResultCount}件のチャットが見つかりました
+            {t('searchResults', { count: searchResultCount })}
           </div>
         )}
         {sessions.length === 0 ? (
           <div className="p-4 text-center text-sm text-muted-foreground">
-            「{searchQuery}」に一致するチャットはありません
+            {t('noMatchingChats', { query: searchQuery || '' })}
           </div>
         ) : (
           sessions.map((session) => (

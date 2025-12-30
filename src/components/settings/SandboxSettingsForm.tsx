@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,6 +18,8 @@ export function SandboxSettingsForm({
   onChange,
   disabled = false,
 }: SandboxSettingsFormProps) {
+  const t = useTranslations('settings.sandbox');
+
   const handleWorkspacePathChange = (value: string) => {
     onChange({
       ...settings,
@@ -35,36 +38,35 @@ export function SandboxSettingsForm({
     <div className="space-y-6">
       <div className="space-y-2">
         <Label htmlFor="workspace-path" className="text-sm font-medium">
-          ワークスペースパス
+          {t('workspacePath')}
         </Label>
         <Input
           id="workspace-path"
           value={settings.workspacePath}
           onChange={(e) => handleWorkspacePathChange(e.target.value)}
           disabled={disabled}
-          placeholder="./workspace"
+          placeholder={t('workspacePathPlaceholder')}
         />
         <p className="text-xs text-muted-foreground">
-          Claude Codeが動作するディレクトリを指定します。相対パス（./workspace）または絶対パス（/path/to/workspace）が使用できます。
+          {t('workspacePathDescription')}
         </p>
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="claude-md-template" className="text-sm font-medium">
-          CLAUDE.md テンプレート
+          {t('claudeMdTemplate')}
         </Label>
         <Textarea
           id="claude-md-template"
           value={settings.claudeMdTemplate ?? DEFAULT_WORKSPACE_CLAUDE_MD}
           onChange={(e) => handleClaudeMdTemplateChange(e.target.value)}
           disabled={disabled}
-          placeholder="ワークスペースのCLAUDE.mdテンプレート..."
+          placeholder={t('claudeMdTemplatePlaceholder')}
           rows={10}
           className="font-mono text-sm"
         />
         <p className="text-xs text-muted-foreground">
-          新しいワークスペースにCLAUDE.mdが存在しない場合、このテンプレートから自動作成されます。
-          既存のCLAUDE.mdは上書きされません。
+          {t('claudeMdTemplateDescription')}
         </p>
       </div>
     </div>

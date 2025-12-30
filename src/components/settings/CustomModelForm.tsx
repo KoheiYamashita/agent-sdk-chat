@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -39,6 +40,8 @@ export function CustomModelForm({
   onCancel,
   disabled = false,
 }: CustomModelFormProps) {
+  const t = useTranslations('models');
+  const tCommon = useTranslations('common');
   const [name, setName] = useState(model?.name ?? '');
   const [displayName, setDisplayName] = useState(model?.displayName ?? '');
   const [baseModel, setBaseModel] = useState(model?.baseModel ?? '');
@@ -100,41 +103,41 @@ export function CustomModelForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="displayName">表示名 *</Label>
+          <Label htmlFor="displayName">{t('displayNameRequired')}</Label>
           <Input
             id="displayName"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="例: コードレビューアシスタント"
+            placeholder={t('displayNamePlaceholder')}
             disabled={isLoading}
             required
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="name">識別名</Label>
+          <Label htmlFor="name">{t('identifier')}</Label>
           <Input
             id="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="例: code-reviewer"
+            placeholder={t('identifierPlaceholder')}
             disabled={isLoading || !!model}
             className="font-mono text-sm"
           />
           <p className="text-xs text-muted-foreground">
-            英数字とハイフンのみ使用可能
+            {t('identifierHint')}
           </p>
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="baseModel">ベースモデル *</Label>
+        <Label htmlFor="baseModel">{t('baseModel')} *</Label>
         <Select
           value={baseModel}
           onValueChange={setBaseModel}
           disabled={isLoading}
         >
           <SelectTrigger id="baseModel">
-            <SelectValue placeholder="モデルを選択" />
+            <SelectValue placeholder={t('selectModel')} />
           </SelectTrigger>
           <SelectContent>
             {supportedModels.map((m) => (
@@ -147,12 +150,12 @@ export function CustomModelForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="systemPrompt">システムプロンプト</Label>
+        <Label htmlFor="systemPrompt">{t('systemPrompt')}</Label>
         <Textarea
           id="systemPrompt"
           value={systemPrompt}
           onChange={(e) => setSystemPrompt(e.target.value)}
-          placeholder="このモデルの役割や振る舞いを定義するプロンプトを入力..."
+          placeholder={t('systemPromptPlaceholder')}
           disabled={isLoading}
           rows={6}
           className="font-mono text-sm"
@@ -160,18 +163,18 @@ export function CustomModelForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="description">説明</Label>
+        <Label htmlFor="description">{t('descriptionLabel')}</Label>
         <Input
           id="description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="例: コードの品質とベストプラクティスをレビューします"
+          placeholder={t('descriptionPlaceholder')}
           disabled={isLoading}
         />
       </div>
 
       <div className="space-y-2">
-        <Label>アイコン</Label>
+        <Label>{t('icon')}</Label>
         <IconPicker
           value={icon}
           color={iconColor}
@@ -187,9 +190,9 @@ export function CustomModelForm({
 
       {skills.length > 0 && (
         <div className="space-y-2">
-          <Label>Skills設定</Label>
+          <Label>{t('skillsSettings')}</Label>
           <p className="text-xs text-muted-foreground mb-2">
-            このモデルでのSkillsの有効/無効を設定します。デフォルトはグローバル設定に従います。
+            {t('skillsSettingsHint')}
           </p>
           <SkillSettingsEditor
             skills={skills}
@@ -207,10 +210,10 @@ export function CustomModelForm({
           onClick={onCancel}
           disabled={isLoading}
         >
-          キャンセル
+          {tCommon('cancel')}
         </Button>
         <Button type="submit" disabled={isLoading || !name || !displayName || !baseModel}>
-          {model ? '更新' : '作成'}
+          {model ? t('update') : tCommon('create')}
         </Button>
       </div>
     </form>

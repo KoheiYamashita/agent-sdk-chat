@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { Save, X, Loader2, FileText, AlertTriangle, Edit3, Eye, Columns } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -133,6 +134,7 @@ export function FilePreview({
   workspacePath,
   className,
 }: FilePreviewProps) {
+  const t = useTranslations('filePreview');
   const [content, setContent] = useState<string>('');
   const [originalContent, setOriginalContent] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
@@ -165,7 +167,7 @@ export function FilePreview({
     }
 
     if (isNonPreviewableBinary(item.name)) {
-      setError('このファイル形式は表示できません');
+      setError(t('unsupportedFormat'));
       return;
     }
 
@@ -235,7 +237,7 @@ export function FilePreview({
       <div className={cn('flex items-center justify-center h-full text-muted-foreground', className)}>
         <div className="text-center">
           <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-          <p className="text-sm">ファイルを選択してください</p>
+          <p className="text-sm">{t('selectFile')}</p>
         </div>
       </div>
     );
@@ -246,7 +248,7 @@ export function FilePreview({
       <div className={cn('flex items-center justify-center h-full text-muted-foreground', className)}>
         <div className="text-center">
           <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-          <p className="text-sm">フォルダは表示できません</p>
+          <p className="text-sm">{t('folderNotPreviewable')}</p>
         </div>
       </div>
     );
@@ -259,7 +261,7 @@ export function FilePreview({
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-sm font-medium truncate">{item.name}</span>
           {isDirty && (
-            <span className="text-xs text-muted-foreground">(未保存)</span>
+            <span className="text-xs text-muted-foreground">({t('unsaved')})</span>
           )}
           {fileInfo && (
             <span className="text-xs text-muted-foreground hidden sm:inline">
@@ -276,13 +278,13 @@ export function FilePreview({
               onValueChange={(value) => value && setViewMode(value as ViewMode)}
               size="sm"
             >
-              <ToggleGroupItem value="edit" aria-label="編集モード" title="編集">
+              <ToggleGroupItem value="edit" aria-label={t('editMode')} title={t('editMode')}>
                 <Edit3 className="h-3.5 w-3.5" />
               </ToggleGroupItem>
-              <ToggleGroupItem value="preview" aria-label="プレビュー" title="プレビュー">
+              <ToggleGroupItem value="preview" aria-label={t('previewMode')} title={t('previewMode')}>
                 <Eye className="h-3.5 w-3.5" />
               </ToggleGroupItem>
-              <ToggleGroupItem value="split" aria-label="分割表示" title="分割表示">
+              <ToggleGroupItem value="split" aria-label={t('splitView')} title={t('splitView')}>
                 <Columns className="h-3.5 w-3.5" />
               </ToggleGroupItem>
             </ToggleGroup>
@@ -299,7 +301,7 @@ export function FilePreview({
             ) : (
               <Save className="h-3.5 w-3.5" />
             )}
-            <span className="ml-1 hidden sm:inline">保存</span>
+            <span className="ml-1 hidden sm:inline">{t('save')}</span>
           </Button>
           <Button
             variant="ghost"
@@ -336,14 +338,14 @@ export function FilePreview({
             >
               <div className="flex items-center justify-center h-full">
                 <p className="text-muted-foreground">
-                  PDFを表示できません。
+                  {t('pdfNotSupported')}
                   <a
                     href={streamUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-primary underline ml-1"
                   >
-                    ダウンロード
+                    {t('download')}
                   </a>
                 </p>
               </div>
@@ -358,7 +360,7 @@ export function FilePreview({
               className="max-w-full max-h-full object-contain rounded"
               style={{ maxHeight: 'calc(100% - 2rem)' }}
             >
-              お使いのブラウザは動画再生に対応していません
+              {t('videoNotSupported')}
             </video>
           </div>
         ) : isImage ? (
@@ -379,7 +381,7 @@ export function FilePreview({
               controls
               className="w-full max-w-md"
             >
-              お使いのブラウザは音声再生に対応していません
+              {t('audioNotSupported')}
             </audio>
           </div>
         )
@@ -397,7 +399,7 @@ export function FilePreview({
                   'font-mono text-sm leading-relaxed',
                   'focus-visible:ring-0 focus-visible:ring-offset-0'
                 )}
-                placeholder="ファイルの内容がここに表示されます"
+                placeholder={t('contentPlaceholder')}
                 spellCheck={false}
                 data-language={getLanguage(item.name)}
               />
@@ -444,7 +446,7 @@ export function FilePreview({
               'font-mono text-sm leading-relaxed',
               'focus-visible:ring-0 focus-visible:ring-offset-0'
             )}
-            placeholder="ファイルの内容がここに表示されます"
+            placeholder={t('contentPlaceholder')}
             spellCheck={false}
             data-language={getLanguage(item.name)}
           />

@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useUsage } from '@/hooks/useUsage';
 import { useSettings } from '@/hooks/useSettings';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,16 +17,27 @@ interface UsageMetricCardProps {
   description: string;
   utilization: number;
   resetsAt: string | null;
+  resetLabel: string;
+  usedLabel: string;
+  utilizationLabel: string;
 }
 
 interface ExtraUsageCardProps {
   extraUsage: ExtraUsage;
+  translations: {
+    title: string;
+    description: string;
+    usedLimit: string;
+    status: string;
+    enabled: string;
+    disabled: string;
+  };
 }
 
-function formatResetTime(isoString: string | null): string | null {
+function formatResetTime(isoString: string | null, locale: string): string | null {
   if (!isoString) return null;
   const date = new Date(isoString);
-  return date.toLocaleString('ja-JP', {
+  return date.toLocaleString(locale, {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
@@ -40,7 +52,7 @@ function getProgressColor(value: number): string {
   return 'bg-primary';
 }
 
-function UsageMetricCard({ title, description, utilization, resetsAt }: UsageMetricCardProps) {
+function UsageMetricCard({ title, description, utilization, resetsAt, resetLabel, usedLabel, utilizationLabel }: UsageMetricCardProps) {
   return (
     <Card>
       <CardHeader>
@@ -49,8 +61,8 @@ function UsageMetricCard({ title, description, utilization, resetsAt }: UsageMet
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex justify-between text-sm">
-          <span>使用率</span>
-          <span className="font-medium">{utilization.toFixed(0)}% used</span>
+          <span>{utilizationLabel}</span>
+          <span className="font-medium">{usedLabel}</span>
         </div>
         <Progress
           value={utilization}
@@ -59,7 +71,7 @@ function UsageMetricCard({ title, description, utilization, resetsAt }: UsageMet
         />
         {resetsAt && (
           <p className="text-xs text-muted-foreground">
-            リセット: {formatResetTime(resetsAt)}
+            {resetLabel}: {resetsAt}
           </p>
         )}
       </CardContent>
@@ -86,7 +98,7 @@ function UsageMetricSkeleton() {
   );
 }
 
-function ExtraUsageCard({ extraUsage }: ExtraUsageCardProps) {
+function ExtraUsageCard({ extraUsage, translations }: ExtraUsageCardProps) {
   const utilization = extraUsage.monthly_limit > 0
     ? (extraUsage.used_credits / extraUsage.monthly_limit) * 100
     : 0;
@@ -94,12 +106,12 @@ function ExtraUsageCard({ extraUsage }: ExtraUsageCardProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">追加クレジット</CardTitle>
-        <CardDescription>月間追加クレジットの使用状況</CardDescription>
+        <CardTitle className="text-base">{translations.title}</CardTitle>
+        <CardDescription>{translations.description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex justify-between text-sm">
-          <span>使用済み / 月間上限</span>
+          <span>{translations.usedLimit}</span>
           <span className="font-medium">
             ${(extraUsage.used_credits / 100).toFixed(2)} / ${(extraUsage.monthly_limit / 100).toFixed(2)}
           </span>
@@ -110,7 +122,7 @@ function ExtraUsageCard({ extraUsage }: ExtraUsageCardProps) {
           indicatorClassName={getProgressColor(utilization)}
         />
         <p className="text-xs text-muted-foreground">
-          ステータス: {extraUsage.is_enabled ? '有効' : '無効'}
+          {translations.status}: {extraUsage.is_enabled ? translations.enabled : translations.disabled}
         </p>
       </CardContent>
     </Card>
@@ -118,11 +130,15 @@ function ExtraUsageCard({ extraUsage }: ExtraUsageCardProps) {
 }
 
 export default function UsagePage() {
+  const t = useTranslations('usage');
   const router = useRouter();
   const { settings, isLoading: isSettingsLoading } = useSettings();
   const { usage, isLoading, error, refetch } = useUsage();
 
   const showUsage = settings?.danger?.showUsage ?? false;
+
+  // Get locale for date formatting
+  const locale = settings?.general?.language === 'zh' ? 'zh-CN' : settings?.general?.language === 'en' ? 'en-US' : 'ja-JP';
 
   // Redirect to settings page if showUsage is disabled
   useEffect(() => {
@@ -154,7 +170,7 @@ export default function UsagePage() {
               className="mt-4"
               onClick={() => refetch()}
             >
-              再試行
+              {t('retry')}
             </Button>
           </CardContent>
         </Card>
@@ -162,13 +178,26 @@ export default function UsagePage() {
     );
   }
 
+  // Helper function to get formatted used label
+  const getUsedLabel = (value: number) => t('used', { value: value.toFixed(0) });
+
+  // Extra credits translations
+  const extraCreditsTranslations = {
+    title: t('extraCredits.title'),
+    description: t('extraCredits.description'),
+    usedLimit: t('extraCredits.usedLimit'),
+    status: t('extraCredits.status'),
+    enabled: t('extraCredits.enabled'),
+    disabled: t('extraCredits.disabled'),
+  };
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-xl font-semibold">使用量の概要</h2>
+          <h2 className="text-xl font-semibold">{t('overview')}</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Claude Codeの使用状況を確認できます
+            {t('overviewDescription')}
           </p>
         </div>
         <Button
@@ -178,7 +207,7 @@ export default function UsagePage() {
           disabled={isLoading}
         >
           <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-          更新
+          {t('refresh')}
         </Button>
       </div>
 
@@ -192,38 +221,50 @@ export default function UsagePage() {
         <div className="space-y-4">
           {usage.five_hour && (
             <UsageMetricCard
-              title="5時間セッション使用量"
-              description="現在のセッションでの使用量（5時間ローリングウィンドウ）"
+              title={t('fiveHour.title')}
+              description={t('fiveHour.description')}
               utilization={usage.five_hour.utilization}
-              resetsAt={usage.five_hour.resets_at}
+              resetsAt={formatResetTime(usage.five_hour.resets_at, locale)}
+              resetLabel={t('reset')}
+              usedLabel={getUsedLabel(usage.five_hour.utilization)}
+              utilizationLabel={t('utilization')}
             />
           )}
           {usage.seven_day && (
             <UsageMetricCard
-              title="7日間 全モデル使用量"
-              description="過去7日間の全モデル合計使用量"
+              title={t('sevenDay.title')}
+              description={t('sevenDay.description')}
               utilization={usage.seven_day.utilization}
-              resetsAt={usage.seven_day.resets_at}
+              resetsAt={formatResetTime(usage.seven_day.resets_at, locale)}
+              resetLabel={t('reset')}
+              usedLabel={getUsedLabel(usage.seven_day.utilization)}
+              utilizationLabel={t('utilization')}
             />
           )}
           {usage.seven_day_sonnet && (
             <UsageMetricCard
-              title="7日間 Sonnet使用量"
-              description="過去7日間のSonnetモデル使用量"
+              title={t('sevenDaySonnet.title')}
+              description={t('sevenDaySonnet.description')}
               utilization={usage.seven_day_sonnet.utilization}
-              resetsAt={usage.seven_day_sonnet.resets_at}
+              resetsAt={formatResetTime(usage.seven_day_sonnet.resets_at, locale)}
+              resetLabel={t('reset')}
+              usedLabel={getUsedLabel(usage.seven_day_sonnet.utilization)}
+              utilizationLabel={t('utilization')}
             />
           )}
           {usage.seven_day_opus && (
             <UsageMetricCard
-              title="7日間 Opus使用量"
-              description="過去7日間のOpusモデル使用量（Maxプラン向け）"
+              title={t('sevenDayOpus.title')}
+              description={t('sevenDayOpus.description')}
               utilization={usage.seven_day_opus.utilization}
-              resetsAt={usage.seven_day_opus.resets_at}
+              resetsAt={formatResetTime(usage.seven_day_opus.resets_at, locale)}
+              resetLabel={t('reset')}
+              usedLabel={getUsedLabel(usage.seven_day_opus.utilization)}
+              utilizationLabel={t('utilization')}
             />
           )}
           {usage.extra_usage && usage.extra_usage.is_enabled && (
-            <ExtraUsageCard extraUsage={usage.extra_usage} />
+            <ExtraUsageCard extraUsage={usage.extra_usage} translations={extraCreditsTranslations} />
           )}
         </div>
       ) : null}

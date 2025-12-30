@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { ChevronDown, ChevronRight, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -41,6 +42,8 @@ export function TagGroupHeader({
   onDelete,
   canDelete,
 }: TagGroupHeaderProps) {
+  const t = useTranslations('session.tag');
+  const tCommon = useTranslations('common');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -97,14 +100,14 @@ export function TagGroupHeader({
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={handleRenameClick}>
                   <Pencil className="h-4 w-4 mr-2" />
-                  名前変更
+                  {t('rename')}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-destructive focus:text-destructive"
                   onClick={handleDeleteClick}
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
-                  削除
+                  {tCommon('delete')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -116,23 +119,23 @@ export function TagGroupHeader({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {canDelete ? `タグ「${tagName}」を削除` : '削除できません'}
+              {canDelete ? t('deleteTitle', { name: tagName }) : t('deleteDisabled')}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {canDelete
-                ? 'このタグを削除しますか？この操作は取り消せません。'
-                : `タグ「${tagName}」には${sessionCount}件のセッションが紐づいています。先にセッションのタグを解除してください。`}
+                ? t('deleteConfirm')
+                : t('deleteDisabledReason', { name: tagName, count: sessionCount })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             {canDelete ? (
               <>
-                <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                <AlertDialogCancel>{tCommon('cancel')}</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={handleConfirmDelete}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
-                  削除
+                  {tCommon('delete')}
                 </AlertDialogAction>
               </>
             ) : (

@@ -1,0 +1,519 @@
+{
+  "common": {
+    "cancel": "取消",
+    "delete": "删除",
+    "save": "保存",
+    "create": "创建",
+    "error": "错误",
+    "loading": "加载中...",
+    "send": "发送",
+    "close": "关闭",
+    "open": "打开",
+    "back": "返回",
+    "minutes": "分钟",
+    "confirm": "确认",
+    "warning": "注意"
+  },
+  "sidebar": {
+    "newChat": "新建对话",
+    "files": "文件",
+    "usage": "用量",
+    "settings": "设置",
+    "menu": "菜单"
+  },
+  "chat": {
+    "send": "发送",
+    "inputPlaceholder": "输入消息... (Shift+Enter发送)",
+    "stopGeneration": "停止生成",
+    "openTerminal": "打开终端",
+    "closeTerminal": "关闭终端",
+    "archived": "此对话已归档（只读）",
+    "you": "你",
+    "footer": "Agent SDK Chat - 基于 Claude Agent SDK",
+    "error": "错误：",
+    "newChat": "新建对话",
+    "emptyMessage": "输入消息开始对话",
+    "searchPlaceholder": "搜索消息...",
+    "noResults": "0 条结果",
+    "prevMatch": "上一个匹配（较旧）",
+    "nextMatch": "下一个匹配（较新）",
+    "selectModel": "选择模型",
+    "standardModels": "标准模型",
+    "customModels": "自定义模型",
+    "manageModels": "管理模型...",
+    "selectPermission": "选择权限模式",
+    "thinkingOn": "思考模式：开启",
+    "thinkingOff": "思考模式：关闭",
+    "openFile": "打开文件",
+    "file": "文件",
+    "skillsEnabled": "{count}/{total} 已启用",
+    "copyCode": "复制代码",
+    "copy": "复制",
+    "copied": "已复制"
+  },
+  "toolApproval": {
+    "title": "工具执行确认",
+    "toolName": "工具名称：",
+    "input": "输入：",
+    "none": "无",
+    "deny": "拒绝",
+    "denyShortcut": "拒绝 [d]",
+    "allow": "允许",
+    "allowShortcut": "允许 [a]",
+    "alwaysAllow": "始终允许",
+    "alwaysAllowShortcut": "始终允许 [y]",
+    "confirmation": "工具执行确认：",
+    "dangerous": "危险",
+    "decision": {
+      "allow": "已允许",
+      "always": "始终允许",
+      "deny": "已拒绝",
+      "interrupt": "已中断",
+      "waiting": "等待中..."
+    }
+  },
+  "thinking": {
+    "thinking": "思考中",
+    "thinkingProgress": "思考中..."
+  },
+  "session": {
+    "newChat": "新建对话",
+    "setTag": "设置标签",
+    "archive": "归档",
+    "unarchive": "取消归档",
+    "deleteConfirm": "确定要删除吗？",
+    "searchPlaceholder": "搜索对话...",
+    "searchResults": "找到{count}条对话",
+    "noResults": "没有匹配的会话",
+    "noHistory": "没有对话记录",
+    "noMatchingChats": "没有匹配「{query}」的对话",
+    "untagged": "无标签",
+    "tag": {
+      "setTitle": "设置标签",
+      "none": "无标签",
+      "name": "标签名",
+      "newPlaceholder": "新标签名",
+      "createNew": "创建新标签",
+      "createError": "创建标签失败",
+      "setError": "设置标签失败",
+      "rename": "重命名",
+      "renameTitle": "重命名标签",
+      "renamePlaceholder": "输入标签名",
+      "deleteTitle": "删除标签「{name}」",
+      "deleteDisabled": "无法删除",
+      "deleteConfirm": "删除此标签？此操作无法撤销。",
+      "deleteDisabledReason": "标签「{name}」有{count}个会话关联。请先移除会话的标签。",
+      "errors": {
+        "nameRequired": "请输入标签名",
+        "alreadyExists": "同名标签已存在",
+        "notFound": "标签未找到",
+        "hasSessionsPrefix": "此标签有",
+        "hasSessionsSuffix": "个会话关联。请先移除会话的标签。"
+      }
+    }
+  },
+  "settings": {
+    "title": "设置",
+    "loadError": "加载设置失败：",
+    "language": {
+      "title": "语言",
+      "description": "设置应用程序的显示语言。"
+    },
+    "customModels": {
+      "title": "自定义模型",
+      "description": "创建和管理带有系统提示词的自定义模型。",
+      "manage": "管理自定义模型"
+    },
+    "skills": {
+      "title": "技能",
+      "description": "管理 Claude Agent SDK 技能。技能为 Claude 提供可重用的指令。",
+      "manage": "管理技能"
+    },
+    "titleGeneration": {
+      "title": "自动生成标题",
+      "description": "开始新对话时，自动根据对话内容生成标题。",
+      "enabled": "自动生成标题",
+      "enabledDescription": "开始新对话时，在第一次助手回复后自动生成标题。",
+      "recommended": "推荐",
+      "model": "使用模型",
+      "modelPlaceholder": "选择模型",
+      "modelAuto": "自动（{model}）",
+      "modelDescription": "选择用于生成标题的模型。推荐使用轻量级的 Haiku 模型。",
+      "prompt": "提示词模板",
+      "promptPlaceholder": "用于生成标题的提示词...",
+      "promptDescriptionPart1": "将替换为用户消息和助手回复。输出期望为 JSON 格式 ",
+      "promptDescriptionPart2": "。"
+    },
+    "general": {
+      "title": "通用设置",
+      "description": "更改应用程序的基本设置。",
+      "defaultModel": "默认模型",
+      "defaultModelDescription": "设置新对话的默认模型。您可以在对话界面单独更改。",
+      "selectModel": "选择模型",
+      "standardModels": "标准模型",
+      "customModels": "自定义模型",
+      "defaultPermissionMode": "默认权限模式",
+      "defaultPermissionModeDescription": "设置新对话的默认权限模式。您可以在对话界面单独更改。",
+      "thinking": "扩展思考",
+      "thinkingDescription": "启用 Claude 的扩展思考功能可进行更深入的推理。可能会增加令牌使用量。",
+      "enableThinkingByDefault": "默认启用思考",
+      "approvalTimeout": "工具审批超时",
+      "approvalTimeoutDescription": "设置工具执行审批的等待时间。超时后自动停止。设为0表示无限制。"
+    },
+    "permissions": {
+      "title": "默认允许的工具",
+      "description": "勾选的工具在开始新对话时会自动允许。未勾选的工具每次都需要确认。",
+      "selectAll": "全选",
+      "deselectAll": "全不选"
+    },
+    "sandbox": {
+      "title": "沙盒设置",
+      "description": "限制 Claude Code 的执行环境以提高安全性。在沙盒模式下，仅在指定的工作区内运行。",
+      "workspacePath": "工作区路径",
+      "workspacePathDescription": "指定 Claude Code 的工作目录。可以使用相对路径（./workspace）或绝对路径（/path/to/workspace）。",
+      "workspacePathPlaceholder": "./workspace",
+      "claudeMdTemplate": "CLAUDE.md 模板",
+      "claudeMdTemplateDescription": "如果新工作区中不存在 CLAUDE.md，将从此模板自动创建。现有的 CLAUDE.md 不会被覆盖。",
+      "claudeMdTemplatePlaceholder": "工作区的 CLAUDE.md 模板..."
+    },
+    "appearance": {
+      "title": "外观设置",
+      "description": "自定义对话界面中显示的用户和 Claude 图标。",
+      "userIcon": "用户图标",
+      "botIcon": "Claude 图标",
+      "favicon": "网站图标",
+      "faviconDescription": "设置浏览器标签页中显示的图标",
+      "iconType": {
+        "icon": "图标",
+        "initials": "首字母",
+        "image": "图片"
+      },
+      "iconLabels": {
+        "user": "用户",
+        "userCircle": "圆形",
+        "userRound": "圆",
+        "circleUser": "圆用户",
+        "smile": "笑脸",
+        "star": "星星",
+        "heart": "爱心",
+        "bot": "机器人",
+        "brain": "大脑",
+        "sparkles": "闪光",
+        "cpu": "CPU",
+        "zap": "闪电",
+        "wand": "魔法",
+        "messageCircle": "消息",
+        "robot": "机器人",
+        "code": "代码",
+        "terminal": "终端",
+        "custom": "自定义"
+      },
+      "initials": "首字母",
+      "initialsPlaceholder": "例如：YT",
+      "initialsDescription": "最多2个字符",
+      "imageUrl": "图片URL",
+      "imageUrlPlaceholder": "https://...",
+      "selectImage": "选择图片",
+      "processing": "处理中...",
+      "currentImage": "当前图片",
+      "imageFormats": "支持 PNG, JPG, GIF, WebP 格式（优化至 {size}px）",
+      "userName": "显示名称",
+      "userNamePlaceholder": "例如：小明",
+      "userNameDescription": "对话中显示的名称（空白时显示「你」）",
+      "preview": "预览"
+    },
+    "danger": {
+      "title": "危险区域",
+      "description": "这些设置面向高级用户。更改前请仔细阅读说明。",
+      "manage": "管理危险设置",
+      "showUsage": {
+        "title": "用量显示",
+        "label": "启用用量显示",
+        "description": "在侧边栏添加用量显示链接。使用本地 Claude Code 凭据查看订阅使用情况。",
+        "dialogTitle": "注意",
+        "dialogDescription": "启用此设置后，将使用本地 Claude Code 凭据显示订阅用量。",
+        "dialogPoint1": "此功能仅供个人使用",
+        "dialogPoint2": "向第三方提供订阅凭据可能违反 Anthropic 的服务条款",
+        "dialogPoint3": "使用风险自负",
+        "enable": "了解并启用"
+      }
+    },
+    "permissionMode": {
+      "default": {
+        "label": "默认",
+        "description": "使用普通权限设置（工具执行时确认）"
+      },
+      "acceptEdits": {
+        "label": "允许编辑",
+        "description": "自动允许文件编辑，其他操作需确认",
+        "recommended": "推荐"
+      },
+      "bypassPermissions": {
+        "label": "允许全部",
+        "description": "自动允许所有工具执行",
+        "warning": "注意"
+      },
+      "plan": {
+        "label": "计划模式",
+        "description": "只读模式，更改仅为建议"
+      }
+    }
+  },
+  "files": {
+    "title": "文件",
+    "newFolder": "新建文件夹",
+    "newFile": "新建文件",
+    "upload": "上传",
+    "refresh": "刷新",
+    "folderName": "文件夹名",
+    "fileName": "文件名",
+    "rename": "重命名",
+    "download": "下载",
+    "copyPath": "复制路径",
+    "deleteConfirm": "删除「{name}」？",
+    "deleteWarning": "此操作无法撤销。",
+    "emptyFolder": "此文件夹为空",
+    "preview": "预览",
+    "edit": "编辑",
+    "saveChanges": "保存更改",
+    "discardChanges": "放弃更改"
+  },
+  "usage": {
+    "title": "用量",
+    "overview": "用量概览",
+    "overviewDescription": "查看 Claude Code 使用情况",
+    "period": "周期",
+    "inputTokens": "输入令牌",
+    "outputTokens": "输出令牌",
+    "totalCost": "总费用",
+    "noData": "无用量数据",
+    "refresh": "刷新",
+    "retry": "重试",
+    "utilization": "使用率",
+    "used": "已使用 {value}%",
+    "reset": "重置",
+    "fiveHour": {
+      "title": "5小时会话用量",
+      "description": "当前会话的用量（5小时滚动窗口）"
+    },
+    "sevenDay": {
+      "title": "7天全模型用量",
+      "description": "过去7天所有模型的总用量"
+    },
+    "sevenDaySonnet": {
+      "title": "7天 Sonnet 用量",
+      "description": "过去7天 Sonnet 模型的用量"
+    },
+    "sevenDayOpus": {
+      "title": "7天 Opus 用量",
+      "description": "过去7天 Opus 模型的用量（Max 计划）"
+    },
+    "extraCredits": {
+      "title": "额外额度",
+      "description": "月度额外额度使用情况",
+      "usedLimit": "已用 / 月度上限",
+      "status": "状态",
+      "enabled": "已启用",
+      "disabled": "已禁用"
+    },
+    "errors": {
+      "credentialsNotFound": "未找到认证信息。请登录Claude Code。",
+      "refreshFailed": "刷新令牌失败。请重新登录。",
+      "unauthorized": "认证失败。请重新登录。",
+      "apiFailed": "获取用量数据失败。",
+      "internal": "发生内部错误。"
+    }
+  },
+  "workspace": {
+    "title": "工作区",
+    "select": "选择工作区",
+    "create": "新建",
+    "clone": "Git克隆",
+    "name": "工作区名称",
+    "gitUrl": "Git仓库URL",
+    "cloning": "克隆中...",
+    "folderName": "文件夹名",
+    "default": "默认",
+    "createNewFolder": "新建文件夹"
+  },
+  "fileBrowser": {
+    "noFiles": "暂无文件"
+  },
+  "models": {
+    "title": "自定义模型",
+    "description": "创建和管理带有系统提示词的自定义模型。",
+    "create": "新建",
+    "createNew": "新建自定义模型",
+    "edit": "编辑",
+    "editModel": "编辑模型：{name}",
+    "name": "模型名称",
+    "baseModel": "基础模型",
+    "systemPrompt": "系统提示词",
+    "icon": "图标",
+    "deleteConfirm": "确定要删除此自定义模型吗？",
+    "empty": "暂无自定义模型。",
+    "emptyHint": "点击「新建」按钮创建。",
+    "standard": "标准模型",
+    "standardDescription": "可用标准模型列表（只读）。",
+    "backToSettings": "返回设置",
+    "displayName": "显示名称",
+    "displayNameRequired": "显示名称 *",
+    "displayNamePlaceholder": "例如：代码审查助手",
+    "identifier": "标识符",
+    "identifierPlaceholder": "例如：code-reviewer",
+    "identifierHint": "仅允许字母、数字和连字符",
+    "selectModel": "选择模型",
+    "systemPromptPlaceholder": "输入用于定义此模型角色和行为的提示词...",
+    "descriptionLabel": "描述",
+    "descriptionPlaceholder": "例如：审查代码质量和最佳实践",
+    "skillsSettings": "技能设置",
+    "skillsSettingsHint": "配置此模型的技能启用/禁用状态。默认遵循全局设置。",
+    "update": "更新",
+    "disabled": "已禁用",
+    "enable": "启用",
+    "disable": "禁用"
+  },
+  "skills": {
+    "title": "技能",
+    "description": "管理 Claude Agent SDK 技能。技能为 Claude 提供可重用的指令。",
+    "create": "新建",
+    "createNew": "新建技能",
+    "edit": "编辑",
+    "editSkill": "编辑技能：{name}",
+    "name": "技能名称",
+    "content": "技能内容 (SKILL.md)",
+    "enabled": "启用",
+    "deleteConfirm": "确定要删除此技能吗？",
+    "empty": "暂无技能。",
+    "emptyHint": "点击「新建」按钮创建。",
+    "backToSettings": "返回设置",
+    "displayName": "显示名称",
+    "displayNameRequired": "显示名称 *",
+    "displayNamePlaceholder": "例如：代码审查",
+    "identifier": "标识符",
+    "identifierPlaceholder": "例如：code-review",
+    "identifierHint": "仅允许字母、数字和连字符",
+    "descriptionLabel": "描述",
+    "descriptionPlaceholder": "例如：审查代码质量和最佳实践",
+    "contentRequired": "SKILL.md 内容 *",
+    "contentHint": "可以在 YAML 前置元数据中指定 name, description, allowed-tools, model",
+    "update": "更新",
+    "disabled": "已禁用",
+    "default": "默认",
+    "noSkills": "暂无注册的技能。",
+    "addSkillsHint": "请从设置页面添加技能。"
+  },
+  "iconPicker": {
+    "imageIcon": "图片图标",
+    "iconTab": "图标",
+    "imageTab": "图片",
+    "iconLabel": "图标",
+    "colorLabel": "颜色",
+    "processing": "处理中...",
+    "selectImage": "选择图片",
+    "imageFormats": "支持 PNG, JPG, GIF, WebP 格式（优化至 128px）",
+    "removeImage": "删除图片并恢复为图标",
+    "imageLoadError": "加载图片失败"
+  },
+  "toolCall": {
+    "inputParams": "输入参数",
+    "outputResult": "输出结果"
+  },
+  "filePreview": {
+    "unsupportedFormat": "无法显示此文件格式",
+    "selectFile": "请选择文件",
+    "folderNotPreviewable": "无法显示文件夹",
+    "unsaved": "未保存",
+    "editMode": "编辑模式",
+    "previewMode": "预览",
+    "splitView": "分屏视图",
+    "save": "保存",
+    "pdfNotSupported": "无法显示 PDF 文件。",
+    "download": "下载",
+    "videoNotSupported": "您的浏览器不支持视频播放",
+    "audioNotSupported": "您的浏览器不支持音频播放",
+    "contentPlaceholder": "文件内容将在此显示"
+  },
+  "fileBrowser": {
+    "copyPath": "复制路径",
+    "copyPathPrompt": "请复制路径：",
+    "rename": "重命名",
+    "noFiles": "无文件"
+  },
+  "gitClone": {
+    "title": "克隆 Git 仓库",
+    "repoUrl": "仓库 URL",
+    "targetFolder": "目标文件夹名",
+    "optional": "可选",
+    "targetFolderPlaceholder": "为空时使用仓库名称",
+    "cloning": "克隆中...",
+    "clone": "克隆",
+    "largeRepoHint": "大型仓库可能需要更长时间来克隆",
+    "errors": {
+      "urlRequired": "请输入仓库 URL",
+      "invalidUrl": "无效的 Git 仓库 URL",
+      "notFound": "找不到仓库。请检查 URL",
+      "authFailed": "认证失败。请检查访问权限",
+      "folderExists": "文件夹「{name}」已存在。请指定其他名称",
+      "timeout": "克隆操作超时。大型仓库可能需要更长时间",
+      "pathTraversal": "不允许访问工作区外部",
+      "generic": "克隆过程中发生错误"
+    }
+  },
+  "workspaceSelector": {
+    "startNewChat": "开始新对话",
+    "selectWorkspaceHint": "选择工作区并输入消息",
+    "selectWorkspace": "选择工作区",
+    "selectWorkspaceDesc": "选择 Claude 操作的目录",
+    "selectFolder": "选择文件夹",
+    "selected": "已选择："
+  },
+  "workspaceBadge": {
+    "default": "默认",
+    "workspace": "工作区",
+    "currentDir": "当前工作目录",
+    "dirHint": "Claude 将在此目录内执行文件操作。"
+  },
+  "csv": {
+    "unclosedQuote": "引号未闭合",
+    "parseError": "解析 CSV 失败",
+    "noData": "无 CSV 数据",
+    "column": "列 {index}",
+    "rowsColumns": "{rows} 行 × {columns} 列"
+  },
+  "json": {
+    "parseError": "解析 JSON 失败"
+  },
+  "mermaid": {
+    "renderError": "渲染图表失败",
+    "noContent": "请输入图表"
+  },
+  "tools": {
+    "categories": {
+      "read": "只读",
+      "write": "文件写入",
+      "execute": "命令执行",
+      "web": "Web 操作",
+      "other": "其他"
+    },
+    "descriptions": {
+      "Read": "读取文件",
+      "Glob": "按模式搜索文件",
+      "Grep": "搜索文件内容",
+      "LSP": "获取代码定义和引用",
+      "NotebookRead": "读取 Jupyter Notebook",
+      "Write": "创建或覆盖文件",
+      "Edit": "编辑文件",
+      "NotebookEdit": "编辑 Jupyter Notebook",
+      "Bash": "执行 Shell 命令",
+      "KillShell": "终止 Shell 进程",
+      "WebFetch": "从 URL 获取内容",
+      "WebSearch": "执行网络搜索",
+      "Task": "执行子任务",
+      "TaskOutput": "获取任务输出",
+      "TodoWrite": "管理待办事项",
+      "AskUserQuestion": "向用户提问",
+      "Skill": "执行项目技能"
+    }
+  }
+}

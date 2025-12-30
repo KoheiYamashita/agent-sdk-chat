@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   User,
   UserCircle,
@@ -37,49 +38,49 @@ interface AppearanceSettingsFormProps {
   disabled?: boolean;
 }
 
-const userIcons: { type: AvatarIconType; icon: React.ComponentType<{ className?: string }>; label: string }[] = [
-  { type: 'user', icon: User, label: 'ユーザー' },
-  { type: 'user-circle', icon: UserCircle, label: '丸型' },
-  { type: 'user-round', icon: UserRound, label: '丸' },
-  { type: 'circle-user', icon: CircleUser, label: 'サークル' },
-  { type: 'smile', icon: Smile, label: 'スマイル' },
-  { type: 'star', icon: Star, label: 'スター' },
-  { type: 'heart', icon: Heart, label: 'ハート' },
-  { type: 'initials', icon: User, label: 'イニシャル' },
-  { type: 'image', icon: ImagePlus, label: '画像' },
+const userIconTypes: { type: AvatarIconType; icon: React.ComponentType<{ className?: string }>; labelKey: string }[] = [
+  { type: 'user', icon: User, labelKey: 'user' },
+  { type: 'user-circle', icon: UserCircle, labelKey: 'userCircle' },
+  { type: 'user-round', icon: UserRound, labelKey: 'userRound' },
+  { type: 'circle-user', icon: CircleUser, labelKey: 'circleUser' },
+  { type: 'smile', icon: Smile, labelKey: 'smile' },
+  { type: 'star', icon: Star, labelKey: 'star' },
+  { type: 'heart', icon: Heart, labelKey: 'heart' },
+  { type: 'initials', icon: User, labelKey: 'initials' },
+  { type: 'image', icon: ImagePlus, labelKey: 'image' },
 ];
 
-const botIcons: { type: BotIconType; icon: React.ComponentType<{ className?: string }>; label: string }[] = [
-  { type: 'bot', icon: Bot, label: 'ボット' },
-  { type: 'brain', icon: Brain, label: '脳' },
-  { type: 'sparkles', icon: Sparkles, label: 'キラキラ' },
-  { type: 'cpu', icon: Cpu, label: 'CPU' },
-  { type: 'zap', icon: Zap, label: '稲妻' },
-  { type: 'wand', icon: Wand, label: '魔法' },
-  { type: 'message-circle', icon: MessageCircle, label: 'メッセージ' },
-  { type: 'initials', icon: Bot, label: 'イニシャル' },
-  { type: 'image', icon: ImagePlus, label: '画像' },
+const botIconTypes: { type: BotIconType; icon: React.ComponentType<{ className?: string }>; labelKey: string }[] = [
+  { type: 'bot', icon: Bot, labelKey: 'bot' },
+  { type: 'brain', icon: Brain, labelKey: 'brain' },
+  { type: 'sparkles', icon: Sparkles, labelKey: 'sparkles' },
+  { type: 'cpu', icon: Cpu, labelKey: 'cpu' },
+  { type: 'zap', icon: Zap, labelKey: 'zap' },
+  { type: 'wand', icon: Wand, labelKey: 'wand' },
+  { type: 'message-circle', icon: MessageCircle, labelKey: 'messageCircle' },
+  { type: 'initials', icon: Bot, labelKey: 'initials' },
+  { type: 'image', icon: ImagePlus, labelKey: 'image' },
 ];
 
-const faviconOptions: { type: FaviconType; icon: React.ComponentType<{ className?: string }>; label: string }[] = [
-  { type: 'robot', icon: Bot, label: 'ロボット' },
-  { type: 'bot', icon: Bot, label: 'ボット' },
-  { type: 'brain', icon: Brain, label: '脳' },
-  { type: 'sparkles', icon: Sparkles, label: 'キラキラ' },
-  { type: 'cpu', icon: Cpu, label: 'CPU' },
-  { type: 'zap', icon: Zap, label: '稲妻' },
-  { type: 'code', icon: Code, label: 'コード' },
-  { type: 'terminal', icon: Terminal, label: 'ターミナル' },
-  { type: 'custom', icon: ImagePlus, label: 'カスタム' },
+const faviconIconTypes: { type: FaviconType; icon: React.ComponentType<{ className?: string }>; labelKey: string }[] = [
+  { type: 'robot', icon: Bot, labelKey: 'robot' },
+  { type: 'bot', icon: Bot, labelKey: 'bot' },
+  { type: 'brain', icon: Brain, labelKey: 'brain' },
+  { type: 'sparkles', icon: Sparkles, labelKey: 'sparkles' },
+  { type: 'cpu', icon: Cpu, labelKey: 'cpu' },
+  { type: 'zap', icon: Zap, labelKey: 'zap' },
+  { type: 'code', icon: Code, labelKey: 'code' },
+  { type: 'terminal', icon: Terminal, labelKey: 'terminal' },
+  { type: 'custom', icon: ImagePlus, labelKey: 'custom' },
 ];
 
 export function getUserIcon(type: AvatarIconType) {
-  const iconConfig = userIcons.find((i) => i.type === type);
+  const iconConfig = userIconTypes.find((i) => i.type === type);
   return iconConfig?.icon ?? User;
 }
 
 export function getBotIcon(type: BotIconType) {
-  const iconConfig = botIcons.find((i) => i.type === type);
+  const iconConfig = botIconTypes.find((i) => i.type === type);
   return iconConfig?.icon ?? Bot;
 }
 
@@ -99,6 +100,9 @@ export function AppearanceSettingsForm({
   onChange,
   disabled,
 }: AppearanceSettingsFormProps) {
+  const t = useTranslations('settings.appearance');
+  const tCommon = useTranslations('common');
+  const tChat = useTranslations('chat');
   const [localSettings, setLocalSettings] = useState(settings);
   const [isUploadingUser, setIsUploadingUser] = useState(false);
   const [isUploadingBot, setIsUploadingBot] = useState(false);
@@ -286,9 +290,9 @@ export function AppearanceSettingsForm({
     <div className="space-y-6">
       {/* User Icon Selection */}
       <div className="space-y-3">
-        <Label className="text-sm font-medium">ユーザーアイコン</Label>
+        <Label className="text-sm font-medium">{t('userIcon')}</Label>
         <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-          {userIcons.map(({ type, icon: Icon, label }) => (
+          {userIconTypes.map(({ type, icon: Icon, labelKey }) => (
             <button
               key={type}
               type="button"
@@ -302,7 +306,7 @@ export function AppearanceSettingsForm({
                   : 'border-border/50 bg-background/50',
                 disabled && 'opacity-50 cursor-not-allowed'
               )}
-              title={label}
+              title={t(`iconLabels.${labelKey}`)}
             >
               <Avatar className="h-7 w-7 ring-2 ring-background shadow-sm">
                 {type === 'image' && localSettings.userImageUrl ? (
@@ -317,7 +321,7 @@ export function AppearanceSettingsForm({
                 </AvatarFallback>
               </Avatar>
               <span className="text-[10px] text-muted-foreground truncate w-full text-center">
-                {label}
+                {t(`iconLabels.${labelKey}`)}
               </span>
             </button>
           ))}
@@ -325,14 +329,14 @@ export function AppearanceSettingsForm({
         {localSettings.userIcon === 'initials' && (
           <div className="mt-2">
             <Input
-              placeholder="例: YT"
+              placeholder={t('initialsPlaceholder')}
               value={localSettings.userInitials}
               onChange={(e) => handleUserInitialsChange(e.target.value)}
               maxLength={2}
               disabled={disabled}
               className="w-24"
             />
-            <p className="text-xs text-muted-foreground mt-1">2文字まで入力できます</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('initialsDescription')}</p>
           </div>
         )}
         {localSettings.userIcon === 'image' && (
@@ -357,12 +361,12 @@ export function AppearanceSettingsForm({
                 {isUploadingUser ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    処理中...
+                    {t('processing')}
                   </>
                 ) : (
                   <>
                     <ImagePlus className="h-4 w-4 mr-2" />
-                    画像を選択
+                    {t('selectImage')}
                   </>
                 )}
               </Button>
@@ -375,7 +379,7 @@ export function AppearanceSettingsForm({
                   disabled={disabled}
                 >
                   <X className="h-4 w-4 mr-1" />
-                  削除
+                  {tCommon('delete')}
                 </Button>
               )}
             </div>
@@ -384,33 +388,33 @@ export function AppearanceSettingsForm({
                 <Avatar className="h-10 w-10 ring-2 ring-background shadow-sm">
                   <AvatarImage src={localSettings.userImageUrl} alt="User preview" />
                 </Avatar>
-                <span className="text-xs text-muted-foreground">現在の画像</span>
+                <span className="text-xs text-muted-foreground">{t('currentImage')}</span>
               </div>
             )}
-            <p className="text-xs text-muted-foreground">PNG, JPG, GIF, WebP形式に対応（128pxに最適化）</p>
+            <p className="text-xs text-muted-foreground">{t('imageFormats', { size: 128 })}</p>
           </div>
         )}
       </div>
 
       {/* User Name */}
       <div className="space-y-3">
-        <Label className="text-sm font-medium">表示名</Label>
+        <Label className="text-sm font-medium">{t('userName')}</Label>
         <Input
-          placeholder="例: Taro"
+          placeholder={t('userNamePlaceholder')}
           value={localSettings.userName ?? ''}
           onChange={(e) => handleUserNameChange(e.target.value)}
           maxLength={50}
           disabled={disabled}
           className="w-full max-w-xs"
         />
-        <p className="text-xs text-muted-foreground">チャットで表示される名前（空白の場合は「あなた」と表示）</p>
+        <p className="text-xs text-muted-foreground">{t('userNameDescription')}</p>
       </div>
 
       {/* Bot Icon Selection */}
       <div className="space-y-3">
-        <Label className="text-sm font-medium">Claudeアイコン</Label>
+        <Label className="text-sm font-medium">{t('botIcon')}</Label>
         <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-          {botIcons.map(({ type, icon: Icon, label }) => (
+          {botIconTypes.map(({ type, icon: Icon, labelKey }) => (
             <button
               key={type}
               type="button"
@@ -424,7 +428,7 @@ export function AppearanceSettingsForm({
                   : 'border-border/50 bg-background/50',
                 disabled && 'opacity-50 cursor-not-allowed'
               )}
-              title={label}
+              title={t(`iconLabels.${labelKey}`)}
             >
               <Avatar className="h-7 w-7 ring-2 ring-background shadow-sm">
                 {type === 'image' && localSettings.botImageUrl ? (
@@ -439,7 +443,7 @@ export function AppearanceSettingsForm({
                 </AvatarFallback>
               </Avatar>
               <span className="text-[10px] text-muted-foreground truncate w-full text-center">
-                {label}
+                {t(`iconLabels.${labelKey}`)}
               </span>
             </button>
           ))}
@@ -447,14 +451,14 @@ export function AppearanceSettingsForm({
         {localSettings.botIcon === 'initials' && (
           <div className="mt-2">
             <Input
-              placeholder="例: AI"
+              placeholder={t('initialsPlaceholder')}
               value={localSettings.botInitials}
               onChange={(e) => handleBotInitialsChange(e.target.value)}
               maxLength={2}
               disabled={disabled}
               className="w-24"
             />
-            <p className="text-xs text-muted-foreground mt-1">2文字まで入力できます</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('initialsDescription')}</p>
           </div>
         )}
         {localSettings.botIcon === 'image' && (
@@ -479,12 +483,12 @@ export function AppearanceSettingsForm({
                 {isUploadingBot ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    処理中...
+                    {t('processing')}
                   </>
                 ) : (
                   <>
                     <ImagePlus className="h-4 w-4 mr-2" />
-                    画像を選択
+                    {t('selectImage')}
                   </>
                 )}
               </Button>
@@ -497,7 +501,7 @@ export function AppearanceSettingsForm({
                   disabled={disabled}
                 >
                   <X className="h-4 w-4 mr-1" />
-                  削除
+                  {tCommon('delete')}
                 </Button>
               )}
             </div>
@@ -506,20 +510,20 @@ export function AppearanceSettingsForm({
                 <Avatar className="h-10 w-10 ring-2 ring-background shadow-sm">
                   <AvatarImage src={localSettings.botImageUrl} alt="Bot preview" />
                 </Avatar>
-                <span className="text-xs text-muted-foreground">現在の画像</span>
+                <span className="text-xs text-muted-foreground">{t('currentImage')}</span>
               </div>
             )}
-            <p className="text-xs text-muted-foreground">PNG, JPG, GIF, WebP形式に対応（128pxに最適化）</p>
+            <p className="text-xs text-muted-foreground">{t('imageFormats', { size: 128 })}</p>
           </div>
         )}
       </div>
 
       {/* Favicon Selection */}
       <div className="space-y-3">
-        <Label className="text-sm font-medium">ファビコン</Label>
-        <p className="text-xs text-muted-foreground">ブラウザのタブに表示されるアイコンを設定します</p>
+        <Label className="text-sm font-medium">{t('favicon')}</Label>
+        <p className="text-xs text-muted-foreground">{t('faviconDescription')}</p>
         <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-          {faviconOptions.map(({ type, icon: Icon, label }) => (
+          {faviconIconTypes.map(({ type, icon: Icon, labelKey }) => (
             <button
               key={type}
               type="button"
@@ -533,7 +537,7 @@ export function AppearanceSettingsForm({
                   : 'border-border/50 bg-background/50',
                 disabled && 'opacity-50 cursor-not-allowed'
               )}
-              title={label}
+              title={t(`iconLabels.${labelKey}`)}
             >
               <div className="h-7 w-7 flex items-center justify-center">
                 {type === 'custom' && localSettings.customFaviconUrl ? (
@@ -545,7 +549,7 @@ export function AppearanceSettingsForm({
                 ) : type !== 'custom' && FAVICON_SVGS[type] ? (
                   <img
                     src={svgToDataUrl(FAVICON_SVGS[type])}
-                    alt={label}
+                    alt={t(`iconLabels.${labelKey}`)}
                     className="h-6 w-6 object-contain"
                   />
                 ) : (
@@ -553,7 +557,7 @@ export function AppearanceSettingsForm({
                 )}
               </div>
               <span className="text-[10px] text-muted-foreground truncate w-full text-center">
-                {label}
+                {t(`iconLabels.${labelKey}`)}
               </span>
             </button>
           ))}
@@ -580,12 +584,12 @@ export function AppearanceSettingsForm({
                 {isUploadingFavicon ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    処理中...
+                    {t('processing')}
                   </>
                 ) : (
                   <>
                     <ImagePlus className="h-4 w-4 mr-2" />
-                    画像を選択
+                    {t('selectImage')}
                   </>
                 )}
               </Button>
@@ -598,7 +602,7 @@ export function AppearanceSettingsForm({
                   disabled={disabled}
                 >
                   <X className="h-4 w-4 mr-1" />
-                  削除
+                  {tCommon('delete')}
                 </Button>
               )}
             </div>
@@ -609,17 +613,17 @@ export function AppearanceSettingsForm({
                   alt="Custom favicon preview"
                   className="h-8 w-8 object-contain border rounded"
                 />
-                <span className="text-xs text-muted-foreground">現在の画像</span>
+                <span className="text-xs text-muted-foreground">{t('currentImage')}</span>
               </div>
             )}
-            <p className="text-xs text-muted-foreground">PNG, JPG, GIF, WebP形式に対応（64pxに最適化）</p>
+            <p className="text-xs text-muted-foreground">{t('imageFormats', { size: 64 })}</p>
           </div>
         )}
       </div>
 
       {/* Preview */}
       <div className="space-y-3">
-        <Label className="text-sm font-medium">プレビュー</Label>
+        <Label className="text-sm font-medium">{t('preview')}</Label>
         <div className="flex items-center gap-4 p-4 rounded-lg bg-muted/30 border border-border/50">
           <div className="flex items-center gap-2">
             <Avatar className="h-8 w-8 ring-2 ring-background shadow-sm">
@@ -630,7 +634,7 @@ export function AppearanceSettingsForm({
                 {renderUserAvatarContent()}
               </AvatarFallback>
             </Avatar>
-            <span className="text-sm text-muted-foreground">{localSettings.userName || 'あなた'}</span>
+            <span className="text-sm text-muted-foreground">{localSettings.userName || tChat('you')}</span>
           </div>
           <div className="flex items-center gap-2">
             <Avatar className="h-8 w-8 ring-2 ring-background shadow-sm">

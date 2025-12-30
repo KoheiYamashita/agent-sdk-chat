@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
@@ -21,6 +22,7 @@ export function SkillCard({
   onToggleEnabled,
   disabled = false,
 }: SkillCardProps) {
+  const t = useTranslations('skills');
   // Extract first line of content as preview (skip YAML frontmatter)
   const getContentPreview = (content: string): string => {
     const lines = content.split('\n');
@@ -68,7 +70,7 @@ export function SkillCard({
             <h4 className="font-medium truncate">{skill.displayName}</h4>
             {!skill.isEnabled && (
               <span className="text-xs text-muted-foreground px-1.5 py-0.5 bg-muted rounded">
-                無効
+                {t('disabled')}
               </span>
             )}
           </div>
@@ -93,7 +95,7 @@ export function SkillCard({
           checked={skill.isEnabled}
           onCheckedChange={onToggleEnabled}
           disabled={disabled}
-          aria-label={skill.isEnabled ? '無効にする' : '有効にする'}
+          aria-label={skill.isEnabled ? t('disable') : t('enable')}
         />
         <Button
           variant="ghost"

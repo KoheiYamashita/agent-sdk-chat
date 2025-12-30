@@ -2,6 +2,7 @@
 
 import { Suspense, useState, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   FilePlus,
   FolderPlus,
@@ -19,6 +20,8 @@ import { FilePreview } from '@/components/workspace/FilePreview';
 import type { DirectoryItem } from '@/types';
 
 function FilesPageContent() {
+  const t = useTranslations('files');
+  const tCommon = useTranslations('common');
   const searchParams = useSearchParams();
   const workspacePath = searchParams.get('workspace') || undefined;
   const [selectedItem, setSelectedItem] = useState<DirectoryItem | null>(null);
@@ -123,7 +126,7 @@ function FilesPageContent() {
               type="text"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              placeholder={isCreatingFolder ? 'フォルダ名' : 'ファイル名'}
+              placeholder={isCreatingFolder ? t('folderName') : t('fileName')}
               className="h-8 text-sm max-w-xs"
               autoFocus
               onKeyDown={(e) => {
@@ -146,7 +149,7 @@ function FilesPageContent() {
               {isSubmitting ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
-                '作成'
+                tCommon('create')
               )}
             </Button>
             <Button
@@ -159,7 +162,7 @@ function FilesPageContent() {
                 setNewName('');
               }}
             >
-              キャンセル
+              {tCommon('cancel')}
             </Button>
           </div>
         ) : (
@@ -171,7 +174,7 @@ function FilesPageContent() {
               onClick={() => setIsCreatingFile(true)}
             >
               <FilePlus className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">ファイル</span>
+              <span className="hidden sm:inline">{t('newFile')}</span>
             </Button>
             <Button
               variant="outline"
@@ -180,7 +183,7 @@ function FilesPageContent() {
               onClick={() => setIsCreatingFolder(true)}
             >
               <FolderPlus className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">フォルダ</span>
+              <span className="hidden sm:inline">{t('newFolder')}</span>
             </Button>
             <Button
               variant="outline"
@@ -194,7 +197,7 @@ function FilesPageContent() {
               ) : (
                 <Upload className="h-3.5 w-3.5" />
               )}
-              <span className="hidden sm:inline">アップロード</span>
+              <span className="hidden sm:inline">{t('upload')}</span>
             </Button>
             <input
               ref={fileInputRef}
@@ -211,7 +214,7 @@ function FilesPageContent() {
               onClick={handleRefresh}
             >
               <RefreshCw className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">更新</span>
+              <span className="hidden sm:inline">{t('refresh')}</span>
             </Button>
             <Button
               variant="ghost"

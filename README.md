@@ -1,3 +1,5 @@
+[English](./README_EN.md) | [中文](./README_ZH.md)
+
 # Agent SDK Chat
 
 > **注意**: このプロジェクトは個人利用を想定しています。商用及び複数人利用は想定していません。

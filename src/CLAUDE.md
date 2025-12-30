@@ -10,6 +10,7 @@ Agent SDK Chatアプリケーションのメインソースコードディレク
 | `components/` | Reactコンポーネント（chat, sidebar, settings, terminal, workspace, ui） |
 | `contexts/` | React Contextプロバイダー（SidebarContext, TerminalContext） |
 | `hooks/` | カスタムReact Hooks（useChat, useSessions, useSettings, useModels） |
+| `i18n/` | 国際化設定（ロケール設定、I18nProvider） |
 | `lib/` | ユーティリティ、Claude SDK連携、Prismaクライアント、プロバイダー |
 | `types/` | TypeScript型定義 |
 | `terminal-server/` | WebSocket PTYサーバーハンドラー |

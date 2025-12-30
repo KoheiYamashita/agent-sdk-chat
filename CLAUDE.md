@@ -33,6 +33,7 @@ npm run db:studio        # Prisma Studio起動
 - **バックエンド**: Next.js API Routes + Claude Agent SDK
 - **データベース**: SQLite + Prisma ORM（出力先: `src/generated/prisma`）
 - **ターミナル**: xterm.js（フロント）+ node-pty（バック）via WebSocket
+- **国際化（i18n）**: next-intl（日本語/英語/中国語対応）
 
 ### 主要なデータフロー
 
@@ -61,6 +62,9 @@ npm run db:studio        # Prisma Studio起動
 | Claude SDK連携 | `src/lib/claude/` | SDK初期化、セッション管理 |
 | ターミナルサーバー | `src/terminal-server/` | WebSocket PTYハンドラー |
 | カスタムサーバー | `server.ts` | Next.js + WebSocket統合 |
+| i18nプロバイダー | `src/i18n/` | クライアントサイドの国際化設定、ロケール検出 |
+| i18nサーバー | `src/lib/i18n/` | サーバーサイドの翻訳関数 |
+| 翻訳ファイル | `messages/` | 各言語のJSON翻訳ファイル（ja.json, en.json, zh.json） |
 
 ### API構成
 
@@ -79,6 +83,7 @@ npm run db:studio        # Prisma Studio起動
 - **Skill**: スキル定義（`name`, `content`（SKILL.md）, `isEnabled`）
 - **MCPServer**: MCPサーバー設定（stdio/sse/httpタイプ）
 - **Settings**: アプリ設定のKey-Valueストア（`general`, `permissions`, `sandbox`, `appearance`, `titleGeneration`, `danger`）
+  - `GeneralSettings`: `language`（表示言語: ja/en/zh）, `defaultModel`, `defaultPermissionMode`など
   - `SandboxSettings`: `workspacePath`（ワークスペースパス）, `claudeMdTemplate`（ワークスペースのCLAUDE.mdテンプレート）
   - `DangerSettings`: `showUsage`（使用量表示の有効化、デフォルトfalse）
 
@@ -88,3 +93,18 @@ npm run db:studio        # Prisma Studio起動
 - クライアントコンポーネントは`"use client"`ディレクティブが必要
 - UIコンポーネント追加: `npx shadcn@latest add <component>`
 - 各ディレクトリに詳細な`CLAUDE.md`があるので参照すること
+
+### 国際化（i18n）
+
+- クライアントコンポーネントでは`useTranslations()`フックを使用
+  ```tsx
+  const t = useTranslations('settings');
+  return <span>{t('title')}</span>;
+  ```
+- サーバーサイド（API Routes）では`createServerTranslator()`を使用
+  ```ts
+  const t = await createServerTranslator('errors');
+  return { error: t('notFound') };
+  ```
+- 翻訳キーは`messages/ja.json`を基準に追加（en.json, zh.jsonも同時に更新）
+- 新しい翻訳は適切なネームスペースに追加（例: `settings.appearance.title`）

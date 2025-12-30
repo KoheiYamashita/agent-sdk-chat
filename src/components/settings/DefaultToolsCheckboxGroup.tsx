@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +21,9 @@ export function DefaultToolsCheckboxGroup({
   onChange,
   disabled = false,
 }: DefaultToolsCheckboxGroupProps) {
+  const t = useTranslations('settings.permissions');
+  const tTools = useTranslations('tools');
+
   const handleToolToggle = (toolName: string, checked: boolean) => {
     if (checked) {
       onChange([...selectedTools, toolName]);
@@ -72,12 +76,12 @@ export function DefaultToolsCheckboxGroup({
           disabled={disabled}
         />
         <Label htmlFor="select-all-tools" className="font-medium cursor-pointer">
-          すべて選択
+          {t('selectAll')}
         </Label>
       </div>
 
       {/* Category Groups */}
-      {toolsByCategory.map(({ category, label, tools }) => {
+      {toolsByCategory.map(({ category, categoryKey, tools }) => {
         const categoryAllSelected = tools.every((t) =>
           selectedTools.includes(t.name)
         );
@@ -109,7 +113,7 @@ export function DefaultToolsCheckboxGroup({
                 htmlFor={`category-${category}`}
                 className="font-medium cursor-pointer"
               >
-                {label}
+                {tTools(categoryKey)}
               </Label>
             </div>
             <div className="ml-6 space-y-2">
@@ -141,6 +145,9 @@ function ToolCheckboxItem({
   onCheckedChange: (checked: boolean) => void;
   disabled?: boolean;
 }) {
+  const t = useTranslations('common');
+  const tTools = useTranslations('tools.descriptions');
+
   return (
     <div className="flex items-start space-x-3">
       <Checkbox
@@ -154,11 +161,11 @@ function ToolCheckboxItem({
           <span className="font-mono text-sm">{tool.displayName}</span>
           {tool.isDangerous && (
             <Badge variant="destructive" className="text-xs py-0">
-              注意
+              {t('warning')}
             </Badge>
           )}
         </div>
-        <p className="text-sm text-muted-foreground">{tool.description}</p>
+        <p className="text-sm text-muted-foreground">{tTools(tool.descriptionKey)}</p>
       </Label>
     </div>
   );

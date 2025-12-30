@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useChat } from '@/hooks/useChat';
 import { useSettings } from '@/hooks/useSettings';
 import { useAllModels } from '@/hooks/useModels';
@@ -53,6 +54,7 @@ export function ChatContainer({ sessionId }: ChatContainerProps) {
 
 function ChatContainerInner({ sessionId }: ChatContainerProps) {
   const router = useRouter();
+  const t = useTranslations('chat');
   const { open: openSidebar, chatResetKey } = useSidebar();
   const { isOpen: isTerminalOpen, toggleTerminal, closeTerminal, destroySession } = useTerminal();
   const [workspacePath, setWorkspacePath] = useState<string | null>(null);
@@ -275,7 +277,7 @@ function ChatContainerInner({ sessionId }: ChatContainerProps) {
 
         {error && (
           <div className="bg-destructive/10 border-destructive/20 border-b px-4 py-2 text-sm text-destructive">
-            エラー: {error}
+            {t('error')} {error}
           </div>
         )}
 
@@ -303,7 +305,7 @@ function ChatContainerInner({ sessionId }: ChatContainerProps) {
 
         {session?.isArchived ? (
           <div className="border-t bg-muted/50 p-4 text-center text-sm text-muted-foreground">
-            このチャットはアーカイブされています（閲覧専用）
+            {t('archived')}
           </div>
         ) : (
           <InputArea

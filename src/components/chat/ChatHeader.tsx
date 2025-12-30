@@ -1,6 +1,7 @@
 'use client';
 
 import { Menu, Search } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { WorkspaceBadge } from '@/components/workspace';
 import type { Session } from '@/types';
@@ -20,6 +21,7 @@ export function ChatHeader({
   onSearchClick,
   showSearchButton = false,
 }: ChatHeaderProps) {
+  const t = useTranslations('chat');
   return (
     <header className="border-b border-border/50 bg-background/80 backdrop-blur-sm px-3 sm:px-4 py-3 flex items-center gap-3 sm:gap-4">
       <Button
@@ -32,7 +34,7 @@ export function ChatHeader({
       </Button>
       <div className="flex-1 min-w-0">
         <h1 className="font-semibold truncate text-sm sm:text-base text-foreground/90">
-          {session?.title || '新規チャット'}
+          {session?.title || t('newChat')}
         </h1>
       </div>
       {showSearchButton && (

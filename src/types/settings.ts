@@ -36,7 +36,7 @@ export interface GeneralSettings {
   defaultPermissionMode: PermissionMode;
   defaultThinkingEnabled: boolean;
   theme: 'light' | 'dark' | 'system';
-  language: 'ja' | 'en';
+  language: 'ja' | 'en' | 'zh';
   approvalTimeoutMinutes: number; // デフォルト60、0で無制限
 }
 

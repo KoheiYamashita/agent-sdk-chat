@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   ChevronRight,
   ChevronDown,
@@ -77,6 +78,9 @@ export function FileBrowserItem({
   onDelete,
   onDownload,
 }: FileBrowserItemProps) {
+  const t = useTranslations('fileBrowser');
+  const tFiles = useTranslations('files');
+  const tCommon = useTranslations('common');
   // 子要素のキャッシュはローカルで維持（パフォーマンスのため）
   const [children, setChildren] = useState<DirectoryItem[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -164,12 +168,12 @@ export function FileBrowserItem({
         await navigator.clipboard.writeText(item.path);
         return;
       } catch {
-        // フォールバックへ
+        // Fallback to prompt
       }
     }
 
-    // 非セキュアコンテキスト（HTTP）ではプロンプトで表示
-    window.prompt('パスをコピーしてください:', item.path);
+    // Fallback for non-secure context (HTTP)
+    window.prompt(t('copyPathPrompt'), item.path);
   }, [item.path]);
 
   const paddingLeft = 8 + depth * 16;
@@ -250,19 +254,19 @@ export function FileBrowserItem({
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={handleCopyPath}>
                 <Copy className="h-4 w-4 mr-2" />
-                パスをコピー
+                {t('copyPath')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => {
                 setIsRenaming(true);
                 setNewName(item.name);
               }}>
                 <Pencil className="h-4 w-4 mr-2" />
-                名前を変更
+                {t('rename')}
               </DropdownMenuItem>
               {!item.isDirectory && (
                 <DropdownMenuItem onClick={handleDownloadClick}>
                   <Download className="h-4 w-4 mr-2" />
-                  ダウンロード
+                  {tFiles('download')}
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
@@ -271,7 +275,7 @@ export function FileBrowserItem({
                 onClick={handleDeleteClick}
               >
                 <Trash2 className="h-4 w-4 mr-2" />
-                削除
+                {tCommon('delete')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
