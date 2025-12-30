@@ -4,6 +4,10 @@
 
 Claude Agent SDKを使用したブラウザベースのチャットアプリケーションです。ChatGPTライクなインターフェースでClaudeCodeと対話できます。
 
+## デモ
+
+https://github.com/user-attachments/assets/3f392e56-efb6-4d51-85d3-e021e2a93ea6
+
 ## 機能
 
 - **リアルタイムチャット**: SSE（Server-Sent Events）によるストリーミングレスポンス
