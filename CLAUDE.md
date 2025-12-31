@@ -18,6 +18,11 @@ npm run start            # 本番サーバー起動
 npm run lint             # ESLint実行
 npm run typecheck        # TypeScript型チェック
 
+# テスト
+npm run test             # vitest（watchモード）
+npm run test:run         # vitest（単発実行）
+npm run test:coverage    # カバレッジ付きテスト実行
+
 # データベース
 npm run db:migrate       # Prismaマイグレーション（開発環境）
 npm run db:deploy        # Prismaマイグレーション（本番環境）
@@ -34,6 +39,7 @@ npm run db:studio        # Prisma Studio起動
 - **データベース**: SQLite + Prisma ORM（出力先: `src/generated/prisma`）
 - **ターミナル**: xterm.js（フロント）+ node-pty（バック）via WebSocket
 - **国際化（i18n）**: next-intl（日本語/英語/中国語対応）
+- **テスト**: Vitest + React Testing Library + jsdom
 
 ### 主要なデータフロー
 
@@ -65,6 +71,8 @@ npm run db:studio        # Prisma Studio起動
 | i18nプロバイダー | `src/i18n/` | クライアントサイドの国際化設定、ロケール検出 |
 | i18nサーバー | `src/lib/i18n/` | サーバーサイドの翻訳関数 |
 | 翻訳ファイル | `messages/` | 各言語のJSON翻訳ファイル（ja.json, en.json, zh.json） |
+| テスト設定 | `vitest.config.ts`, `src/test/` | Vitest設定、セットアップ、モック |
+| テストファイル | `src/**/__tests__/` | 各モジュールのユニットテスト |
 
 ### API構成
 
@@ -108,3 +116,11 @@ npm run db:studio        # Prisma Studio起動
   ```
 - 翻訳キーは`messages/ja.json`を基準に追加（en.json, zh.jsonも同時に更新）
 - 新しい翻訳は適切なネームスペースに追加（例: `settings.appearance.title`）
+
+### テスト
+
+- テストファイルは対象モジュールと同じディレクトリの`__tests__/`に配置
+- API Routeテストでは`vi.mock()`でPrismaとSDKをモック
+- Hooksテストでは`@testing-library/react`の`renderHook`を使用
+- fake timersを使用する場合は`afterEach`で`vi.useRealTimers()`を呼び出すこと
+- GitHub Actions CIで自動テスト実行（push/PR時）
