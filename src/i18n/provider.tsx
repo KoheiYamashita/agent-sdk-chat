@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { NextIntlClientProvider } from 'next-intl';
 import { useSettings } from '@/hooks/useSettings';
-import { getLocaleFromNavigator, isValidLocale, defaultLocale, type Locale } from './config';
+import { getLocaleFromNavigator, isValidLocale, type Locale } from './config';
 
 // Import all translation files
 import ja from '../../messages/ja.json';

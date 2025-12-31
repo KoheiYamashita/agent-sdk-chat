@@ -42,7 +42,6 @@ function ModelIcon({ model }: { model: SelectableModel }) {
 
 export default function GeneralSettingsPage() {
   const t = useTranslations('settings');
-  const tCommon = useTranslations('common');
   const { settings, isLoading, error, isSaving, updateGeneralSettings } = useSettings();
   const { selectableModels, isLoading: isLoadingModels } = useAllModels();
 

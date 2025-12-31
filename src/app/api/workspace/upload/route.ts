@@ -78,7 +78,7 @@ export async function POST(request: Request) {
         const buffer = Buffer.from(await file.arrayBuffer());
         await fs.writeFile(filePath, buffer);
         uploadedFiles.push(path.relative(basePath, filePath));
-      } catch (err) {
+      } catch {
         errors.push(`Failed to upload: ${file.name}`);
       }
     }

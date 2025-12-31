@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { isValidImageUrl } from '../image-utils';
 
 // Note: optimizeImage uses browser APIs (FileReader, Image, Canvas) which are difficult

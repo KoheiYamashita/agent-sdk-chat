@@ -37,6 +37,7 @@ export function Terminal({
   const wsRef = useRef<WebSocket | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const connectRef = useRef<() => void>(() => {});
 
   const sendMessage = useCallback((message: TerminalClientMessage) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -107,10 +108,10 @@ export function Terminal({
       console.log('Terminal WebSocket closed');
       onConnectionChange?.(false);
 
-      // Attempt to reconnect after a delay
+      // Attempt to reconnect after a delay using ref to avoid stale closure
       reconnectTimeoutRef.current = setTimeout(() => {
         if (terminalRef.current) {
-          connect();
+          connectRef.current();
         }
       }, 3000);
     };
@@ -120,6 +121,11 @@ export function Terminal({
       onError?.('WebSocket connection error');
     };
   }, [chatSessionId, workspacePath, onReady, onError, onConnectionChange, sendMessage]);
+
+  // Keep connectRef updated with latest connect function
+  useEffect(() => {
+    connectRef.current = connect;
+  }, [connect]);
 
   // Initialize terminal and WebSocket
   useEffect(() => {
