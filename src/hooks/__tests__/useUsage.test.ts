@@ -34,11 +34,11 @@ describe('useUsage', () => {
   });
 
   const mockUsageData = {
-    totalSessions: 10,
-    totalMessages: 150,
-    totalInputTokens: 50000,
-    totalOutputTokens: 25000,
-    estimatedCost: 1.23,
+    five_hour: { utilization: 0.5, resets_at: '2024-01-01T12:00:00Z' },
+    seven_day: { utilization: 0.3, resets_at: '2024-01-07T00:00:00Z' },
+    seven_day_opus: null,
+    seven_day_sonnet: { utilization: 0.2, resets_at: '2024-01-07T00:00:00Z' },
+    extra_usage: null,
   };
 
   describe('initial state', () => {
@@ -145,6 +145,11 @@ describe('useUsage', () => {
 
   describe('refetch', () => {
     it('should refetch usage data', async () => {
+      const updatedUsageData = {
+        ...mockUsageData,
+        five_hour: { utilization: 0.7, resets_at: '2024-01-01T12:00:00Z' },
+      };
+
       mockFetch
         .mockResolvedValueOnce({
           ok: true,
@@ -152,10 +157,7 @@ describe('useUsage', () => {
         })
         .mockResolvedValueOnce({
           ok: true,
-          json: () =>
-            Promise.resolve({
-              data: { ...mockUsageData, totalSessions: 15 },
-            }),
+          json: () => Promise.resolve({ data: updatedUsageData }),
         });
 
       const { result } = renderHook(() => useUsage(), {
@@ -166,14 +168,14 @@ describe('useUsage', () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      expect(result.current.usage?.totalSessions).toBe(10);
+      expect(result.current.usage?.five_hour?.utilization).toBe(0.5);
 
       await act(async () => {
         await result.current.refetch();
       });
 
       await waitFor(() => {
-        expect(result.current.usage?.totalSessions).toBe(15);
+        expect(result.current.usage?.five_hour?.utilization).toBe(0.7);
       });
     });
   });

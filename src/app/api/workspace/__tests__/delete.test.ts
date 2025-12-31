@@ -62,7 +62,7 @@ describe('DELETE /api/workspace/delete', () => {
     it('should return 400 when path is empty', async () => {
       const request = createRequest({ path: '' });
       const response = await DELETE(request);
-      const data = await response.json();
+      await response.json(); // Consume response body
 
       expect(response.status).toBe(400);
     });

@@ -56,11 +56,12 @@ import { prisma } from '@/lib/db/prisma';
 import { query } from '@anthropic-ai/claude-agent-sdk';
 
 const mockFindUnique = prisma.session.findUnique as unknown as ReturnType<typeof vi.fn>;
-const mockCreate = prisma.session.create as unknown as ReturnType<typeof vi.fn>;
+const _mockCreate = prisma.session.create as unknown as ReturnType<typeof vi.fn>;
 const mockSettingsFindUnique = prisma.settings.findUnique as unknown as ReturnType<typeof vi.fn>;
 const mockCustomModelFindUnique = prisma.customModel.findUnique as unknown as ReturnType<typeof vi.fn>;
 const mockSkillFindMany = prisma.skill.findMany as unknown as ReturnType<typeof vi.fn>;
-const mockQuery = query as unknown as ReturnType<typeof vi.fn>;
+const _mockQuery = query as unknown as ReturnType<typeof vi.fn>;
+// _mockCreate and _mockQuery are defined for future streaming tests
 
 function createRequest(body: unknown): Request {
   return new Request('http://localhost:3000/api/chat', {

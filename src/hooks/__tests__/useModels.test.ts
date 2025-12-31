@@ -283,6 +283,7 @@ describe('useModels', () => {
 
         await act(async () => {
           await result.current.createModel({
+            name: 'new-model',
             displayName: 'New Model',
             baseModel: 'claude-sonnet-4-20250514',
             systemPrompt: 'Hello',
@@ -318,8 +319,10 @@ describe('useModels', () => {
         await expect(
           act(async () => {
             await result.current.createModel({
+              name: 'duplicate',
               displayName: 'Duplicate',
               baseModel: 'claude-sonnet-4-20250514',
+              systemPrompt: '',
             });
           })
         ).rejects.toThrow('Model name already exists');

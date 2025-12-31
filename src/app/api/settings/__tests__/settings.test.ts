@@ -154,7 +154,8 @@ describe('Settings API', () => {
       const upsertCall = mockUpsert.mock.calls.find(
         (call) => call[0].where.key === 'appearance'
       );
-      const savedValue = JSON.parse(upsertCall[0].update.value);
+      expect(upsertCall).toBeDefined();
+      const savedValue = JSON.parse(upsertCall![0].update.value);
 
       // Initials should be uppercased and truncated to 2 chars
       expect(savedValue.userInitials).toBe('AB');
@@ -180,7 +181,8 @@ describe('Settings API', () => {
       const upsertCall = mockUpsert.mock.calls.find(
         (call) => call[0].where.key === 'appearance'
       );
-      const savedValue = JSON.parse(upsertCall[0].update.value);
+      expect(upsertCall).toBeDefined();
+      const savedValue = JSON.parse(upsertCall![0].update.value);
 
       expect(savedValue.userImageUrl).toBe('data:image/png;base64,ABC123');
     });

@@ -157,8 +157,8 @@ describe('useSkills', () => {
       await act(async () => {
         await result.current.createSkill({
           name: 'new-skill',
+          displayName: 'New Skill',
           content: '# New skill',
-          isEnabled: true,
         });
       });
 
@@ -167,8 +167,8 @@ describe('useSkills', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: 'new-skill',
+          displayName: 'New Skill',
           content: '# New skill',
-          isEnabled: true,
         }),
       });
     });
@@ -196,8 +196,8 @@ describe('useSkills', () => {
         act(async () => {
           await result.current.createSkill({
             name: 'duplicate',
+            displayName: 'Duplicate',
             content: '',
-            isEnabled: true,
           });
         })
       ).rejects.toThrow('Skill name already exists');
@@ -390,7 +390,7 @@ describe('useSkills', () => {
       });
 
       act(() => {
-        result.current.createSkill({ name: 'test', content: '', isEnabled: true });
+        result.current.createSkill({ name: 'test', displayName: 'Test', content: '' });
       });
 
       await waitFor(() => {

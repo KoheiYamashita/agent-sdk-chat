@@ -187,7 +187,7 @@ describe('GET /api/sessions/[id]/messages', () => {
       createRequest('session-1', { cursor: 'msg-4', limit: '5' }),
       createRouteParams('session-1')
     );
-    const data = await response.json();
+    await response.json(); // Consume response body
 
     expect(response.status).toBe(200);
     expect(mockPrisma.message.findMany).toHaveBeenCalledWith(

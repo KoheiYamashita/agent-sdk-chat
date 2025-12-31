@@ -101,7 +101,7 @@ describe('GET /api/usage', () => {
         });
 
       const response = await GET();
-      const data = await response.json();
+      await response.json(); // Consume response body
 
       expect(response.status).toBe(200);
       expect(mockWriteFile).toHaveBeenCalled();

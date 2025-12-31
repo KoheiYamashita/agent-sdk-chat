@@ -35,23 +35,32 @@ describe('useSettings', () => {
 
   const mockSettings = {
     general: {
-      language: 'en',
+      language: 'en' as const,
       defaultModel: 'claude-sonnet-4-20250514',
-      defaultPermissionMode: 'default',
+      defaultPermissionMode: 'default' as const,
+      defaultThinkingEnabled: true,
+      theme: 'system' as const,
       approvalTimeoutMinutes: 60,
     },
     permissions: {
-      defaultPermissionMode: 'default' as const,
+      mode: 'default',
+      allowedTools: [],
+      disallowedTools: [],
     },
     sandbox: {
       workspacePath: '/home/user/workspace',
       claudeMdTemplate: '',
     },
     appearance: {
-      theme: 'system' as const,
-      messageFontSize: 14,
-      codeFontSize: 13,
-      terminalFontSize: 13,
+      userIcon: 'user' as const,
+      userInitials: '',
+      userImageUrl: '',
+      userName: '',
+      botIcon: 'bot' as const,
+      botInitials: '',
+      botImageUrl: '',
+      favicon: 'robot' as const,
+      customFaviconUrl: '',
     },
     titleGeneration: {
       enabled: true,
@@ -212,13 +221,13 @@ describe('useSettings', () => {
       });
 
       await act(async () => {
-        await result.current.updateAppearanceSettings({ theme: 'dark' });
+        await result.current.updateAppearanceSettings({ userIcon: 'star' });
       });
 
       expect(mockFetch).toHaveBeenCalledWith('/api/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: expect.stringContaining('"theme":"dark"'),
+        body: expect.stringContaining('"userIcon":"star"'),
       });
     });
   });
